@@ -18,7 +18,7 @@ export default function VFRViewer() {
       <Canvas camera={{ position: [0, 1.5, 2.5], fov: 35 }}>
         <Suspense fallback={null}>
           <Stage environment="city" intensity={0.6}>
-            <Model url="https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf" />
+            <Model url="/models/mannequin.glb" />
           </Stage>
           <OrbitControls enablePan={false} />
         </Suspense>
