@@ -1,0 +1,2 @@
+SKU,GPU Time (s),File Size (KB),Cost (€)
+mannequin.glb,0,270.44,0.00
