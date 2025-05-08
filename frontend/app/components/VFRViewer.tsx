@@ -1,15 +1,19 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
-import { Stage, OrbitControls } from "@react-three/drei";
+import { Suspense, useEffect } from "react";
+import { Stage, OrbitControls, useGLTF } from "@react-three/drei";
 import { useLoader } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 
+// Configure GLTFLoader with MeshoptDecoder
+useGLTF.preload("/models/mannequin.glb");
+
 function Model({ url }: { url: string }) {
-  const gltf = useLoader(GLTFLoader, url) as { scene: THREE.Group };
-  return <primitive object={gltf.scene} dispose={null} />;
+  // Use useGLTF instead of useLoader for better handling of compressed models
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} dispose={null} />;
 }
 
 export default function VFRViewer() {
