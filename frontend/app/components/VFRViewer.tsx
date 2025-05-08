@@ -16,20 +16,28 @@ function Model({ url }: { url: string }) {
   return <primitive object={scene} dispose={null} />;
 }
 
+// Replace this with your actual Cloudflare Worker URL after deployment
+// Example: https://vfr-edge.your-subdomain.workers.dev
+const ASSET_BASE = "<CLOUDFLARE_WORKER_URL>";
+
+// Set to true to use Cloudflare R2 assets, false to use local assets
+const USE_CLOUDFLARE = false;
+
 export default function VFRViewer() {
-  // TODO: Replace with your actual Cloudflare Worker URL after deployment
-  const workerUrl = "https://vfr-edge.your-subdomain.workers.dev";
+  // The model to load
+  const modelFile = "mannequin.glb";
+  
+  // Determine the full URL based on the configuration
+  const modelUrl = USE_CLOUDFLARE
+    ? `${ASSET_BASE}/${modelFile}`
+    : `/models/${modelFile}`;
   
   return (
     <div className="w-full h-[480px]">
       <Canvas camera={{ fov: 35 }} shadows>
         <Suspense fallback={null}>
           <Stage environment="city" intensity={0.6}>
-            {/* For local development */}
-            <Model url="/models/mannequin.glb" />
-            
-            {/* For production with Cloudflare R2 */}
-            {/* <Model url={`${workerUrl}/mannequin.glb`} /> */}
+            <Model url={modelUrl} />
           </Stage>
           <OrbitControls enablePan={false} />
         </Suspense>

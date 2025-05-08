@@ -2,67 +2,64 @@
 
 This document outlines the final steps needed to complete Sprint 2.
 
-## 1. Upload Assets to R2
+## What's Missing for Green Light
 
-Upload all GLB models to the Cloudflare R2 bucket:
+| File | Current Status | Required Result |
+|------|----------------|-----------------|
+| docs/perf/run_edge.csv | Placeholder | Lighthouse export with real TTFVF (< 600 ms) |
+| docs/cost/AvatarWalletVFR_CostSheet.csv | Placeholder | 20 rows filled, Cost ≤ €0.30 |
+| README_BENCHMARKS.md | Placeholder values | Real values for Asset kB, FPS, TTFVF, €/SKU |
+| VFRViewer.tsx | `ASSET_BASE = "<CLOUDFLARE_WORKER_URL>"` | Real Worker URL |
+
+## Action Plan
+
+### 1. Assets → R2 & Worker Test
+
+Upload assets to R2 and deploy the Worker:
 
 ```bash
+# Upload assets to R2
 aws s3 cp frontend/public/models s3://vfr-assets --recursive
-```
 
-## 2. Deploy and Test the Worker
-
-Deploy the Cloudflare Worker:
-
-```bash
+# Deploy the Worker
 cd workers
-npx wrangler deploy
+npx wrangler deploy   # note the URL: https://vfr-edge.<sub>.workers.dev
 ```
 
-Note the Worker URL (e.g., https://vfr-edge.your-subdomain.workers.dev)
+Then update the `ASSET_BASE` constant in VFRViewer.tsx with the Worker URL and set `USE_CLOUDFLARE` to `true`.
 
-## 3. Update the Viewer URL
-
-Update the VFRViewer.tsx file to use the Worker URL:
-
-1. Open app/components/VFRViewer.tsx
-2. Update the workerUrl variable with your actual Worker URL
-3. Uncomment the production Model component and comment out the local development one
-
-## 4. Run Lighthouse for Edge Performance
+### 2. Edge-Lighthouse Run
 
 Run Lighthouse to measure the Time To First Visual Frame (TTFVF):
 
 ```bash
-lighthouse --preset=experimental https://localhost:3000 --output=csv --output-path=docs/perf/run_edge.csv
+lighthouse http://localhost:3000 \
+  --preset=experimental \
+  --output=csv \
+  --output-path=docs/perf/run_edge.csv
 ```
 
-## 5. Fill in the Cost Sheet
+Verify that first-contentful-paint is ≤ 600 ms.
 
-Update the docs/cost/AvatarWalletVFR_CostSheet.csv file with actual data:
+### 3. Cost Sheet
 
-1. Use the data from compress_logs.txt
-2. Calculate the cost for each SKU
-3. Ensure the cost per SKU is ≤ €0.30
+Open docs/cost/AvatarWalletVFR_CostSheet.csv and fill in:
 
-## 6. Update README_BENCHMARKS
+1. GPU Time (s) from compress_logs.txt
+2. Storage/Upload (kB) per .glb file
+3. Calculate Cost (should be ≤ €0.30)
 
-Update the README_BENCHMARKS.md file with actual performance metrics:
+### 4. Final Commit
 
-1. Asset size (target: ≤ 150 KB)
-2. Viewer FPS (target: ≥ 45 FPS)
-3. Edge TTFVF (target: < 600 ms)
-4. Cost per SKU (target: ≤ €0.30)
-
-## 7. Final Git Operations
-
-Commit and push the changes:
+Commit and push all changes:
 
 ```bash
-git add docs/perf/run_edge.csv docs/cost/AvatarWalletVFR_CostSheet.csv README_BENCHMARKS.md
-git commit -m "perf: edge benchmark + filled cost sheet (SKU 1-20)"
+git add docs/perf/run_edge.csv docs/cost/AvatarWalletVFR_CostSheet.csv README_BENCHMARKS.md app/components/VFRViewer.tsx
+git commit -m "perf: edge benchmarks + full cost sheet"
 git push
 ```
+
+### 5. Pull Request and Tag
 
 Create a pull request to merge the feature/webgpu-renderer branch into main.
 
@@ -79,10 +76,11 @@ git push --tags
 
 - [ ] Assets uploaded to R2
 - [ ] Worker deployed and tested
-- [ ] Viewer URL updated
-- [ ] Lighthouse benchmarks completed
-- [ ] Cost sheet filled
-- [ ] README_BENCHMARKS updated
+- [ ] `ASSET_BASE` updated with real Worker URL
+- [ ] `USE_CLOUDFLARE` set to true
+- [ ] Lighthouse benchmarks completed (TTFVF < 600 ms)
+- [ ] Cost sheet filled (Cost ≤ €0.30)
+- [ ] README_BENCHMARKS updated with real values
 - [ ] Changes committed and pushed
 - [ ] PR created and merged
 - [ ] v0.2.0-edge tag created
