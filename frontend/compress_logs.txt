@@ -1,0 +1,1 @@
+mannequin.glb,GPU Time (s),270.44

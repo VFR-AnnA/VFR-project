@@ -1,0 +1,7 @@
+name = "vfr-edge"
+compatibility_date = "2025-05-06"
+
+[[r2_buckets]]
+binding = "VFR_BUCKET"
+bucket_name = "vfr-assets"
+preview_bucket_name = "vfr-assets"

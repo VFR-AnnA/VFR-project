@@ -18,7 +18,8 @@ export default function VFRViewer() {
       <Canvas camera={{ fov: 35 }} shadows>
         <Suspense fallback={null}>
           <Stage environment="city" intensity={0.6}>
-            <Model url="/models/mannequin.glb" />
+            <Model url="https://vfr-edge.your-subdomain.workers.dev/mannequin.glb" />
+            {/* Replace the URL above with your actual Cloudflare Worker endpoint */}
           </Stage>
           <OrbitControls enablePan={false} />
         </Suspense>
