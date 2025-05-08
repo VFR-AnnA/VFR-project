@@ -17,14 +17,19 @@ function Model({ url }: { url: string }) {
 }
 
 export default function VFRViewer() {
+  // TODO: Replace with your actual Cloudflare Worker URL after deployment
+  const workerUrl = "https://vfr-edge.your-subdomain.workers.dev";
+  
   return (
     <div className="w-full h-[480px]">
       <Canvas camera={{ fov: 35 }} shadows>
         <Suspense fallback={null}>
           <Stage environment="city" intensity={0.6}>
+            {/* For local development */}
             <Model url="/models/mannequin.glb" />
-            {/* Replace the URL above with your actual Cloudflare Worker endpoint when ready */}
-            {/* Example: https://vfr-edge.your-subdomain.workers.dev/mannequin.glb */}
+            
+            {/* For production with Cloudflare R2 */}
+            {/* <Model url={`${workerUrl}/mannequin.glb`} /> */}
           </Stage>
           <OrbitControls enablePan={false} />
         </Suspense>

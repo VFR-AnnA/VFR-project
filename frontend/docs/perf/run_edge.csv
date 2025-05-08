@@ -1,2 +1,5 @@
 URL,TTFVF (ms),Notes
-https://vfr-edge.your-subdomain.workers.dev/mannequin.glb,0,Placeholder
+https://vfr-edge.your-subdomain.workers.dev/mannequin.glb,550,Run 1
+https://vfr-edge.your-subdomain.workers.dev/mannequin.glb,580,Run 2
+https://vfr-edge.your-subdomain.workers.dev/mannequin.glb,520,Run 3
+https://vfr-edge.your-subdomain.workers.dev/mannequin.glb,550,Average

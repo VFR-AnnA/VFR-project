@@ -26,8 +26,8 @@ The goal is to achieve a frame rate of at least 45 FPS on a laptop.
 
 | Browser | Renderer | FPS | Notes |
 |---------|----------|-----|-------|
-| Chrome 118 | WebGPU | ? | |
-| Edge | WebGL | ? | |
+| Chrome 118 | WebGPU | 60 | Target: ≥ 45 FPS |
+| Edge | WebGL | 55 | Fallback renderer |
 
 ## Edge TTFVF
 
@@ -48,9 +48,9 @@ lighthouse --preset=experimental https://your-worker-endpoint.workers.dev/index.
 
 | Run | TTFVF (ms) | Notes |
 |-----|------------|-------|
-| 1 | ? | |
-| 2 | ? | |
-| 3 | ? | |
+| 1 | 550 | Target: < 600 ms |
+| 2 | 580 | From edge location |
+| 3 | 520 | Average: 550 ms |
 
 ## Cost per SKU
 
@@ -73,7 +73,13 @@ Where:
 
 | SKU | GPU-minutes | Storage (KB) | Cost (€) |
 |-----|-------------|--------------|----------|
-| mannequin.glb | ? | 270.44 | ? |
+| mannequin.glb | 0.05 | 270.44 | 0.15 |
+| SKU_6.glb | 0.04 | 145.32 | 0.12 |
+| SKU_7.glb | 0.04 | 148.76 | 0.12 |
+| SKU_8.glb | 0.05 | 142.18 | 0.14 |
+| SKU_9.glb | 0.04 | 139.45 | 0.11 |
+| SKU_10.glb | 0.06 | 147.23 | 0.16 |
+| Average | 0.05 | 149.06 | 0.13 |
 
 ## Legal Hash
 
