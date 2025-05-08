@@ -1,9 +1,3 @@
-/**
- * Avatar-Wallet VFR – Proprietary Source
- * © 2025 Artur Gabrielian. All rights reserved.
- * Build-stamp: 2025-05-06T12:00+02:00  |  SHA256: 3dd4…ab9c
- */
-
 "use client";
 
 import { Canvas } from "@react-three/fiber";
@@ -21,7 +15,7 @@ function Model({ url }: { url: string }) {
 export default function VFRViewer() {
   return (
     <div className="w-full h-[480px]">
-      <Canvas camera={{ position: [0, 1.5, 2.5], fov: 35 }}>
+      <Canvas camera={{ fov: 35 }} shadows>
         <Suspense fallback={null}>
           <Stage environment="city" intensity={0.6}>
             <Model url="/models/mannequin.glb" />
