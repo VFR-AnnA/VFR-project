@@ -12,6 +12,10 @@ The goal is to achieve a file size of less than 150 KB for each model.
 2. Record the file sizes in the compress_logs.csv file.
 3. Verify that each model is less than 150 KB.
 
+### Current Status
+
+- `mannequin.glb`: 270.44 KB (Target: ≤ 150 KB) - *Exceeds target*
+
 ## Viewer FPS
 
 The goal is to achieve a frame rate of at least 45 FPS on a laptop.
@@ -29,9 +33,9 @@ The goal is to achieve a frame rate of at least 45 FPS on a laptop.
 | Chrome 118 | WebGPU | 60 | Target: ≥ 45 FPS |
 | Edge | WebGL | 55 | Fallback renderer |
 
-## Edge TTFVF
+## Edge TTFVF / FCP
 
-The goal is to achieve a Time To First Visual Frame (TTFVF) of less than 600 ms.
+The goal is to achieve a Time To First Visual Frame (TTFVF) / First Contentful Paint (FCP) of 0.8 s.
 
 ### Measurement
 
@@ -46,11 +50,9 @@ lighthouse --preset=experimental https://your-worker-endpoint.workers.dev/index.
 
 ### Results
 
-| Run | TTFVF (ms) | Notes |
-|-----|------------|-------|
-| 1 | 550 | Target: < 600 ms |
-| 2 | 580 | From edge location |
-| 3 | 520 | Average: 550 ms |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| FCP    | 0.8 s | Explicitly set as per Sprint 2. Target: ≤ 0.8s (previously < 0.6s) |
 
 ## Cost per SKU
 
@@ -81,6 +83,8 @@ Where:
 | SKU_10.glb | 0.06 | 147.23 | 0.16 |
 | Average | 0.05 | 149.06 | 0.13 |
 
+The highest cost per SKU will be updated here once `docs/cost/AvatarWalletVFR_CostSheet.csv` is finalized. Current target: ≤ €0.30.
+
 ## Legal Hash
 
 The SHA-256 hash of the i-Depot ZIP file is included in the source code as a reference.
@@ -100,3 +104,9 @@ sha256sum i-depot.zip
 | File | SHA-256 Hash |
 |------|--------------|
 | i-depot.zip | 3dd4…ab9c |
+
+## Measurement Record
+
+| Date       | Commit Hash | Notes                               |
+|------------|-------------|-------------------------------------|
+| 2025-05-10 | [commit-hash] | Sprint 2 benchmark values updated. User to provide actual commit hash. |
