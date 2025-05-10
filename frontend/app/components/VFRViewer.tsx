@@ -16,12 +16,8 @@ function Model({ url }: { url: string }) {
   return <primitive object={scene} dispose={null} />;
 }
 
-// Replace this with your actual Cloudflare Worker URL after deployment
-// Example: https://vfr-edge.your-subdomain.workers.dev
-const ASSET_BASE = "<CLOUDFLARE_WORKER_URL>";
-
-// Set to true to use Cloudflare R2 assets, false to use local assets
-const USE_CLOUDFLARE = false;
+const ASSET_BASE   = "https://vfr-edge.vfravater.workers.dev";
+const USE_CLOUDFLARE = true;
 
 export default function VFRViewer() {
   // The model to load
