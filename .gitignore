@@ -1,0 +1,5 @@
+# Ignore Cloudflare Wrangler local development artifacts
+frontend/.wrangler/
+
+# Ignore downloaded GLB files that are not part of the source
+frontend/downloaded-mannequin.glb

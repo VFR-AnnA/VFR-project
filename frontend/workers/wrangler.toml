@@ -1,7 +1,8 @@
 name = "vfr-edge"
-compatibility_date = "2025-05-06"
+account_id = "cf6d4712c964a9071a5fabe..."   # Replace with your Cloudflare Account ID
+compatibility_date = "2025-05-09"
 
 [[r2_buckets]]
 binding = "VFR_BUCKET"
-bucket_name = "vfr-assets"
-preview_bucket_name = "vfr-assets"
+bucket_name = "vfr"               # Your new bucket
+preview_bucket_name = "vfr"
