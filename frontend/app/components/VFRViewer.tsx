@@ -31,7 +31,7 @@ export default function VFRViewer() {
   return (
     <div className="w-full h-[480px]">
       <Canvas camera={{ fov: 35 }} shadows>
-        <Suspense fallback={<img src="/file.svg" alt="" />}>
+        <Suspense fallback={<div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><img src="/file.svg" alt="" /></div>}>
           <Stage environment="city" intensity={0.6}>
             <Model url={modelUrl} />
           </Stage>
