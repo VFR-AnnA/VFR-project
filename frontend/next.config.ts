@@ -22,9 +22,6 @@ SHA256: 3dd4…ab9c
     return config;
   },
   // Allow connections from other devices on the network
-  server: {
-    host: '0.0.0.0',
-  },
 };
 
 export default nextConfig;

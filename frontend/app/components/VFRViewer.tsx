@@ -1,12 +1,8 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useEffect } from "react";
-import { Stage, OrbitControls, useGLTF } from "@react-three/drei";
-import { Html } from "@react-three/drei";
-import { useLoader } from "@react-three/fiber";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import * as THREE from "three";
+import { Suspense } from "react";
+import { Stage, OrbitControls, useGLTF, Html } from "@react-three/drei";
 
 // Configure GLTFLoader with MeshoptDecoder
 
