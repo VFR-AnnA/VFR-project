@@ -13,7 +13,7 @@ export default function VFRModal() {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="focus:outline-none focus-visible:ring-2 px-4 py-2 bg-emerald-600 text-white rounded-lg" role="dialog" aria-modal="true" title="Open Viewer">
+        <button className="focus:outline-none focus-visible:ring-2 px-4 py-2 bg-emerald-700 text-white rounded-lg" role="dialog" aria-modal="true" title="Open Viewer">
           Try It On
         </button>
       </Dialog.Trigger>
@@ -28,7 +28,7 @@ export default function VFRModal() {
             transition={{ duration: 0.25 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-zinc-900 p-6 rounded-xl shadow-xl w-[840px] max-w-[95vw]"
           >
-            <Dialog.Title className="sr-only">3D Model Viewer</Dialog.Title>
+            <Dialog.Title className="sr-only" title="3D preview">3D Model Viewer</Dialog.Title>
             <Dialog.Description className="sr-only">
               Interactive 3D model viewer for Visual Feature Recognition
             </Dialog.Description>
