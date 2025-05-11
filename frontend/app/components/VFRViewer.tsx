@@ -1,40 +1,33 @@
 "use client";
+import { useGLTF } from "@react-three/drei";
+import { Suspense, useEffect, useState } from "react";
 
-import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
-import { Stage, OrbitControls, useGLTF, Html } from "@react-three/drei";
-
-// Configure GLTFLoader with MeshoptDecoder
-
-function Model({ url }: { url: string }) {
-  useGLTF.preload(`${ASSET_BASE}/mannequin.glb`);
-  // Use useGLTF instead of useLoader for better handling of compressed models
-  const { scene } = useGLTF(url);
-  return <primitive object={scene} dispose={null} />;
-}
-
-const ASSET_BASE   = "https://vfr-edge.vfravater.workers.dev";
+const ASSET_BASE = 'https://vfr-edge.vfravater.workers.dev';
 const USE_CLOUDFLARE = true;
 
+function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: string }) {
+  const stub = useGLTF(stubUrl);
+  const full = useGLTF(fullUrl);
+
+  const [model, setModel] = useState(stub);
+
+  useEffect(() => {
+    setModel(full);
+  }, [full]);
+
+  return <primitive object={model.scene} />;
+}
+
 export default function VFRViewer() {
-  // The model to load
-  const modelFile = "mannequin.glb";
-  
-  // Determine the full URL based on the configuration
-  const modelUrl = USE_CLOUDFLARE
-    ? `${ASSET_BASE}/${modelFile}`
-    : `/models/${modelFile}`;
-  
   return (
-    <div className="w-full h-[480px]">
-      <Canvas camera={{ fov: 35 }} shadows>
-        <Suspense fallback={<Html center><span style={{color: '#fff', fontSize: '12px'}}>Loading…</span></Html>}>
-          <Stage environment="city" intensity={0.6}>
-            <Model url={modelUrl} />
-          </Stage>
-          <OrbitControls enablePan={false} />
-        </Suspense>
-      </Canvas>
-    </div>
+    <Suspense fallback={null}>
+      <ProgressiveModel
+        stubUrl={`${ASSET_BASE}/mannequin-stub.glb`}
+        fullUrl={`${ASSET_BASE}/mannequin-draco.glb`}
+      />
+    </Suspense>
   );
 }
+
+useGLTF.preload(`${ASSET_BASE}/mannequin-stub.glb`);
+useGLTF.preload(`${ASSET_BASE}/mannequin-draco.glb`);

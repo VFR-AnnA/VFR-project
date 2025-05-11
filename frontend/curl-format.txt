@@ -1,0 +1,9 @@
+time_namelookup:  %{time_namelookup}s
+time_connect:     %{time_connect}s
+time_tls:         %{time_appconnect}s
+time_ttfb:        %{time_starttransfer}s
+time_total:       %{time_total}s
+size_download:    %{size_download} bytes
+speed_download:   %{speed_download} bytes/s
+remote_ip:        %{remote_ip}
+http_code:        %{http_code}
