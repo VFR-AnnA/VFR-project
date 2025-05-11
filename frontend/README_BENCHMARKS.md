@@ -1,112 +1,21 @@
-# Performance Benchmarks
+# Progressive LOD Benchmark Results
 
-This document provides instructions for benchmarking the performance of the VFR application.
+## Stub Model
+- Size: ~301 kB
+- First Contentful Paint (FCP): ≤ 300 ms (target)
+- Edge TTFB: 405 ms (measured)
+- Download Time: 466 ms (measured)
 
-## Asset Size
+## Draco Compressed Model
+- Size: ~271 kB
+- First Contentful Paint (FCP): ≤ 800 ms (target)
+- Edge TTFB: 202 ms (measured)
+- Download Time: 344 ms (measured)
 
-The goal is to achieve a file size of less than 150 KB for each model.
+## Cache Behavior
+- Cache HIT observed on reload (verify in DevTools Network tab)
 
-### Measurement
-
-1. Compress the GLB models using Draco and MeshOptimizer as described in the README_GLB_COMPRESSION.md file.
-2. Record the file sizes in the compress_logs.csv file.
-3. Verify that each model is less than 150 KB.
-
-### Current Status
-
-- `mannequin.glb`: 270.44 KB (Target: ≤ 150 KB) - *Exceeds target*
-
-## Viewer FPS
-
-The goal is to achieve a frame rate of at least 45 FPS on a laptop.
-
-### Measurement
-
-1. Set up the WebGPU renderer as described in the README_WEBGPU.md file.
-2. Add the Stats.js panel or log the FPS to the console.
-3. Record the FPS measurements in this file.
-
-### Results
-
-| Browser | Renderer | FPS | Notes |
-|---------|----------|-----|-------|
-| Chrome 118 | WebGPU | 60 | Target: ≥ 45 FPS |
-| Edge | WebGL | 55 | Fallback renderer |
-
-## Edge TTFVF / FCP
-
-The goal is to achieve a Time To First Visual Frame (TTFVF) / First Contentful Paint (FCP) of 0.8 s.
-
-### Measurement
-
-1. Set up the Cloudflare R2 and Worker as described in the README_CLOUDFLARE.md file.
-2. Run Lighthouse to measure the TTFVF:
-
-```bash
-lighthouse --preset=experimental https://your-worker-endpoint.workers.dev/index.html --output=csv --output-path=docs/perf/run_edge.csv
-```
-
-3. Record the TTFVF measurements in this file.
-
-### Results
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| FCP    | 0.8 s | Explicitly set as per Sprint 2. Target: ≤ 0.8s (previously < 0.6s) |
-
-## Cost per SKU
-
-The goal is to achieve a cost of less than €0.30 per SKU.
-
-### Calculation
-
-The cost per SKU is calculated as follows:
-
-```
-Cost per SKU = (GPU-minutes * €tariff + storage) / SKU
-```
-
-Where:
-- GPU-minutes is the time taken to compress the model in minutes
-- €tariff is the cost per GPU-minute
-- storage is the cost of storing the model in R2
-
-### Results
-
-| SKU | GPU-minutes | Storage (KB) | Cost (€) |
-|-----|-------------|--------------|----------|
-| mannequin.glb | 0.05 | 270.44 | 0.15 |
-| SKU_6.glb | 0.04 | 145.32 | 0.12 |
-| SKU_7.glb | 0.04 | 148.76 | 0.12 |
-| SKU_8.glb | 0.05 | 142.18 | 0.14 |
-| SKU_9.glb | 0.04 | 139.45 | 0.11 |
-| SKU_10.glb | 0.06 | 147.23 | 0.16 |
-| Average | 0.05 | 149.06 | 0.13 |
-
-The highest cost per SKU will be updated here once `docs/cost/AvatarWalletVFR_CostSheet.csv` is finalized. Current target: ≤ €0.30.
-
-## Legal Hash
-
-The SHA-256 hash of the i-Depot ZIP file is included in the source code as a reference.
-
-### Verification
-
-1. Calculate the SHA-256 hash of the i-Depot ZIP file:
-
-```bash
-sha256sum i-depot.zip
-```
-
-2. Verify that the hash matches the one in the source code.
-
-### Results
-
-| File | SHA-256 Hash |
-|------|--------------|
-| i-depot.zip | 3dd4…ab9c |
-
-## Measurement Record
-
-| Date       | Commit Hash | Notes                               |
-|------------|-------------|-------------------------------------|
-| 2025-05-10 | [commit-hash] | Sprint 2 benchmark values updated. User to provide actual commit hash. |
+## Notes
+- Stub file size is larger than the ideal target (~50 kB).
+- Draco compressed file size is larger than the ideal target (≤ 150 kB).
+- Further optimization may be needed for production readiness.
