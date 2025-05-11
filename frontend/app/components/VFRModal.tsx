@@ -13,7 +13,7 @@ export default function VFRModal() {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg">
+        <button className="focus:outline-none focus-visible:ring-2 px-4 py-2 bg-emerald-600 text-white rounded-lg" role="dialog" aria-modal="true" title="Open Viewer">
           Try It On
         </button>
       </Dialog.Trigger>
