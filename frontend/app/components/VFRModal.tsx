@@ -8,8 +8,27 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import VFRViewer from "./VFRViewer";
+import { ErrorBoundary } from 'react-error-boundary'
+import { FC } from 'react';
+
+const ViewerErrorBoundary: FC<{ onFail: () => void; children: React.ReactNode }> = ({ onFail, children }) => {
+  return (
+    <ErrorBoundary
+      fallbackRender={() => {
+        onFail(); // sluit modal
+        return null; // niets renderen in Canvas
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
 
 export default function VFRModal() {
+  const handleViewerFail = () => {
+    console.log('Viewer failed to load');
+  };
+
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
@@ -35,7 +54,9 @@ export default function VFRModal() {
             <Dialog.Close className="absolute top-2 right-3 text-white text-2xl leading-none">
               ×
             </Dialog.Close>
-            <VFRViewer />
+            <ViewerErrorBoundary onFail={handleViewerFail}>
+              <VFRViewer />
+            </ViewerErrorBoundary>
           </motion.div>
         </Dialog.Content>
       </Dialog.Portal>

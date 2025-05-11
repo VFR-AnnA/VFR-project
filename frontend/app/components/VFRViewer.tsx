@@ -3,14 +3,15 @@
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect } from "react";
 import { Stage, OrbitControls, useGLTF } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 import { useLoader } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import * as THREE from "three";
 
 // Configure GLTFLoader with MeshoptDecoder
-useGLTF.preload("/models/mannequin.glb");
 
 function Model({ url }: { url: string }) {
+  useGLTF.preload(`${ASSET_BASE}/mannequin.glb`);
   // Use useGLTF instead of useLoader for better handling of compressed models
   const { scene } = useGLTF(url);
   return <primitive object={scene} dispose={null} />;
@@ -31,7 +32,7 @@ export default function VFRViewer() {
   return (
     <div className="w-full h-[480px]">
       <Canvas camera={{ fov: 35 }} shadows>
-        <Suspense fallback={<div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><img src="/file.svg" alt="" /></div>}>
+        <Suspense fallback={<Html center><span style={{color: '#fff', fontSize: '12px'}}>Loading…</span></Html>}>
           <Stage environment="city" intensity={0.6}>
             <Model url={modelUrl} />
           </Stage>
