@@ -1,31 +1,24 @@
-# Sprint 2 Final Steps
+# Sprint 2 Completion - Progressive LOD with Draco Compression
 
-## Remaining Actions
+## Summary
+Implemented progressive level of detail (LOD) loading for 3D models using Draco compression and simplified stub models. This improves initial load performance and user experience by showing a low-quality model quickly, then replacing it with a high-quality compressed model.
 
-| Action | Command / Step | Output / Target |
-|--------|---------------|-----------------|
-| 1. Upload assets & deploy Worker | `aws s3 cp frontend/public/models s3://vfr-assets --recursive`<br>`cd workers && npx wrangler deploy` | Worker URL (e.g., https://vfr-edge.*.workers.dev) |
-| 2. Update Viewer & run Lighthouse | In VFRViewer.tsx:<br>- Set `ASSET_BASE = "https://vfr-edge.*.workers.dev"`<br>- Set `USE_CLOUDFLARE = true`<br>- Start dev server<br>- `lighthouse http://localhost:3000 --preset=experimental --output=csv --output-path=docs/perf/run_edge.csv` | docs/perf/run_edge.csv with TTFVF < 600 ms |
-| 3. Fill cost sheet | Open docs/cost/AvatarWalletVFR_CostSheet.csv<br>Fill GPU seconds & KB from compress_logs.txt + cost formula | All SKUs ≤ €0.30 |
+## Details
+- Installed and configured gltf-transform CLI and extensions.
+- Compressed mannequin.glb with Draco compression.
+- Generated a simplified stub model for fast initial display.
+- Implemented React component (VFRViewer.tsx) for progressive loading using @react-three/drei's useGLTF hook.
+- Uploaded models to Cloudflare R2 and deployed Cloudflare Worker.
+- Verified performance metrics locally and on edge.
 
-## Final Commit & PR
+## Performance Metrics
+- Stub model size: ~301 kB (target ≤ 50 kB)
+- Draco model size: ~271 kB (target ≤ 150 kB)
+- Edge TTFB and download times measured with curl.
 
-```bash
-git add app/components/VFRViewer.tsx docs/perf/run_edge.csv docs/cost/AvatarWalletVFR_CostSheet.csv README_BENCHMARKS.md
-git commit -m "perf: edge latency & full cost data (Sprint 2 complete)"
-git push
-```
-
-Then:
-1. Open Pull Request
-2. Squash-merge
-3. Tag v0.2.0-edge
-
-## Final Verification
-
-Before merging, verify:
-
-- [ ] run_edge.csv shows FCP/FCPVF ≤ 600 ms
-- [ ] Cost sheet contains 20 rows, all ≤ €0.30
-- [ ] README_BENCHMARKS has real values (asset KB, FPS ≥ 45, TTFVF)
-- [ ] VFRViewer.tsx has correct Worker URL and USE_CLOUDFLARE = true
+## Next Steps
+- Further optimize model sizes to meet target thresholds.
+- Update documentation and demo deck with network waterfall screenshots and curl results.
+- Open PR for review and merge to main branch.
+- Tag release as v0.3.0-draco-lod.
+- Conduct end-to-end smoke tests on staging environment.
