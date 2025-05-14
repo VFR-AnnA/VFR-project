@@ -6,11 +6,10 @@
 
 "use client";
 
-import { useRef, useState, useCallback, ChangeEvent } from "react";
-import Image from "next/image";
+import { useRef, useState, ChangeEvent } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
-import { getMeasurementsFromImage, BodyMeasurements } from "../../../utils/measure";
+import { getMeasurementsFromImage } from "../../../utils/measure";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";

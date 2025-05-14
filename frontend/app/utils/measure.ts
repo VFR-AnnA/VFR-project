@@ -7,12 +7,8 @@
 import * as poseModule from '@mediapipe/pose';
 
 // Define the types we need from MediaPipe
-export type PoseResults = {
-  poseLandmarks: poseModule.NormalizedLandmarkList;
-  poseWorldLandmarks: poseModule.LandmarkList;
-  segmentationMask: any;
-  image: any;
-};
+// Use the actual type from MediaPipe
+export type PoseResults = poseModule.Results;
 
 // Define the measurement result type
 export interface BodyMeasurements {
@@ -121,7 +117,7 @@ export function estimateBodyMeasurements(
  * Initialize MediaPipe Pose detector
  * @returns Promise that resolves to a MediaPipe Pose instance
  */
-export async function initPoseDetector(): Promise<any> {
+export async function initPoseDetector(): Promise<poseModule.Pose> {
   // Dynamically import the Pose class to avoid Next.js build issues
   // This is a workaround for the MediaPipe module loading in Next.js
   const { Pose } = await import('@mediapipe/pose');
@@ -155,10 +151,10 @@ export async function getMeasurementsFromImage(
   referenceHeightCm?: number
 ): Promise<BodyMeasurements> {
   try {
-    const pose = await initPoseDetector();
+    const pose = await initPoseDetector() as poseModule.Pose;
     
     return new Promise((resolve, reject) => {
-      pose.onResults((results: PoseResults) => {
+      pose.onResults((results: poseModule.Results) => {
         if (results.poseLandmarks) {
           try {
             const measurements = estimateBodyMeasurements(

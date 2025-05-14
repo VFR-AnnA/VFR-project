@@ -1,15 +1,24 @@
 "use client";
 
 // Polyfill for ProgressEvent
+// Polyfill for ProgressEvent with eslint-disable for the any type
 if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).ProgressEvent = class ProgressEvent extends Event {
+    lengthComputable: boolean;
+    loaded: number;
+    total: number;
+    
     constructor(type: string, init?: ProgressEventInit) {
       super(type, init);
+      this.lengthComputable = init?.lengthComputable || false;
+      this.loaded = init?.loaded || 0;
+      this.total = init?.total || 0;
     }
   };
 }
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
 import { Suspense, useEffect, useState, useRef } from "react";
 import * as THREE from 'three';
@@ -19,7 +28,7 @@ import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../..
 const MODELS_PATH = '/models';
 
 // Debug logging function
-const debug = (message: string, ...args: any[]) => {
+const debug = (message: string, ...args: unknown[]) => {
   console.log(`[VFRViewer] ${message}`, ...args);
 };
 

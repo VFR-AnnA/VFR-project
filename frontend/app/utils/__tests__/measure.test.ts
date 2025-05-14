@@ -4,7 +4,8 @@
  * Build-stamp: 2025-05-15T00:37+02:00
  */
 
-import { estimateBodyMeasurements, BodyMeasurements, PoseResults } from '../measure';
+import { estimateBodyMeasurements } from '../measure';
+import type { NormalizedLandmarkList } from '@mediapipe/pose';
 
 // Mock pose landmarks data
 const createMockLandmarks = (height: number = 1.0, width: number = 0.5) => {
@@ -76,7 +77,7 @@ describe('Body Measurement Functions', () => {
     
     it('should throw error when no landmarks are provided', () => {
       // Arrange
-      const emptyLandmarks: any[] = [];
+      const emptyLandmarks: NormalizedLandmarkList = [];
       const imageHeight = 1000;
       
       // Act & Assert

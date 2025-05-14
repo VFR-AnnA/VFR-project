@@ -39,3 +39,9 @@
 - Memory Usage: ~80MB peak during detection
 
 All processing runs locally with no server round-trip, meeting the requirement for edge computing.
+
+## Latest Performance Metrics (v0.4.0-body-ai)
+- Commit: beb19078e151844b2b8870420410ce0863a576bc
+- Largest Contentful Paint (LCP): 0.56s
+- Interaction to Next Paint (INP): 24ms
+- Accessibility Score: 99%
