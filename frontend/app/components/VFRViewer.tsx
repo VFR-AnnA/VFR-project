@@ -1,24 +1,34 @@
 "use client";
 
 // Polyfill for ProgressEvent
+// Polyfill for ProgressEvent with eslint-disable for the any type
 if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).ProgressEvent = class ProgressEvent extends Event {
+    lengthComputable: boolean;
+    loaded: number;
+    total: number;
+    
     constructor(type: string, init?: ProgressEventInit) {
       super(type, init);
+      this.lengthComputable = init?.lengthComputable || false;
+      this.loaded = init?.loaded || 0;
+      this.total = init?.total || 0;
     }
   };
 }
 
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
+import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
 
 const MODELS_PATH = '/models';
 
 // Debug logging function
-const debug = (message: string, ...args: any[]) => {
+const debug = (message: string, ...args: unknown[]) => {
   console.log(`[VFRViewer] ${message}`, ...args);
 };
 
@@ -38,7 +48,13 @@ type ModelGLTF = {
   asset: { version: string; generator: string; };
 };
 
-function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: string }) {
+interface ProgressiveModelProps {
+  stubUrl: string;
+  fullUrl: string;
+  avatarParams: AvatarParams;
+}
+
+function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelProps) {
   // Use the useGLTF hook at the component level
   const { scene: fullScene } = useGLTF(fullUrl) as ModelGLTF;
   const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
@@ -46,6 +62,36 @@ function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: stri
   const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const modelRef = useRef<THREE.Group>(null);
+
+  // Apply avatar parameters as scale factors
+  useEffect(() => {
+    if (modelRef.current) {
+      const { height, chest, waist, hip } = paramsToScaleFactors(avatarParams);
+      
+      // Apply overall height scaling
+      modelRef.current.scale.y = 0.9 * height;
+      
+      // Find and scale specific body parts if they exist
+      modelRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          const name = child.name.toLowerCase();
+          
+          // Apply specific scaling to body parts
+          if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
+            child.scale.x = chest;
+            child.scale.z = chest;
+          } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
+            child.scale.x = waist;
+            child.scale.z = waist;
+          } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
+            child.scale.x = hip;
+            child.scale.z = hip;
+          }
+        }
+      });
+    }
+  }, [avatarParams, model]);
 
   useEffect(() => {
     try {
@@ -85,6 +131,7 @@ function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: stri
   return (
     <group position={[0, -0.5, 0]}>
       <primitive
+        ref={modelRef}
         object={model}
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
@@ -94,7 +141,11 @@ function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: stri
   );
 }
 
-export default function VFRViewer() {
+interface VFRViewerProps {
+  avatarParams?: AvatarParams;
+}
+
+export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
   return (
     <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
       <Canvas
@@ -127,6 +178,7 @@ export default function VFRViewer() {
           <ProgressiveModel
             stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
             fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
+            avatarParams={avatarParams}
           />
           <Environment preset="city" />
           <OrbitControls
