@@ -39,33 +39,36 @@ type ModelGLTF = {
 };
 
 function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: string }) {
-  const [model, setModel] = useState<ModelGLTF | null>(null);
+  // Use the useGLTF hook at the component level
+  const { scene: fullScene } = useGLTF(fullUrl) as ModelGLTF;
+  const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
+  
+  const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        debug('Loading stub model:', stubUrl);
-        const stubModel = await useGLTF(stubUrl) as ModelGLTF;
-        setModel(stubModel);
-        
+    try {
+      // First set the stub model
+      debug('Loading stub model:', stubUrl);
+      setModel(stubScene);
+      
+      // Then set the full model after a short delay
+      const timer = setTimeout(() => {
         debug('Loading full model:', fullUrl);
-        const fullModel = await useGLTF(fullUrl) as ModelGLTF;
-        setModel(fullModel);
-        
+        setModel(fullScene);
         setIsLoading(false);
         debug('Models loaded successfully');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        debug('Error loading models:', errorMessage);
-        setError(errorMessage);
-        setIsLoading(false);
-      }
-    };
-
-    loadModels();
-  }, [stubUrl, fullUrl]);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      debug('Error loading models:', errorMessage);
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  }, [stubScene, fullScene, stubUrl, fullUrl]);
 
   if (error) {
     return (
@@ -82,7 +85,7 @@ function ProgressiveModel({ stubUrl, fullUrl }: { stubUrl: string; fullUrl: stri
   return (
     <group position={[0, -0.5, 0]}>
       <primitive
-        object={model.scene}
+        object={model}
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
         scale={0.9}
