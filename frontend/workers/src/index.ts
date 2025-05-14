@@ -8,10 +8,18 @@ export default {
   async fetch(req: Request, env: Env) {
 const url = new URL(req.url);
     if (url.pathname === '/favicon.ico') {
-      // TODO: Replace with actual asset URL or serve from R2 if available
-      return fetch('https://placehold.co/32x32/orange/white/png?text=Favicon', { // Using a placeholder
-        headers: { 'Access-Control-Allow-Origin': '*' },
-      });
+      const obj = await env.VFR_BUCKET.get('favicon.ico');
+      if (obj) {
+        return new Response(await obj.arrayBuffer(), {
+          headers: {
+            'Content-Type': obj.httpMetadata?.contentType ?? 'image/x-icon',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=31536000, immutable', // 1 year
+          },
+        });
+      }
+      // fallback (may be removed after testing)
+      return new Response('favicon not found', { status: 404 });
     }
     const key = new URL(req.url).pathname.slice(1) || "mannequin.glb";
     const obj = await env.VFR_BUCKET.get(key);

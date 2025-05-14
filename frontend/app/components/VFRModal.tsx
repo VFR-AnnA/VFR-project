@@ -7,7 +7,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
-import VFRViewer from "./VFRViewer";
+import VFRViewerWrapper from "./VFRViewerWrapper";
 import { ErrorBoundary } from 'react-error-boundary'
 import { FC } from 'react';
 
@@ -55,7 +55,7 @@ export default function VFRModal() {
               ×
             </Dialog.Close>
             <ViewerErrorBoundary onFail={handleViewerFail}>
-              <VFRViewer />
+              <VFRViewerWrapper />
             </ViewerErrorBoundary>
           </motion.div>
         </Dialog.Content>

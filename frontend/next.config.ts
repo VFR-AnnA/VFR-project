@@ -9,6 +9,7 @@ import webpack from 'webpack';
 
 const nextConfig: NextConfig = {
   webpack(config) {
+    // Add banner plugin
     config.plugins.push(
       new webpack.BannerPlugin({
         banner: `
@@ -19,9 +20,17 @@ SHA256: 3dd4…ab9c
         raw: false,
       })
     );
+
+    // Configure for Three.js and WebGL
+    config.module.rules.push({
+      test: /\.(glb|gltf)$/,
+      type: 'asset/resource'
+    });
+
     return config;
   },
   // Allow connections from other devices on the network
+  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
 };
 
 export default nextConfig;
