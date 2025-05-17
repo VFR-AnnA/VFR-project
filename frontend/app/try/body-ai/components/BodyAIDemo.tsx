@@ -10,6 +10,7 @@ import { useRef, useState, ChangeEvent } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage } from "../../../utils/measure";
+import DropUploader from "../../../components/DropUploader";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
@@ -25,11 +26,8 @@ export default function BodyAIDemo() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
   
-  // Handle file selection
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  // Handle file upload from DropUploader
+  const handleFileUpload = async (file: File) => {
     try {
       // Create object URL for the selected image
       const url = URL.createObjectURL(file);
@@ -42,10 +40,10 @@ export default function BodyAIDemo() {
       
       img.onload = async () => {
         try {
-          // Dynamically import MediaPipe to avoid Next.js build issues
-          await import('@mediapipe/pose');
+          // Dynamically import MediaPipe Tasks Vision to avoid Next.js build issues
+          await import('@mediapipe/tasks-vision');
           
-          // Process the image with MediaPipe
+          // Process the image with MediaPipe Tasks Vision
           const measurements = await getMeasurementsFromImage(img);
           
           // Update avatar parameters with detected measurements
@@ -101,59 +99,66 @@ export default function BodyAIDemo() {
           <h2 className="text-xl font-medium mb-4">Upload Your Photo</h2>
           
           <div className="mb-6">
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={handleUploadClick}
-            >
-              {imageUrl ? (
-                <div className="relative w-full h-[400px]">
-                  {/* eslint-disable-next-line */}
-                  <img
-                    ref={imageRef}
-                    src={imageUrl}
-                    alt="Uploaded photo"
-                    className="mx-auto max-h-[400px] max-w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="py-12">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-500">Click to upload a full-body photo</p>
-                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
-                </div>
-              )}
-              
-              {status === "loading" && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-                </div>
-              )}
-            </div>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-              aria-label="Upload full-body photo"
-              title="Upload full-body photo"
-            />
+            {imageUrl ? (
+              <div className="relative w-full h-[400px] mb-4">
+                {/* eslint-disable-next-line */}
+                <img
+                  ref={imageRef}
+                  src={imageUrl}
+                  alt="Uploaded photo"
+                  className="mx-auto max-h-[400px] max-w-full object-contain"
+                />
+                
+                {status === "loading" && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <DropUploader
+                onUpload={handleFileUpload}
+                ariaLabel="Upload full-body photo"
+                maxFileSize={4 * 1024 * 1024} // 4MB max
+                allowMultiple={false}
+                className="w-full"
+              />
+            )}
           </div>
           
           <div className="flex space-x-4">
-            <button
-              onClick={handleUploadClick}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Upload Photo
-            </button>
+            {imageUrl && (
+              <button
+                onClick={handleUploadClick}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Upload New Photo
+              </button>
+            )}
             <button
               onClick={handleCameraCapture}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center gap-2"
+              disabled={status === "loading"}
             >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
               Use Camera
             </button>
           </div>
