@@ -7,7 +7,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS } from "../../types/avatar-params";
 
 // Dynamically import the VFRViewer component with SSR disabled
@@ -38,13 +38,29 @@ export default function VFRViewerWrapper({
     ...params
   });
 
+  // Use a ref to store previous params for comparison
+  const prevParamsRef = useRef(params);
+  
   // Update avatarParams when params prop changes
   useEffect(() => {
-    setAvatarParams(prevParams => ({
-      ...prevParams,
-      ...params
-    }));
-  }, [params]);
+    // Only update if params actually changed
+    const hasChanged =
+      prevParamsRef.current.heightCm !== params.heightCm ||
+      prevParamsRef.current.chestCm !== params.chestCm ||
+      prevParamsRef.current.waistCm !== params.waistCm ||
+      prevParamsRef.current.hipCm !== params.hipCm;
+    
+    if (hasChanged) {
+      // Update the ref
+      prevParamsRef.current = params;
+      
+      // Update state
+      setAvatarParams(prevParams => ({
+        ...prevParams,
+        ...params
+      }));
+    }
+  }, [params.heightCm, params.chestCm, params.waistCm, params.hipCm]);
 
   // Handle parameter change from controls
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
