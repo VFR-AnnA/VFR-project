@@ -9,6 +9,7 @@
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS } from "../../types/avatar-params";
+import FPSOverlay from "./FPSOverlay";
 
 // Dynamically import the VFRViewer component with SSR disabled
 const VFRViewer = dynamic(() => import("./VFRViewer"), {
@@ -19,11 +20,13 @@ const VFRViewer = dynamic(() => import("./VFRViewer"), {
 interface VFRViewerWrapperProps {
   params?: Partial<AvatarParams>;
   showControls?: boolean;
+  showFPS?: boolean;
 }
 
 export default function VFRViewerWrapper({
   params = {},
-  showControls = false
+  showControls = false,
+  showFPS = process.env.NODE_ENV === 'development'
 }: VFRViewerWrapperProps = {}) {
   // Merge params with defaults
   const [avatarParams, setAvatarParams] = useState<AvatarParams>({
@@ -57,6 +60,9 @@ export default function VFRViewerWrapper({
 
   return (
     <div className="vfr-viewer-container">
+      {/* FPS Overlay - only shown when enabled */}
+      <FPSOverlay enabled={showFPS} />
+      
       {/* Pass each parameter directly to ensure they're being passed correctly */}
       <VFRViewer
         avatarParams={{
