@@ -7,7 +7,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS } from "../../types/avatar-params";
 
 // Dynamically import the VFRViewer component with SSR disabled
@@ -17,31 +17,55 @@ const VFRViewer = dynamic(() => import("./VFRViewer"), {
 });
 
 interface VFRViewerWrapperProps {
-  initialParams?: Partial<AvatarParams>;
+  params?: Partial<AvatarParams>;
   showControls?: boolean;
 }
 
 export default function VFRViewerWrapper({
-  initialParams = {},
+  params = {},
   showControls = false
 }: VFRViewerWrapperProps = {}) {
-  // Merge initial params with defaults
+  // Merge params with defaults
   const [avatarParams, setAvatarParams] = useState<AvatarParams>({
     ...DEFAULT_AVATAR_PARAMS,
-    ...initialParams
+    ...params
   });
+
+  // Update avatarParams when params prop changes
+  useEffect(() => {
+    setAvatarParams(prevParams => ({
+      ...prevParams,
+      ...params
+    }));
+  }, [params]);
 
   // Handle parameter change from controls
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
-    setAvatarParams(prev => ({
-      ...prev,
-      [param]: value
-    }));
+    console.log(`🎮 VFRViewerWrapper: Parameter change - ${param}: ${value}`);
+    setAvatarParams(prev => {
+      const newParams = {
+        ...prev,
+        [param]: value
+      };
+      console.log('🎮 VFRViewerWrapper: New avatar params:', newParams);
+      return newParams;
+    });
   };
+
+  // Log the current avatar parameters
+  console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
 
   return (
     <div className="vfr-viewer-container">
-      <VFRViewer avatarParams={avatarParams} />
+      {/* Pass each parameter directly to ensure they're being passed correctly */}
+      <VFRViewer
+        avatarParams={{
+          heightCm: avatarParams.heightCm,
+          chestCm: avatarParams.chestCm,
+          waistCm: avatarParams.waistCm,
+          hipCm: avatarParams.hipCm
+        }}
+      />
       
       {showControls && (
         <div className="mt-4 p-4 bg-gray-100 rounded-lg">

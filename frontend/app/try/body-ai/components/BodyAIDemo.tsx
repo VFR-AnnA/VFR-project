@@ -77,10 +77,15 @@ export default function BodyAIDemo() {
   
   // Handle parameter change from sliders
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
-    setAvatarParams(prev => ({
-      ...prev,
-      [param]: value
-    }));
+    console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
+    setAvatarParams(prev => {
+      const newParams = {
+        ...prev,
+        [param]: value
+      };
+      console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
+      return newParams;
+    });
   };
   
   // Trigger file input click
@@ -173,7 +178,23 @@ export default function BodyAIDemo() {
           <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
           
           <div className="mb-6 bg-gray-800 rounded-lg overflow-hidden">
-            <VFRViewerWrapper initialParams={avatarParams} showControls={true} />
+            {/* Pass each parameter directly to ensure they're being passed correctly */}
+            <VFRViewerWrapper
+              params={{
+                heightCm: avatarParams.heightCm,
+                chestCm: avatarParams.chestCm,
+                waistCm: avatarParams.waistCm,
+                hipCm: avatarParams.hipCm
+              }}
+              showControls={false}
+            />
+            
+            {/* Log the current parameters for debugging */}
+            <div className="p-2 bg-black text-white text-xs">
+              <pre>
+                {JSON.stringify(avatarParams, null, 2)}
+              </pre>
+            </div>
           </div>
           
           <div className="space-y-4">
