@@ -187,16 +187,20 @@ export default function BodyAIDemo() {
           
           <div className="mb-3 bg-gray-800 rounded-lg overflow-hidden">
             {/* Fixed aspect ratio container for the 3D viewer */}
-            <div className="w-full aspect-[4/3] max-h-[300px]">
-              <VFRViewerWrapper
-                params={{
-                  heightCm: avatarParams.heightCm,
-                  chestCm: avatarParams.chestCm,
-                  waistCm: avatarParams.waistCm,
-                  hipCm: avatarParams.hipCm
-                }}
-                showControls={false}
-              />
+            <div className="relative w-full">
+              {/* Reserve height with aspect-ratio, prevents overlap */}
+              <div className="w-full aspect-[4/3] md:aspect-[16/9]">
+                <VFRViewerWrapper
+                  params={{
+                    heightCm: avatarParams.heightCm,
+                    chestCm: avatarParams.chestCm,
+                    waistCm: avatarParams.waistCm,
+                    hipCm: avatarParams.hipCm
+                  }}
+                  showControls={false}
+                  className="absolute inset-0" // canvas fills the reserved box
+                />
+              </div>
             </div>
           </div>
           
@@ -207,8 +211,8 @@ export default function BodyAIDemo() {
               </label>
               <input
                 type="range"
-                min={AVATAR_PARAM_RANGES.heightCm.min}
-                max={AVATAR_PARAM_RANGES.heightCm.max}
+                min={130}
+                max={220}
                 value={avatarParams.heightCm}
                 onChange={(e) => {
                   // Use requestAnimationFrame to debounce slider changes
@@ -228,8 +232,8 @@ export default function BodyAIDemo() {
               </label>
               <input
                 type="range"
-                min={AVATAR_PARAM_RANGES.chestCm.min}
-                max={AVATAR_PARAM_RANGES.chestCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.chestCm}
                 onChange={(e) => {
                   requestAnimationFrame(() => {
@@ -248,8 +252,8 @@ export default function BodyAIDemo() {
               </label>
               <input
                 type="range"
-                min={AVATAR_PARAM_RANGES.waistCm.min}
-                max={AVATAR_PARAM_RANGES.waistCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.waistCm}
                 onChange={(e) => {
                   requestAnimationFrame(() => {
@@ -268,8 +272,8 @@ export default function BodyAIDemo() {
               </label>
               <input
                 type="range"
-                min={AVATAR_PARAM_RANGES.hipCm.min}
-                max={AVATAR_PARAM_RANGES.hipCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.hipCm}
                 onChange={(e) => {
                   requestAnimationFrame(() => {

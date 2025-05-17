@@ -26,11 +26,13 @@ const VFRViewer = dynamic(() => import("./VFRViewer"), {
 interface VFRViewerWrapperProps {
   params?: Partial<AvatarParams>;
   showControls?: boolean;
+  className?: string;
 }
 
 export default function VFRViewerWrapper({
   params = {},
-  showControls = false
+  showControls = false,
+  className = ''
 }: VFRViewerWrapperProps = {}) {
   // Merge params with defaults
   const [avatarParams, setAvatarParams] = useState<AvatarParams>({
@@ -62,16 +64,31 @@ export default function VFRViewerWrapper({
     }
   }, [params.heightCm, params.chestCm, params.waistCm, params.hipCm]);
 
-  // Handle parameter change from controls
-  const handleParamChange = (param: keyof AvatarParams, value: number) => {
-    console.log(`🎮 VFRViewerWrapper: Parameter change - ${param}: ${value}`);
-    setAvatarParams(prev => {
-      const newParams = {
-        ...prev,
-        [param]: value
-      };
-      console.log('🎮 VFRViewerWrapper: New avatar params:', newParams);
-      return newParams;
+  // Set up throttled parameter change handler
+  const handleParamChange = useRef<(param: keyof AvatarParams, value: number) => void>(null);
+  const rafId = useRef<number>(null);
+
+  useEffect(() => {
+    handleParamChange.current = (param: keyof AvatarParams, value: number) => {
+      console.log(`🎮 VFRViewerWrapper: Parameter change - ${param}: ${value}`);
+      setAvatarParams(prev => {
+        const newParams = {
+          ...prev,
+          [param]: value
+        };
+        console.log('🎮 VFRViewerWrapper: New avatar params:', newParams);
+        return newParams;
+      });
+    };
+  }, []);
+
+  // Throttled update function using requestAnimationFrame
+  const throttledUpdate = (param: keyof AvatarParams, value: number) => {
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+    }
+    rafId.current = requestAnimationFrame(() => {
+      handleParamChange.current?.(param, value);
     });
   };
 
@@ -79,7 +96,7 @@ export default function VFRViewerWrapper({
   console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
 
   return (
-    <div className="vfr-viewer-container">
+    <div className={`vfr-viewer-container ${className}`}>
       {/* Pass each parameter directly to ensure they're being passed correctly */}
       <VFRViewer
         avatarParams={{
@@ -107,7 +124,7 @@ export default function VFRViewerWrapper({
                 min={150}
                 max={200}
                 value={avatarParams.heightCm}
-                onChange={(e) => handleParamChange("heightCm", parseInt(e.target.value))}
+                onChange={(e) => throttledUpdate("heightCm", parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 aria-label={`Height slider: ${avatarParams.heightCm} cm`}
                 title={`Adjust height: ${avatarParams.heightCm} cm`}
@@ -127,7 +144,7 @@ export default function VFRViewerWrapper({
                 min={70}
                 max={130}
                 value={avatarParams.chestCm}
-                onChange={(e) => handleParamChange("chestCm", parseInt(e.target.value))}
+                onChange={(e) => throttledUpdate("chestCm", parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 aria-label={`Chest slider: ${avatarParams.chestCm} cm`}
                 title={`Adjust chest: ${avatarParams.chestCm} cm`}
@@ -147,7 +164,7 @@ export default function VFRViewerWrapper({
                 min={60}
                 max={120}
                 value={avatarParams.waistCm}
-                onChange={(e) => handleParamChange("waistCm", parseInt(e.target.value))}
+                onChange={(e) => throttledUpdate("waistCm", parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 aria-label={`Waist slider: ${avatarParams.waistCm} cm`}
                 title={`Adjust waist: ${avatarParams.waistCm} cm`}
@@ -167,7 +184,7 @@ export default function VFRViewerWrapper({
                 min={80}
                 max={140}
                 value={avatarParams.hipCm}
-                onChange={(e) => handleParamChange("hipCm", parseInt(e.target.value))}
+                onChange={(e) => throttledUpdate("hipCm", parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 aria-label={`Hip slider: ${avatarParams.hipCm} cm`}
                 title={`Adjust hip: ${avatarParams.hipCm} cm`}
