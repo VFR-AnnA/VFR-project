@@ -13,7 +13,14 @@ import { AvatarParams, DEFAULT_AVATAR_PARAMS } from "../../types/avatar-params";
 // Dynamically import the VFRViewer component with SSR disabled
 const VFRViewer = dynamic(() => import("./VFRViewer"), {
   ssr: false,
-  loading: () => <div className="w-full h-[480px] bg-gray-100 flex items-center justify-center">Loading 3D Model...</div>
+  loading: () => (
+    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+      <div className="flex flex-col items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white mb-2"></div>
+        <p className="text-white text-sm">Loading 3D Model...</p>
+      </div>
+    </div>
+  )
 });
 
 interface VFRViewerWrapperProps {

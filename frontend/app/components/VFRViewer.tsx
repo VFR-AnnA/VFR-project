@@ -146,8 +146,11 @@ interface VFRViewerProps {
 }
 
 export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
+  debug('Received avatarParams:', avatarParams);
+  debug('Passing to ProgressiveModel:', avatarParams);
+  
   return (
-    <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
+    <div style={{ width: '100%', height: '100%', background: '#1a1a1a' }} className="aspect-square md:aspect-[4/3]">
       <Canvas
         camera={{
           position: [0, 0.5, 2.5],
