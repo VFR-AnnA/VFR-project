@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage } from "../../../utils/measure";
@@ -76,8 +76,19 @@ export default function BodyAIDemo() {
     alert("Camera capture feature coming soon!");
   };
   
-  // Handle parameter change from sliders
+  // References for sliders
+  const sliderRefs = {
+    heightCm: useRef<HTMLInputElement>(null),
+    chestCm: useRef<HTMLInputElement>(null),
+    waistCm: useRef<HTMLInputElement>(null),
+    hipCm: useRef<HTMLInputElement>(null)
+  };
+  
+  // Handle parameter change from sliders with optimization
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
+    // Only update if the value has actually changed
+    if (avatarParams[param] === value) return;
+    
     console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
     setAvatarParams(prev => {
       const newParams = {
@@ -88,6 +99,28 @@ export default function BodyAIDemo() {
       return newParams;
     });
   };
+  
+  // Add passive pointer events for better performance
+  useEffect(() => {
+    // Set up passive event listeners for all sliders
+    Object.entries(sliderRefs).forEach(([param, ref]) => {
+      const el = ref.current;
+      if (!el) return;
+      
+      const onMove = (e: PointerEvent) => {
+        // The actual handling is done by the onChange event
+        // This just ensures the event is passive
+      };
+      
+      el.addEventListener('pointermove', onMove, { passive: true });
+      el.addEventListener('touchmove', onMove as EventListener, { passive: true });
+      
+      return () => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('touchmove', onMove as EventListener);
+      };
+    });
+  }, []);
   
   // Trigger file input click
   const handleUploadClick = () => {
@@ -211,6 +244,7 @@ export default function BodyAIDemo() {
                 Height: {avatarParams.heightCm} cm
               </label>
               <input
+                ref={sliderRefs.heightCm}
                 type="range"
                 min={130}
                 max={220}
@@ -232,6 +266,7 @@ export default function BodyAIDemo() {
                 Chest: {avatarParams.chestCm} cm
               </label>
               <input
+                ref={sliderRefs.chestCm}
                 type="range"
                 min={60}
                 max={140}
@@ -252,6 +287,7 @@ export default function BodyAIDemo() {
                 Waist: {avatarParams.waistCm} cm
               </label>
               <input
+                ref={sliderRefs.waistCm}
                 type="range"
                 min={60}
                 max={140}
@@ -272,6 +308,7 @@ export default function BodyAIDemo() {
                 Hip: {avatarParams.hipCm} cm
               </label>
               <input
+                ref={sliderRefs.hipCm}
                 type="range"
                 min={60}
                 max={140}
