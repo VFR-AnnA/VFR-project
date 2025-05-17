@@ -42,10 +42,10 @@ export default function BodyAIDemo() {
       
       img.onload = async () => {
         try {
-          // Dynamically import MediaPipe to avoid Next.js build issues
-          await import('@mediapipe/pose');
+          // Dynamically import MediaPipe Tasks Vision to avoid Next.js build issues
+          await import('@mediapipe/tasks-vision');
           
-          // Process the image with MediaPipe
+          // Process the image with MediaPipe Tasks Vision
           const measurements = await getMeasurementsFromImage(img);
           
           // Update avatar parameters with detected measurements
