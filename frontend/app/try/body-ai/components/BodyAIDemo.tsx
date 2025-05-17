@@ -104,28 +104,29 @@ export default function BodyAIDemo() {
           
           <div className="mb-3">
             <div
-              className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="relative w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               onClick={handleUploadClick}
             >
-              {imageUrl ? (
-                <div className="relative w-full aspect-[3/4] flex items-center justify-center">
-                  {/* eslint-disable-next-line */}
-                  <img
-                    ref={imageRef}
-                    src={imageUrl}
-                    alt="Uploaded photo"
-                    className="max-h-full max-w-full object-contain"
-                    style={{ aspectRatio: '3/4' }}
-                  />
-                </div>
-              ) : (
-                <div className="w-full aspect-[3/4] max-h-[250px] flex flex-col items-center justify-center">
-                  <svg className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Click to upload a full-body photo</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, WEBP up to 10MB</p>
-                </div>
+              {/* Always visible placeholder - prevents CLS */}
+              <div
+                className="w-full aspect-[3/4] bg-zinc-900/60 flex flex-col items-center justify-center text-sm text-zinc-400"
+              >
+                <svg className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Click to upload a full-body photo</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, WEBP up to 10MB</p>
+              </div>
+              
+              {/* Image overlay when available */}
+              {imageUrl && (
+                <img
+                  ref={imageRef}
+                  src={imageUrl}
+                  alt="Uploaded photo"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  fetchPriority="low"
+                />
               )}
               
               {status === "loading" && (
@@ -177,7 +178,7 @@ export default function BodyAIDemo() {
         </div>
         
         {/* Right column: 3D viewer and sliders */}
-        <div className="bg-gray-100 dark:bg-gray-900 p-3 md:p-4 lg:p-6 md:w-1/2">
+        <div className="bg-gray-100 dark:bg-gray-900 p-3 md:p-4 lg:p-6 md:w-1/2 section-heavy">
           <div className="flex items-center justify-between mb-2 md:mb-3">
             <h2 className="text-lg md:text-xl font-medium dark:text-white">Your Custom Avatar</h2>
             
