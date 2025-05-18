@@ -55,51 +55,96 @@ function Model({ url, avatarParams }: ModelProps) {
     }
   }, [gltf]);
 
-  // Apply transformations with EXTREME exaggeration for demo visibility
+  // Track previous values to detect changes
+  const prevAvatarParamsRef = useRef(avatarParams);
+  
+  // Apply transformations with SUPER EXTREME exaggeration for demo visibility
   useEffect(() => {
-    if (modelRef.current && avatarParams) {
-      console.log("Applying avatar params with EXTREME EXAGGERATION:", avatarParams);
-      
-      // Apply MASSIVELY exaggerated transformations instead of trying to be anatomically realistic
-      // We'll distort the model dramatically to make changes super obvious
-      
-      // 1. Calculate extreme scaling factors (massive exaggeration)
-      const heightDelta = avatarParams.heightCm - 175; // Difference from default
-      const chestDelta = avatarParams.chestCm - 95;    // Difference from default
-      const waistDelta = avatarParams.waistCm - 80;    // Difference from default
-      const hipDelta = avatarParams.hipCm - 100;       // Difference from default
-      
-      // 2. Extremely amplify these deltas for dramatic visual effect
-      const heightFactor = 1.0 + (heightDelta / 50);     // 50 cm change = 2x size
-      const chestFactor = 1.0 + (chestDelta / 15) * 2;   // 15 cm change = 3x width
-      const waistFactor = 1.0 + (waistDelta / 20) * 2;   // 20 cm change = 3x depth
-      const hipFactor = 1.0 + (hipDelta / 20) * 2;       // 20 cm change = 3x depth
-      
-      console.log(`Applied EXTREMELY EXAGGERATED scaling:
-        Height: ${heightFactor.toFixed(2)}
-        Chest: ${chestFactor.toFixed(2)}
-        Waist: ${waistFactor.toFixed(2)}
-        Hip: ${hipFactor.toFixed(2)}`);
-      
-      // Apply dramatic non-uniform scaling to the ENTIRE model
-      // This will create visibly obvious changes when sliders move
-      modelRef.current.scale.set(
-        chestFactor,    // Width (X) - controlled by chest measurement
-        heightFactor,   // Height (Y) - controlled by height measurement
-        (waistFactor + hipFactor) / 2  // Depth (Z) - combined waist/hip effect
-      );
-      
-      // For even more dramatic effect, apply some tilt
-      // When measurements differ a lot, the model will visibly lean
-      if (Math.abs(chestDelta) > 5 || Math.abs(hipDelta) > 5) {
-        // Create a visible tilt effect based on chest vs hip difference
-        const tiltAmount = (chestDelta - hipDelta) / 100;
-        modelRef.current.rotation.z = tiltAmount;
-        console.log(`Applied tilt effect: ${tiltAmount.toFixed(2)} radians`);
+    if (!modelRef.current || !avatarParams) return;
+    
+    // Check if values actually changed
+    const prev = prevAvatarParamsRef.current || {heightCm: 175, chestCm: 95, waistCm: 80, hipCm: 100};
+    const changed = prev?.heightCm !== avatarParams.heightCm ||
+                    prev?.chestCm !== avatarParams.chestCm ||
+                    prev?.waistCm !== avatarParams.waistCm ||
+                    prev?.hipCm !== avatarParams.hipCm;
+    
+    console.log("🔄 AVATAR PARAMS UPDATED:", avatarParams);
+    console.log("Values changed?", changed ? "YES! Applying new transformation" : "No");
+    
+    // Store current values for next comparison
+    prevAvatarParamsRef.current = {...avatarParams};
+    
+    // THE MOST EXTREME, VISIBLE TRANSFORMATIONS POSSIBLE
+    // Completely unrealistic but unmistakably visible changes
+    
+    // 1. Calculate extreme scaling factors (MASSIVE exaggeration)
+    const heightDelta = avatarParams.heightCm - 175; // Difference from default
+    const chestDelta = avatarParams.chestCm - 95;    // Difference from default
+    const waistDelta = avatarParams.waistCm - 80;    // Difference from default
+    const hipDelta = avatarParams.hipCm - 100;       // Difference from default
+    
+    // 2. RIDICULOUSLY amplify these deltas for unmissable visual effect
+    const heightFactor = 1.0 + (heightDelta / 25);     // 25cm change = 2x size!
+    const chestFactor = 1.0 + (chestDelta / 7.5) * 2;  // 7.5cm change = 3x width!!
+    const waistFactor = 1.0 + (waistDelta / 10) * 2;   // 10cm change = 3x depth!!
+    const hipFactor = 1.0 + (hipDelta / 10) * 2;       // 10cm change = 3x depth!!
+    
+    console.log(`🔄 RIDICULOUSLY EXAGGERATED scaling factors:
+      Height: ${heightFactor.toFixed(2)} (delta: ${heightDelta})
+      Chest: ${chestFactor.toFixed(2)} (delta: ${chestDelta})
+      Waist: ${waistFactor.toFixed(2)} (delta: ${waistDelta})
+      Hip: ${hipFactor.toFixed(2)} (delta: ${hipDelta})`);
+    
+    // Apply comically extreme non-uniform scaling to the ENTIRE model
+    modelRef.current.scale.set(
+      chestFactor * 1.5,    // Width (X) - MASSIVELY affected by chest (1.5x multiplier)
+      heightFactor * 1.2,   // Height (Y) - GREATLY affected by height (1.2x multiplier)
+      (waistFactor + hipFactor) / 2 * 1.8  // Depth (Z) - EXTREMELY affected by waist/hip (1.8x multiplier)
+    );
+    
+    // Add color changes based on measurements to make changes even more obvious
+    modelRef.current.traverse((node) => {
+      if (node instanceof THREE.Mesh && node.material) {
+        // Make model glow/change based on measurements
+        if (Math.abs(chestDelta) > 3 || Math.abs(waistDelta) > 3 || Math.abs(hipDelta) > 3) {
+          try {
+            // If any measurement is far from default, make the model visually different
+            if (node.material.color) {
+              // Add a slight color tint based on how far from defaults
+              const colorShift = Math.max(
+                Math.abs(chestDelta/25),
+                Math.abs(waistDelta/20),
+                Math.abs(hipDelta/30)
+              );
+              
+              // Tint toward red for bigger measurements
+              if (colorShift > 0.1) {
+                console.log(`🎨 Applied color shift: ${colorShift.toFixed(2)}`);
+                // This won't actually change the texture but will tint it
+                node.material.emissive = new THREE.Color(colorShift, 0, 0);
+                node.material.emissiveIntensity = colorShift * 2;
+              }
+            }
+          } catch (e) {
+            console.log("Material modification error (non-critical):", e);
+          }
+        }
       }
+    });
+    
+    // Add dramatic rotation for even more obvious visual change
+    if (Math.abs(chestDelta) > 3 || Math.abs(hipDelta) > 3) {
+      // Create an extremely visible tilt effect based on chest vs hip difference
+      const tiltAmount = (chestDelta - hipDelta) / 50; // Much more dramatic tilt
+      modelRef.current.rotation.z = tiltAmount;
+      console.log(`🔄 Applied DRAMATIC tilt effect: ${tiltAmount.toFixed(2)} radians`);
       
-      console.log("Applied EXTREME transformations to make changes obvious");
+      // Also add some Y-axis rotation for even more visibility
+      modelRef.current.rotation.y = (chestDelta + hipDelta) / 100;
     }
+    
+    console.log("✅ Applied EXTREME transformations - changes should be impossible to miss");
   }, [avatarParams, gltf]);
 
   return <primitive ref={modelRef} object={gltf.scene} dispose={null} />;
