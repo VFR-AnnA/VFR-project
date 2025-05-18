@@ -34,3 +34,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## ⚙️ Optionele AI-ontwikkeling (hybride)
+
+Dit project kan gecombineerd worden met een lokale AI-ontwikkelstack. Dit is niet verplicht, maar kan ontwikkelsnelheid en veiligheid verbeteren.
+
+### Aanbevolen setup
+
+- IDE: RooCode / VS Code
+- Lokale LLM's: Ollama + Continue
+- Chat-modellen: Llama 3, DeepSeekCoder
+- Cloud fallback: GPT‑4o voor complexe brainstorms (zonder directe code)
+
+➡️ Zie `docs/AI-workflow.md` voor de volledige optionele handleiding.
