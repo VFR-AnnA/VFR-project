@@ -8,12 +8,24 @@
 
 import dynamic from "next/dynamic";
 
+// Define the avatar parameters type
+export type AvatarParams = {
+  heightCm: number;
+  chestCm: number;
+  waistCm: number;
+  hipCm: number;
+};
+
 // Dynamically import the VFRViewer component with SSR disabled
 const VFRViewer = dynamic(() => import("./VFRViewer"), {
   ssr: false,
   loading: () => <div className="w-full h-[480px] bg-gray-100 flex items-center justify-center">Loading 3D Model...</div>
 });
 
-export default function VFRViewerWrapper() {
-  return <VFRViewer />;
+interface VFRViewerWrapperProps {
+  avatarParams?: AvatarParams;
+}
+
+export default function VFRViewerWrapper({ avatarParams }: VFRViewerWrapperProps) {
+  return <VFRViewer avatarParams={avatarParams} />;
 }

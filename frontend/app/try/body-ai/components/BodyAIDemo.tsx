@@ -113,7 +113,7 @@ export default function BodyAIDemo() {
         className="bg-zinc-900 p-6 rounded-xl"
       >
         <h2 className="text-xl font-semibold mb-4">3D Preview</h2>
-        <VFRViewerWrapper />
+        <VFRViewerWrapper avatarParams={avatarParams} />
       </motion.div>
     </div>
   );
