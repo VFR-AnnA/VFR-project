@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-05-17T17:28:00Z",
+  "mcpServers": {},
+  "defaults": {
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "logLevel": "info"
+  },
+  "schema": {
+    "serverTemplate": {
+      "name": "example-server",
+      "endpoint": "http://localhost:3000",
+      "type": "local",
+      "enabled": true,
+      "timeout": 30000,
+      "authentication": {
+        "type": "none"
+      }
+    }
+  }
+}

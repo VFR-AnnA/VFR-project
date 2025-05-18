@@ -20,7 +20,7 @@ if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
 
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef, useMemo } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
@@ -63,35 +63,45 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+  
+  // Memoize scale factors to avoid unnecessary calculations
+  const scaleFactors = useMemo(() => {
+    return paramsToScaleFactors(avatarParams);
+  }, [
+    avatarParams.heightCm,
+    avatarParams.chestCm,
+    avatarParams.waistCm,
+    avatarParams.hipCm
+  ]);
 
   // Apply avatar parameters as scale factors
   useEffect(() => {
-    if (modelRef.current) {
-      const { height, chest, waist, hip } = paramsToScaleFactors(avatarParams);
-      
-      // Apply overall height scaling
-      modelRef.current.scale.y = 0.9 * height;
-      
-      // Find and scale specific body parts if they exist
-      modelRef.current.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          const name = child.name.toLowerCase();
-          
-          // Apply specific scaling to body parts
-          if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
-            child.scale.x = chest;
-            child.scale.z = chest;
-          } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
-            child.scale.x = waist;
-            child.scale.z = waist;
-          } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
-            child.scale.x = hip;
-            child.scale.z = hip;
-          }
+    if (!modelRef.current) return;
+    
+    const { height, chest, waist, hip } = scaleFactors;
+    
+    // Apply overall height scaling
+    modelRef.current.scale.y = 0.9 * height;
+    
+    // Find and scale specific body parts if they exist
+    modelRef.current.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const name = child.name.toLowerCase();
+        
+        // Apply specific scaling to body parts
+        if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
+          child.scale.x = chest;
+          child.scale.z = chest;
+        } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
+          child.scale.x = waist;
+          child.scale.z = waist;
+        } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
+          child.scale.x = hip;
+          child.scale.z = hip;
         }
-      });
-    }
-  }, [avatarParams, model]);
+      }
+    });
+  }, [scaleFactors, model]);
 
   useEffect(() => {
     try {
@@ -146,8 +156,25 @@ interface VFRViewerProps {
 }
 
 export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
+  debug('Received avatarParams:', avatarParams);
+  debug('Passing to ProgressiveModel:', avatarParams);
+  
+  // Memoize the entire ProgressiveModel to skip re-renders when avatarParams haven't changed
+  const memoizedModel = useMemo(() => (
+    <ProgressiveModel
+      stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
+      fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
+      avatarParams={avatarParams}
+    />
+  ), [
+    avatarParams.heightCm,
+    avatarParams.chestCm,
+    avatarParams.waistCm,
+    avatarParams.hipCm
+  ]);
+  
   return (
-    <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
+    <div style={{ width: '100%', height: '100%', background: '#1a1a1a' }} className="aspect-square md:aspect-[4/3]">
       <Canvas
         camera={{
           position: [0, 0.5, 2.5],
@@ -175,11 +202,7 @@ export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRV
         />
         
         <Suspense fallback={<LoadingSpinner />}>
-          <ProgressiveModel
-            stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
-            fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
-            avatarParams={avatarParams}
-          />
+          {memoizedModel}
           <Environment preset="city" />
           <OrbitControls
             enableDamping

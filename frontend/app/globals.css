@@ -19,3 +19,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Performance optimizations */
+.section-heavy {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
+}

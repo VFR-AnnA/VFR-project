@@ -6,10 +6,11 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage } from "../../../utils/measure";
+import { ThemeToggle } from "../../../components/ThemeToggle";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
@@ -42,10 +43,10 @@ export default function BodyAIDemo() {
       
       img.onload = async () => {
         try {
-          // Dynamically import MediaPipe to avoid Next.js build issues
-          await import('@mediapipe/pose');
+          // Dynamically import MediaPipe Tasks Vision to avoid Next.js build issues
+          await import('@mediapipe/tasks-vision');
           
-          // Process the image with MediaPipe
+          // Process the image with MediaPipe Tasks Vision
           const measurements = await getMeasurementsFromImage(img);
           
           // Update avatar parameters with detected measurements
@@ -75,8 +76,19 @@ export default function BodyAIDemo() {
     alert("Camera capture feature coming soon!");
   };
   
-  // Handle parameter change from sliders
+  // References for sliders
+  const sliderRefs = {
+    heightCm: useRef<HTMLInputElement>(null),
+    chestCm: useRef<HTMLInputElement>(null),
+    waistCm: useRef<HTMLInputElement>(null),
+    hipCm: useRef<HTMLInputElement>(null)
+  };
+  
+  // Handle parameter change from sliders with optimization
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
+    // Only update if the value has actually changed
+    if (avatarParams[param] === value) return;
+    
     console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
     setAvatarParams(prev => {
       const newParams = {
@@ -88,46 +100,71 @@ export default function BodyAIDemo() {
     });
   };
   
+  // Add passive pointer events for better performance
+  useEffect(() => {
+    // Set up passive event listeners for all sliders
+    Object.entries(sliderRefs).forEach(([param, ref]) => {
+      const el = ref.current;
+      if (!el) return;
+      
+      const onMove = (e: PointerEvent) => {
+        // The actual handling is done by the onChange event
+        // This just ensures the event is passive
+      };
+      
+      el.addEventListener('pointermove', onMove, { passive: true });
+      el.addEventListener('touchmove', onMove as EventListener, { passive: true });
+      
+      return () => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('touchmove', onMove as EventListener);
+      };
+    });
+  }, []);
+  
   // Trigger file input click
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
   
   return (
-    <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-4xl xl:max-w-5xl bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+      {/* Layout with side-by-side on larger screens and compact view on mobile */}
+      <div className="flex flex-col md:flex-row">
         {/* Left column: Image upload and detection */}
-        <div className="p-6 flex flex-col">
-          <h2 className="text-xl font-medium mb-4">Upload Your Photo</h2>
+        <div className="p-3 md:p-4 lg:p-6 flex flex-col md:w-1/2">
+          <h2 className="text-lg md:text-xl font-medium mb-2 md:mb-3 dark:text-white">Upload Your Photo</h2>
           
-          <div className="mb-6">
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors"
+          <div className="mb-3">
+            <div
+              className="relative w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               onClick={handleUploadClick}
             >
-              {imageUrl ? (
-                <div className="relative w-full h-[400px]">
-                  {/* eslint-disable-next-line */}
-                  <img
-                    ref={imageRef}
-                    src={imageUrl}
-                    alt="Uploaded photo"
-                    className="mx-auto max-h-[400px] max-w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="py-12">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-500">Click to upload a full-body photo</p>
-                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
-                </div>
+              {/* Always visible placeholder - prevents CLS */}
+              <div
+                className="w-full aspect-[3/4] bg-zinc-900/60 flex flex-col items-center justify-center text-sm text-zinc-400"
+              >
+                <svg className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Click to upload a full-body photo</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, WEBP up to 10MB</p>
+              </div>
+              
+              {/* Image overlay when available */}
+              {imageUrl && (
+                <img
+                  ref={imageRef}
+                  src={imageUrl}
+                  alt="Uploaded photo"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  fetchPriority="low"
+                />
               )}
               
               {status === "loading" && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
                 </div>
               )}
             </div>
@@ -143,71 +180,81 @@ export default function BodyAIDemo() {
             />
           </div>
           
-          <div className="flex space-x-4">
+          <div className="flex space-x-2">
             <button
               onClick={handleUploadClick}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-2 px-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm"
             >
               Upload Photo
             </button>
             <button
               onClick={handleCameraCapture}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm"
             >
               Use Camera
             </button>
           </div>
           
           {status === "error" && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-              <p className="font-medium">Detection Error</p>
-              <p className="text-sm">{errorMessage}</p>
+            <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
+              <p className="font-medium text-sm">Detection Error</p>
+              <p className="text-xs">{errorMessage}</p>
             </div>
           )}
           
           {status === "success" && (
-            <div className="mt-4 p-3 bg-green-100 text-green-700 rounded-lg">
-              <p className="font-medium">Measurements Detected!</p>
-              <p className="text-sm">Adjust the sliders to fine-tune your avatar.</p>
+            <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg">
+              <p className="font-medium text-sm">Measurements Detected!</p>
+              <p className="text-xs">Adjust the sliders to fine-tune your avatar.</p>
             </div>
           )}
         </div>
         
         {/* Right column: 3D viewer and sliders */}
-        <div className="bg-gray-100 p-6">
-          <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
-          
-          <div className="mb-6 bg-gray-800 rounded-lg overflow-hidden">
-            {/* Pass each parameter directly to ensure they're being passed correctly */}
-            <VFRViewerWrapper
-              params={{
-                heightCm: avatarParams.heightCm,
-                chestCm: avatarParams.chestCm,
-                waistCm: avatarParams.waistCm,
-                hipCm: avatarParams.hipCm
-              }}
-              showControls={false}
-            />
+        <div className="bg-gray-100 dark:bg-gray-900 p-3 md:p-4 lg:p-6 md:w-1/2 section-heavy">
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h2 className="text-lg md:text-xl font-medium dark:text-white">Your Custom Avatar</h2>
             
-            {/* Log the current parameters for debugging */}
-            <div className="p-2 bg-black text-white text-xs">
-              <pre>
-                {JSON.stringify(avatarParams, null, 2)}
-              </pre>
+            {/* Dark mode toggle */}
+            <ThemeToggle />
+          </div>
+          
+          <div className="mb-3 bg-gray-800 rounded-lg overflow-hidden">
+            {/* Fixed aspect ratio container for the 3D viewer */}
+            <div className="relative w-full">
+              {/* Reserve height with aspect-ratio, prevents overlap */}
+              <div className="w-full aspect-[4/3] md:aspect-[16/9]">
+                <VFRViewerWrapper
+                  params={{
+                    heightCm: avatarParams.heightCm,
+                    chestCm: avatarParams.chestCm,
+                    waistCm: avatarParams.waistCm,
+                    hipCm: avatarParams.hipCm
+                  }}
+                  showControls={false}
+                  className="absolute inset-0" // canvas fills the reserved box
+                />
+              </div>
             </div>
           </div>
           
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Height: {avatarParams.heightCm} cm
               </label>
               <input
+                ref={sliderRefs.heightCm}
                 type="range"
-                min={AVATAR_PARAM_RANGES.heightCm.min}
-                max={AVATAR_PARAM_RANGES.heightCm.max}
+                min={130}
+                max={220}
                 value={avatarParams.heightCm}
-                onChange={(e) => handleParamChange("heightCm", parseInt(e.target.value))}
+                onChange={(e) => {
+                  // Use requestAnimationFrame to debounce slider changes
+                  requestAnimationFrame(() => {
+                    handleParamChange("heightCm", parseInt(e.target.value));
+                  });
+                }}
                 className="w-full"
                 aria-label={`Height slider: ${avatarParams.heightCm} cm`}
                 title={`Adjust height: ${avatarParams.heightCm} cm`}
@@ -215,15 +262,20 @@ export default function BodyAIDemo() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Chest: {avatarParams.chestCm} cm
               </label>
               <input
+                ref={sliderRefs.chestCm}
                 type="range"
-                min={AVATAR_PARAM_RANGES.chestCm.min}
-                max={AVATAR_PARAM_RANGES.chestCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.chestCm}
-                onChange={(e) => handleParamChange("chestCm", parseInt(e.target.value))}
+                onChange={(e) => {
+                  requestAnimationFrame(() => {
+                    handleParamChange("chestCm", parseInt(e.target.value));
+                  });
+                }}
                 className="w-full"
                 aria-label={`Chest slider: ${avatarParams.chestCm} cm`}
                 title={`Adjust chest: ${avatarParams.chestCm} cm`}
@@ -231,15 +283,20 @@ export default function BodyAIDemo() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Waist: {avatarParams.waistCm} cm
               </label>
               <input
+                ref={sliderRefs.waistCm}
                 type="range"
-                min={AVATAR_PARAM_RANGES.waistCm.min}
-                max={AVATAR_PARAM_RANGES.waistCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.waistCm}
-                onChange={(e) => handleParamChange("waistCm", parseInt(e.target.value))}
+                onChange={(e) => {
+                  requestAnimationFrame(() => {
+                    handleParamChange("waistCm", parseInt(e.target.value));
+                  });
+                }}
                 className="w-full"
                 aria-label={`Waist slider: ${avatarParams.waistCm} cm`}
                 title={`Adjust waist: ${avatarParams.waistCm} cm`}
@@ -247,15 +304,20 @@ export default function BodyAIDemo() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hip: {avatarParams.hipCm} cm
               </label>
               <input
+                ref={sliderRefs.hipCm}
                 type="range"
-                min={AVATAR_PARAM_RANGES.hipCm.min}
-                max={AVATAR_PARAM_RANGES.hipCm.max}
+                min={60}
+                max={140}
                 value={avatarParams.hipCm}
-                onChange={(e) => handleParamChange("hipCm", parseInt(e.target.value))}
+                onChange={(e) => {
+                  requestAnimationFrame(() => {
+                    handleParamChange("hipCm", parseInt(e.target.value));
+                  });
+                }}
                 className="w-full"
                 aria-label={`Hip slider: ${avatarParams.hipCm} cm`}
                 title={`Adjust hip: ${avatarParams.hipCm} cm`}
