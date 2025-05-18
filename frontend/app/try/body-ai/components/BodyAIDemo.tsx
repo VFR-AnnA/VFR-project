@@ -103,17 +103,96 @@ export default function BodyAIDemo() {
               className="w-full"
             />
           </div>
+
+          {/* Add test buttons for extreme values */}
+          <div className="mt-4 space-y-2">
+            <h3 className="text-sm font-medium">Test Controls:</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 190,
+                  chestCm: 95,
+                  waistCm: 80,
+                  hipCm: 100
+                })}
+                className="bg-blue-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Tall (190cm)
+              </button>
+              
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 160,
+                  chestCm: 95,
+                  waistCm: 80,
+                  hipCm: 100
+                })}
+                className="bg-blue-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Short (160cm)
+              </button>
+              
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 175,
+                  chestCm: 115,
+                  waistCm: 80,
+                  hipCm: 100
+                })}
+                className="bg-red-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Large Chest (115cm)
+              </button>
+              
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 175,
+                  chestCm: 95,
+                  waistCm: 100,
+                  hipCm: 100
+                })}
+                className="bg-red-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Large Waist (100cm)
+              </button>
+              
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 175,
+                  chestCm: 95,
+                  waistCm: 80,
+                  hipCm: 120
+                })}
+                className="bg-red-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Large Hips (120cm)
+              </button>
+              
+              <button
+                onClick={() => setAvatarParams({
+                  heightCm: 175,
+                  chestCm: 95,
+                  waistCm: 80,
+                  hipCm: 100
+                })}
+                className="bg-gray-600 text-white py-1 px-2 rounded text-xs"
+              >
+                Reset to Default
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="bg-zinc-900 p-6 rounded-xl"
       >
         <h2 className="text-xl font-semibold mb-4">3D Preview</h2>
-        <VFRViewerWrapper avatarParams={avatarParams} />
+        <p className="text-xs text-gray-400 mb-2">Current values: Height={avatarParams.heightCm}cm, Chest={avatarParams.chestCm}cm, Waist={avatarParams.waistCm}cm, Hip={avatarParams.hipCm}cm</p>
+        <VFRViewerWrapper key={`${avatarParams.heightCm}-${avatarParams.chestCm}-${avatarParams.waistCm}-${avatarParams.hipCm}`} avatarParams={avatarParams} />
       </motion.div>
     </div>
   );
