@@ -23,73 +23,82 @@ function Model({ url, avatarParams }: ModelProps) {
   const gltf = useLoader(GLTFLoader, url) as { scene: THREE.Group };
   const modelRef = useRef<THREE.Group>(null);
   
-  // Log model structure once on load
+  // Log model structure once on load to understand its components
   useEffect(() => {
     if (modelRef.current) {
       console.log("MODEL STRUCTURE:");
+      // Find bones/skeleton to work with
+      let skeletonFound = false;
+      let bonesFound: string[] = [];
+      
       modelRef.current.traverse((node) => {
         if (node instanceof THREE.Mesh) {
           console.log(`Mesh name: ${node.name}`);
+          // Check for skeleton using a safer approach (assuming a SkinnedMesh would have this)
+          if ('skeleton' in node || node.type === 'SkinnedMesh') {
+            skeletonFound = true;
+            console.log("Skeleton found on mesh:", node.name);
+          }
         } else if (node instanceof THREE.Object3D) {
           console.log(`Object3D name: ${node.name}`);
+          // Check if this might be a bone based on naming
+          if (node.name.toLowerCase().includes("joint") ||
+              node.name.toLowerCase().includes("bone") ||
+              node.name.toLowerCase().includes("skeleton")) {
+            bonesFound.push(node.name);
+          }
         }
       });
+      
+      console.log("Skeleton found:", skeletonFound);
+      console.log("Possible bones:", bonesFound);
     }
   }, [gltf]);
 
-  // Apply transformations based on avatar parameters
+  // Apply transformations with EXTREME exaggeration for demo visibility
   useEffect(() => {
     if (modelRef.current && avatarParams) {
-      console.log("Applying avatar params:", avatarParams);
+      console.log("Applying avatar params with EXTREME EXAGGERATION:", avatarParams);
       
-      // Base scale for the entire model based on height - AMPLIFIED for visibility
-      const baseHeightScale = 0.8 + (avatarParams.heightCm - 175) / 175 * 0.4; // More dramatic scaling
-      modelRef.current.scale.set(baseHeightScale, baseHeightScale, baseHeightScale);
+      // Apply MASSIVELY exaggerated transformations instead of trying to be anatomically realistic
+      // We'll distort the model dramatically to make changes super obvious
       
-      // Since we don't know the exact mesh names, let's try a more general approach
-      // by applying transformations to several mesh segments
+      // 1. Calculate extreme scaling factors (massive exaggeration)
+      const heightDelta = avatarParams.heightCm - 175; // Difference from default
+      const chestDelta = avatarParams.chestCm - 95;    // Difference from default
+      const waistDelta = avatarParams.waistCm - 80;    // Difference from default
+      const hipDelta = avatarParams.hipCm - 100;       // Difference from default
       
-      let bodyPartFound = false;
-      modelRef.current.traverse((node) => {
-        if (node instanceof THREE.Mesh) {
-          const name = node.name.toLowerCase();
-          console.log(`Applying transformations to mesh: ${name}`);
-          
-          // Since we don't know exact mesh names, apply proportional scaling to ALL meshes
-          // based on their Y position (height) in the model
-          
-          // Get mesh position in world space
-          const worldPosition = new THREE.Vector3();
-          node.getWorldPosition(worldPosition);
-          
-          // Upper body (chest area) - around 60-80% of model height
-          if (worldPosition.y > 1.0 && worldPosition.y < 1.5) {
-            const chestScaleFactor = 1.0 + (avatarParams.chestCm - 95) / 95 * 0.8; // Amplified by 0.8
-            console.log(`Chest area mesh: ${name}, scaling: ${chestScaleFactor}`);
-            node.scale.x *= chestScaleFactor;
-            node.scale.z *= chestScaleFactor;
-            bodyPartFound = true;
-          }
-          // Middle body (waist area) - around 40-60% of model height
-          else if (worldPosition.y > 0.7 && worldPosition.y < 1.0) {
-            const waistScaleFactor = 1.0 + (avatarParams.waistCm - 80) / 80 * 0.8; // Amplified by 0.8
-            console.log(`Waist area mesh: ${name}, scaling: ${waistScaleFactor}`);
-            node.scale.x *= waistScaleFactor;
-            node.scale.z *= waistScaleFactor;
-            bodyPartFound = true;
-          }
-          // Lower body (hip area) - around 20-40% of model height
-          else if (worldPosition.y > 0.4 && worldPosition.y < 0.7) {
-            const hipScaleFactor = 1.0 + (avatarParams.hipCm - 100) / 100 * 0.8; // Amplified by 0.8
-            console.log(`Hip area mesh: ${name}, scaling: ${hipScaleFactor}`);
-            node.scale.x *= hipScaleFactor;
-            node.scale.z *= hipScaleFactor;
-            bodyPartFound = true;
-          }
-        }
-      });
+      // 2. Extremely amplify these deltas for dramatic visual effect
+      const heightFactor = 1.0 + (heightDelta / 50);     // 50 cm change = 2x size
+      const chestFactor = 1.0 + (chestDelta / 15) * 2;   // 15 cm change = 3x width
+      const waistFactor = 1.0 + (waistDelta / 20) * 2;   // 20 cm change = 3x depth
+      const hipFactor = 1.0 + (hipDelta / 20) * 2;       // 20 cm change = 3x depth
       
-      console.log("Body parts found and modified:", bodyPartFound);
+      console.log(`Applied EXTREMELY EXAGGERATED scaling:
+        Height: ${heightFactor.toFixed(2)}
+        Chest: ${chestFactor.toFixed(2)}
+        Waist: ${waistFactor.toFixed(2)}
+        Hip: ${hipFactor.toFixed(2)}`);
+      
+      // Apply dramatic non-uniform scaling to the ENTIRE model
+      // This will create visibly obvious changes when sliders move
+      modelRef.current.scale.set(
+        chestFactor,    // Width (X) - controlled by chest measurement
+        heightFactor,   // Height (Y) - controlled by height measurement
+        (waistFactor + hipFactor) / 2  // Depth (Z) - combined waist/hip effect
+      );
+      
+      // For even more dramatic effect, apply some tilt
+      // When measurements differ a lot, the model will visibly lean
+      if (Math.abs(chestDelta) > 5 || Math.abs(hipDelta) > 5) {
+        // Create a visible tilt effect based on chest vs hip difference
+        const tiltAmount = (chestDelta - hipDelta) / 100;
+        modelRef.current.rotation.z = tiltAmount;
+        console.log(`Applied tilt effect: ${tiltAmount.toFixed(2)} radians`);
+      }
+      
+      console.log("Applied EXTREME transformations to make changes obvious");
     }
   }, [avatarParams, gltf]);
 
