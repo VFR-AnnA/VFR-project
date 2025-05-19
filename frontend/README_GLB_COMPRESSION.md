@@ -47,6 +47,17 @@ foreach ($n in 6..20) {
 }
 ```
 
+## Runtime Decoder Setup
+
+Three.js requires Draco decoder files at runtime to decompress geometry. Copy the decoder scripts into `public/draco` so the loader can find them:
+
+```bash
+mkdir -p public/draco
+cp node_modules/three/examples/jsm/libs/draco/* public/draco/
+```
+
+Make sure the server exposes these files at the `/draco/` path.
+
 ## Results
 
 The compression results are recorded in the `compress_logs.csv` file. The file contains the following information:

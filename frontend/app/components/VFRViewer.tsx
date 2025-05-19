@@ -18,8 +18,10 @@ if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
   };
 }
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { Suspense, useEffect, useState, useRef } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
@@ -69,14 +71,26 @@ interface ProgressiveModelProps {
 }
 
 function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelProps) {
-  // Use the useGLTF hook at the component level
-  const { scene: fullScene } = useGLTF(fullUrl) as ModelGLTF;
-  const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
-  
   const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+
+  const draco = useMemo(() => {
+    const loader = new DRACOLoader();
+    loader.setDecoderPath('/draco/');
+    return loader;
+  }, []);
+
+  const { scene: fullScene } = useLoader(GLTFLoader, fullUrl, loader => {
+    loader.setDRACOLoader(draco);
+    loader.manager.onError = () => setError(`Failed to load ${fullUrl}`);
+  }) as ModelGLTF;
+
+  const { scene: stubScene } = useLoader(GLTFLoader, stubUrl, loader => {
+    loader.setDRACOLoader(draco);
+    loader.manager.onError = () => setError(`Failed to load ${stubUrl}`);
+  }) as ModelGLTF;
 
   // Mapping from parameter names to possible morph target names
   // We include multiple possible names for each parameter to increase chances of finding a match
@@ -181,10 +195,9 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
   }, [avatarParams, model]);
 
   useEffect(() => {
-    try {
-      // First set the stub model
-      debug('🔄 Loading stub model:', stubUrl);
-      setModel(stubScene);
+    // First set the stub model
+    debug('🔄 Loading stub model:', stubUrl);
+    setModel(stubScene);
       
       // Log the model structure to check for morph targets
       debug('🔍 STUB MODEL STRUCTURE:');
@@ -219,13 +232,7 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
         debug('✅ Models loaded successfully');
       }, 100);
       
-      return () => clearTimeout(timer);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      debug('Error loading models:', errorMessage);
-      setError(errorMessage);
-      setIsLoading(false);
-    }
+    return () => clearTimeout(timer);
   }, [stubScene, fullScene, stubUrl, fullUrl]);
 
   if (error) {
@@ -319,5 +326,5 @@ export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRV
 }
 
 // Preload models
-useGLTF.preload(`${MODELS_PATH}/mannequin-stub.glb`);
-useGLTF.preload(`${MODELS_PATH}/mannequin-draco.glb`);
+useLoader.preload(GLTFLoader, `${MODELS_PATH}/mannequin-stub.glb`);
+useLoader.preload(GLTFLoader, `${MODELS_PATH}/mannequin-draco.glb`);
