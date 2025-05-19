@@ -44,19 +44,25 @@ export default function VFRViewerWrapper({
 
   // Handle parameter change from controls
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
-    console.log(`🎮 VFRViewerWrapper: Parameter change - ${param}: ${value}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🎮 VFRViewerWrapper: Parameter change - ${param}: ${value}`);
+    }
     setAvatarParams(prev => {
       const newParams = {
         ...prev,
         [param]: value
       };
-      console.log('🎮 VFRViewerWrapper: New avatar params:', newParams);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🎮 VFRViewerWrapper: New avatar params:', newParams);
+      }
       return newParams;
     });
   };
 
   // Log the current avatar parameters
-  console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
+  }
 
   return (
     <div className="vfr-viewer-container">

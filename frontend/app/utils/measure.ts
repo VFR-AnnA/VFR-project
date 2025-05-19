@@ -163,16 +163,22 @@ export async function getMeasurementsFromImage(
               referenceHeightCm
             );
             resolve(measurements);
+            pose.close();
           } catch (error) {
             reject(error);
+            pose.close();
           }
         } else {
           reject(new Error('No pose landmarks detected'));
+          pose.close();
         }
       });
-      
+
       // Process the image
-      pose.send({ image: imageSource }).catch(reject);
+      pose.send({ image: imageSource }).catch(err => {
+        pose.close();
+        reject(err);
+      });
     });
   } catch (error) {
     console.error('Error initializing pose detector:', error);

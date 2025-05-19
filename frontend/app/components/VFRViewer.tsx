@@ -29,18 +29,20 @@ const MODELS_PATH = '/models';
 
 // Debug logging function - using direct console.log for maximum visibility
 const debug = (message: string, ...args: unknown[]) => {
-  console.log(`[VFRViewer] ${message}`, ...args);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[VFRViewer] ${message}`, ...args);
+  }
 };
 
 // Debug function to log morph targets
 const logMorphTargets = (mesh: THREE.Mesh) => {
-  console.log('🔍 Checking mesh for morph targets:', mesh.name);
+  debug('🔍 Checking mesh for morph targets:', mesh.name);
   
   if (mesh.morphTargetDictionary) {
-    console.log('✅ FOUND MORPH TARGETS:', Object.keys(mesh.morphTargetDictionary));
-    console.log('Current morph influences:', [...(mesh.morphTargetInfluences || [])]);
+    debug('✅ FOUND MORPH TARGETS:', Object.keys(mesh.morphTargetDictionary));
+    debug('Current morph influences:', [...(mesh.morphTargetInfluences || [])]);
   } else {
-    console.log('❌ NO MORPH TARGETS found on mesh:', mesh.name);
+    debug('❌ NO MORPH TARGETS found on mesh:', mesh.name);
   }
 };
 
@@ -101,18 +103,18 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
   // Apply avatar parameters as morph targets and scale factors
   useEffect(() => {
     // Log the current avatar parameters
-    console.log('🔄 APPLYING AVATAR PARAMETERS:', avatarParams);
+    debug('🔄 APPLYING AVATAR PARAMETERS:', avatarParams);
     
     if (modelRef.current) {
       const { height, chest, waist, hip } = paramsToScaleFactors(avatarParams);
-      console.log('📏 Converted to scale factors:', { height, chest, waist, hip });
+      debug('📏 Converted to scale factors:', { height, chest, waist, hip });
       
       // Apply overall scaling based on all parameters
       modelRef.current.scale.y = 0.9 * height;  // Height affects Y scale
       modelRef.current.scale.x = 0.9 * chest;   // Chest affects X scale
       modelRef.current.scale.z = 0.9 * waist;   // Waist affects Z scale
       
-      console.log('📏 Applied direct scaling to model:', {
+      debug('📏 Applied direct scaling to model:', {
         scaleY: modelRef.current.scale.y,
         scaleX: modelRef.current.scale.x,
         scaleZ: modelRef.current.scale.z
@@ -130,8 +132,8 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
           let morphTargetsApplied = false;
           
           if (child.morphTargetDictionary && child.morphTargetInfluences) {
-            console.log('✅ FOUND MESH WITH MORPH TARGETS:', child.name);
-            console.log('Available morph targets:', Object.keys(child.morphTargetDictionary));
+            debug('✅ FOUND MESH WITH MORPH TARGETS:', child.name);
+            debug('Available morph targets:', Object.keys(child.morphTargetDictionary));
             
             // Try to apply each parameter directly to all available morph targets
             // This is a brute force approach to see if any morph target responds
@@ -143,12 +145,12 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
                 const value = 1.0; // Maximum influence
                 child.morphTargetInfluences[morphIndex] = value;
                 
-                console.log(`✅ APPLIED MORPH TARGET: ${morphName} (index: ${morphIndex}) = ${value}`);
+                debug(`✅ APPLIED MORPH TARGET: ${morphName} (index: ${morphIndex}) = ${value}`);
                 morphTargetsApplied = true;
               }
             });
           } else {
-            console.log('❌ NO MORPH TARGETS on mesh:', child.name);
+            debug('❌ NO MORPH TARGETS on mesh:', child.name);
           }
           
           // Fallback: If no morph targets were applied, use scaling as a fallback
@@ -156,21 +158,21 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
             const name = child.name.toLowerCase();
             const { chest, waist, hip } = paramsToScaleFactors(avatarParams);
             
-            console.log(`⚠️ NO MORPH TARGETS FOUND, using fallback scaling for mesh: ${child.name}`);
+            debug(`⚠️ NO MORPH TARGETS FOUND, using fallback scaling for mesh: ${child.name}`);
             
             // Apply specific scaling to body parts based on name
             if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
               child.scale.x = chest;
               child.scale.z = chest;
-              console.log(`📏 Applied CHEST scaling: ${chest} to ${child.name}`);
+              debug(`📏 Applied CHEST scaling: ${chest} to ${child.name}`);
             } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
               child.scale.x = waist;
               child.scale.z = waist;
-              console.log(`📏 Applied WAIST scaling: ${waist} to ${child.name}`);
+              debug(`📏 Applied WAIST scaling: ${waist} to ${child.name}`);
             } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
               child.scale.x = hip;
               child.scale.z = hip;
-              console.log(`📏 Applied HIP scaling: ${hip} to ${child.name}`);
+              debug(`📏 Applied HIP scaling: ${hip} to ${child.name}`);
             }
           }
         }
@@ -181,40 +183,40 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
   useEffect(() => {
     try {
       // First set the stub model
-      console.log('🔄 Loading stub model:', stubUrl);
+      debug('🔄 Loading stub model:', stubUrl);
       setModel(stubScene);
       
       // Log the model structure to check for morph targets
-      console.log('🔍 STUB MODEL STRUCTURE:');
+      debug('🔍 STUB MODEL STRUCTURE:');
       stubScene.traverse((child) => {
-        console.log(`- ${child.type}: ${child.name}`);
+        debug(`- ${child.type}: ${child.name}`);
         if (child instanceof THREE.Mesh) {
-          console.log(`  Has morph targets: ${!!child.morphTargetDictionary}`);
+          debug(`  Has morph targets: ${!!child.morphTargetDictionary}`);
           if (child.morphTargetDictionary) {
-            console.log(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
+            debug(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
           }
         }
       });
       
       // Then set the full model after a short delay
       const timer = setTimeout(() => {
-        console.log('🔄 Loading full model:', fullUrl);
+        debug('🔄 Loading full model:', fullUrl);
         setModel(fullScene);
         
         // Log the model structure to check for morph targets
-        console.log('🔍 FULL MODEL STRUCTURE:');
+        debug('🔍 FULL MODEL STRUCTURE:');
         fullScene.traverse((child) => {
-          console.log(`- ${child.type}: ${child.name}`);
+          debug(`- ${child.type}: ${child.name}`);
           if (child instanceof THREE.Mesh) {
-            console.log(`  Has morph targets: ${!!child.morphTargetDictionary}`);
+            debug(`  Has morph targets: ${!!child.morphTargetDictionary}`);
             if (child.morphTargetDictionary) {
-              console.log(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
+              debug(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
             }
           }
         });
         
         setIsLoading(false);
-        console.log('✅ Models loaded successfully');
+        debug('✅ Models loaded successfully');
       }, 100);
       
       return () => clearTimeout(timer);
@@ -257,10 +259,10 @@ interface VFRViewerProps {
 
 export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
   // Log the received avatar parameters
-  console.log('🔍 VFRViewer: Received avatarParams:', avatarParams);
+  debug('🔍 VFRViewer: Received avatarParams:', avatarParams);
   
   // Log the parameters being passed to ProgressiveModel
-  console.log('🔍 VFRViewer: Passing to ProgressiveModel:', avatarParams);
+  debug('🔍 VFRViewer: Passing to ProgressiveModel:', avatarParams);
   return (
     <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
       <Canvas
