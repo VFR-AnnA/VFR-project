@@ -5,3 +5,6 @@ compatibility_date = "2024-05-01" # Using a recent date
 [[r2_buckets]]
 binding = "VFR_BUCKET"
 bucket_name = "vfr"
+
+[vars]
+ALLOWED_ORIGIN = "http://localhost:3000"

@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage } from "../../../utils/measure";
@@ -22,6 +22,15 @@ export default function BodyAIDemo() {
   
   // State
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  // Revoke object URL when replaced or on unmount
+  useEffect(() => {
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageUrl]);
   const [status, setStatus] = useState<DetectionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
@@ -39,6 +48,7 @@ export default function BodyAIDemo() {
       img.src = url;
       
       img.onload = async () => {
+        URL.revokeObjectURL(url);
         try {
           // Dynamically import MediaPipe Tasks Vision to avoid Next.js build issues
           await import('@mediapipe/tasks-vision');
@@ -57,6 +67,7 @@ export default function BodyAIDemo() {
       };
       
       img.onerror = () => {
+        URL.revokeObjectURL(url);
         setStatus("error");
         setErrorMessage("Failed to load image");
       };
@@ -75,13 +86,17 @@ export default function BodyAIDemo() {
   
   // Handle parameter change from sliders
   const handleParamChange = (param: keyof AvatarParams, value: number) => {
-    console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
+    }
     setAvatarParams(prev => {
       const newParams = {
         ...prev,
         [param]: value
       };
-      console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
+      }
       return newParams;
     });
   };
