@@ -2,7 +2,7 @@
 
 ## New Features
 - FPS overlay
-- Drag-&-drop uploader
+- Drag-&-drop uploader with visual feedback and validation
 - Dark-mode & mobile layout polish
 - Accessibility 100/100 maintained
 
@@ -10,7 +10,12 @@
 - Performance monitoring with real-time FPS display
 - Enhanced mobile experience with proper safe-area handling
 - System preference detection for theme
-- Improved file upload experience
+- Improved file upload experience:
+  - Visual feedback for drag, hover, and rejected states
+  - File size validation (4MB limit)
+  - Multi-file guard
+  - Mobile-friendly touch interaction
+  - Keyboard and screen reader accessibility
 - fix: sliders now update avatar in realtime (Body-AI MVP)
 
 ## How to Tag
