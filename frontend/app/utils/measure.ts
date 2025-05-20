@@ -148,8 +148,9 @@ export async function initPoseDetector(): Promise<poseModule.Pose> {
  */
 export async function getMeasurementsFromImage(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+  returnRawResults?: boolean,
   referenceHeightCm?: number
-): Promise<BodyMeasurements> {
+): Promise<BodyMeasurements | PoseResults> {
   try {
     const pose = await initPoseDetector() as poseModule.Pose;
     
@@ -157,28 +158,28 @@ export async function getMeasurementsFromImage(
       pose.onResults((results: poseModule.Results) => {
         if (results.poseLandmarks) {
           try {
-            const measurements = estimateBodyMeasurements(
-              results.poseLandmarks,
-              imageSource.height,
-              referenceHeightCm
-            );
-            resolve(measurements);
-            pose.close();
+            // If returnRawResults is true, return the raw results
+            if (returnRawResults) {
+              resolve(results);
+            } else {
+              // Otherwise, calculate and return the measurements
+              const measurements = estimateBodyMeasurements(
+                results.poseLandmarks,
+                imageSource.height,
+                referenceHeightCm
+              );
+              resolve(measurements);
+            }
           } catch (error) {
             reject(error);
-            pose.close();
           }
         } else {
           reject(new Error('No pose landmarks detected'));
-          pose.close();
         }
       });
-
+      
       // Process the image
-      pose.send({ image: imageSource }).catch(err => {
-        pose.close();
-        reject(err);
-      });
+      pose.send({ image: imageSource }).catch(reject);
     });
   } catch (error) {
     console.error('Error initializing pose detector:', error);
