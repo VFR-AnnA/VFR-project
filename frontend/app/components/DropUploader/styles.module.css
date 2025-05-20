@@ -1,0 +1,115 @@
+/**
+ * Avatar-Wallet VFR – Proprietary Source
+ * © 2025 Artur Gabrielian. All rights reserved.
+ * Build-stamp: 2025-05-17T08:45+02:00
+ */
+
+.dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 0.5rem;
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.dropzone:hover {
+  border-color: #94a3b8;
+  background-color: #f1f5f9;
+}
+
+/* Only show hover styles on devices that support hover */
+@media (hover: hover) {
+  .dropzone:hover {
+    border-color: #94a3b8;
+    background-color: #f1f5f9;
+  }
+}
+
+.dropzone:focus-visible {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.dragActive {
+  border-color: #10b981; /* emerald-500 */
+  background-color: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.rejected {
+  border-color: #e11d48; /* rose-600 */
+  background-color: rgba(225, 29, 72, 0.05);
+}
+
+.icon {
+  width: 3rem;
+  height: 3rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.dragActive .icon {
+  color: #10b981; /* emerald-500 */
+  transform: scale(1.1);
+}
+
+.iconError {
+  width: 3rem;
+  height: 3rem;
+  color: #e11d48; /* rose-600 */
+  margin-bottom: 1rem;
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+.text {
+  font-size: 0.875rem;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.subText {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.errorMessage {
+  margin-top: 0.5rem;
+  color: #e11d48; /* rose-600 */
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  background-color: rgba(225, 29, 72, 0.1);
+  border-radius: 0.25rem;
+  text-align: center;
+}

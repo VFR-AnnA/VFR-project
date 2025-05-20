@@ -26,7 +26,9 @@ const ViewerErrorBoundary: FC<{ onFail: () => void; children: React.ReactNode }>
 
 export default function VFRModal() {
   const handleViewerFail = () => {
-    console.log('Viewer failed to load');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Viewer failed to load');
+    }
   };
 
   return (

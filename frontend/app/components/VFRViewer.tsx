@@ -52,9 +52,10 @@ interface ProgressiveModelProps {
   stubUrl: string;
   fullUrl: string;
   avatarParams: AvatarParams;
+  isPreloaded?: boolean;
 }
 
-function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelProps) {
+function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false }: ProgressiveModelProps) {
   // Use the useGLTF hook at the component level
   const { scene: fullScene } = useGLTF(fullUrl) as ModelGLTF;
   const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
@@ -95,26 +96,33 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
 
   useEffect(() => {
     try {
-      // First set the stub model
-      debug('Loading stub model:', stubUrl);
-      setModel(stubScene);
-      
-      // Then set the full model after a short delay
-      const timer = setTimeout(() => {
-        debug('Loading full model:', fullUrl);
+      // If the model is already preloaded, use the full model directly
+      if (isPreloaded) {
+        debug('Using preloaded model');
         setModel(fullScene);
         setIsLoading(false);
-        debug('Models loaded successfully');
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      } else {
+        // First set the stub model
+        debug('Loading stub model:', stubUrl);
+        setModel(stubScene);
+        
+        // Then set the full model after a short delay
+        const timer = setTimeout(() => {
+          debug('Loading full model:', fullUrl);
+          setModel(fullScene);
+          setIsLoading(false);
+          debug('Models loaded successfully');
+        }, 100);
+        
+        return () => clearTimeout(timer);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       debug('Error loading models:', errorMessage);
       setError(errorMessage);
       setIsLoading(false);
     }
-  }, [stubScene, fullScene, stubUrl, fullUrl]);
+  }, [stubScene, fullScene, stubUrl, fullUrl, isPreloaded]);
 
   if (error) {
     return (
@@ -143,11 +151,15 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
 
 interface VFRViewerProps {
   avatarParams?: AvatarParams;
+  isPreloaded?: boolean;
 }
 
-export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
+export default function VFRViewer({
+  avatarParams = DEFAULT_AVATAR_PARAMS,
+  isPreloaded = false
+}: VFRViewerProps) {
   return (
-    <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
+    <div style={{ width: '100%', height: '100%', background: '#1a1a1a' }} className="mx-auto">
       <Canvas
         camera={{
           position: [0, 0.5, 2.5],
@@ -179,6 +191,7 @@ export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRV
             stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
             fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
             avatarParams={avatarParams}
+            isPreloaded={isPreloaded}
           />
           <Environment preset="city" />
           <OrbitControls

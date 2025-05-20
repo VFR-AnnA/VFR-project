@@ -7,13 +7,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS } from "../../types/avatar-params";
 
 // Dynamically import the VFRViewer component with SSR disabled
 const VFRViewer = dynamic(() => import("./VFRViewer"), {
   ssr: false,
-  loading: () => <div className="w-full h-[480px] bg-gray-100 flex items-center justify-center">Loading 3D Model...</div>
+  loading: () => <div className="w-full h-full bg-gray-100 flex items-center justify-center">Loading 3D Model...</div>
 });
 
 interface VFRViewerWrapperProps {
@@ -25,6 +25,9 @@ export default function VFRViewerWrapper({
   params = {},
   showControls = false
 }: VFRViewerWrapperProps = {}) {
+  // Reference to track if the avatar has been loaded
+  const avatarLoadedRef = useRef<boolean>(false);
+  
   // Merge params with defaults
   const [avatarParams, setAvatarParams] = useState<AvatarParams>({
     ...DEFAULT_AVATAR_PARAMS,
@@ -33,10 +36,21 @@ export default function VFRViewerWrapper({
 
   // Update avatarParams when params prop changes
   useEffect(() => {
-    setAvatarParams(prevParams => ({
-      ...prevParams,
-      ...params
-    }));
+    // If the avatar is already loaded, we only need to update the morph targets
+    // instead of reloading the entire model
+    if (avatarLoadedRef.current) {
+      setAvatarParams(prevParams => ({
+        ...prevParams,
+        ...params
+      }));
+    } else {
+      setAvatarParams(prevParams => ({
+        ...prevParams,
+        ...params
+      }));
+      // Mark the avatar as loaded after the first render
+      avatarLoadedRef.current = true;
+    }
   }, [params]);
 
   // Handle parameter change from controls
@@ -56,7 +70,7 @@ export default function VFRViewerWrapper({
   console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
 
   return (
-    <div className="vfr-viewer-container">
+    <div className="vfr-viewer-container w-full h-full mx-auto">
       {/* Pass each parameter directly to ensure they're being passed correctly */}
       <VFRViewer
         avatarParams={{
@@ -65,6 +79,7 @@ export default function VFRViewerWrapper({
           waistCm: avatarParams.waistCm,
           hipCm: avatarParams.hipCm
         }}
+        isPreloaded={avatarLoadedRef.current}
       />
       
       {showControls && (

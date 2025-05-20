@@ -3,3 +3,10 @@ frontend/.wrangler/
 
 # Ignore downloaded GLB files that are not part of the source
 frontend/downloaded-mannequin.glb
+# Node and build artifacts
+node_modules/
+.next/
+dist/
+# OS
+.DS_Store
+Thumbs.db
