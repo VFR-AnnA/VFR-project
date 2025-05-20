@@ -68,7 +68,7 @@ const FPSOverlay: React.FC<FPSOverlayProps> = ({ enabled = true }) => {
       const currentFPS = 1000 / delta;
       
       // Store frame times for rolling average calculation
-      frameTimesRef.current.push(delta);
+      frameTimesRef.current.push(1000 / currentFPS); // Store using currentFPS
       if (frameTimesRef.current.length > 60) {
         frameTimesRef.current.shift();
       }

@@ -40,7 +40,6 @@ const DropUploader: React.FC<DropUploaderProps> = ({
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
@@ -85,7 +84,7 @@ const DropUploader: React.FC<DropUploaderProps> = ({
       
       onUpload(file);
     }
-  }, [onUpload]);
+  }, [onUpload, validateFile]);
   
   // Handle file input change
   const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {

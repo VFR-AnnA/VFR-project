@@ -35,7 +35,12 @@ export function useWebVitals(onPerfEntry?: ReportHandler): void {
      * Send metrics to the analytics endpoint
      * @param metric - The metric to report
      */
-    async function sendToAnalytics(metric: any): Promise<void> {
+    async function sendToAnalytics(metric: {
+      name: string;
+      value: number;
+      delta: number;
+      id: string;
+    }): Promise<void> {
       // Only send metrics in production
       if (process.env.NODE_ENV !== 'production') {
         console.log('[Vitals]', metric);
@@ -88,7 +93,12 @@ export function useWebVitals(onPerfEntry?: ReportHandler): void {
      * Check if a metric exceeds the threshold and trigger an alert if needed
      * @param metric - The metric to check
      */
-    function checkThresholds(metric: any): void {
+    function checkThresholds(metric: {
+      name: string;
+      value: number;
+      delta: number;
+      id: string;
+    }): void {
       // Only check thresholds in production
       if (process.env.NODE_ENV !== 'production') {
         return;
