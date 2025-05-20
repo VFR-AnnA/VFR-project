@@ -64,6 +64,9 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+  
+  // Keep a reference to the loaded model to avoid rebuilding
+  const modelLoadedRef = useRef<boolean>(false);
 
   // Apply avatar parameters as scale factors
   useEffect(() => {
@@ -92,29 +95,34 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
         }
       });
     }
-  }, [avatarParams, model]);
+  }, [avatarParams]);
 
   useEffect(() => {
     try {
-      // If the model is already preloaded, use the full model directly
-      if (isPreloaded) {
-        debug('Using preloaded model');
-        setModel(fullScene);
-        setIsLoading(false);
-      } else {
-        // First set the stub model
-        debug('Loading stub model:', stubUrl);
-        setModel(stubScene);
-        
-        // Then set the full model after a short delay
-        const timer = setTimeout(() => {
-          debug('Loading full model:', fullUrl);
+      // Only load the model once
+      if (!modelLoadedRef.current) {
+        // If the model is already preloaded, use the full model directly
+        if (isPreloaded) {
+          debug('Using preloaded model');
           setModel(fullScene);
           setIsLoading(false);
-          debug('Models loaded successfully');
-        }, 100);
-        
-        return () => clearTimeout(timer);
+          modelLoadedRef.current = true;
+        } else {
+          // First set the stub model
+          debug('Loading stub model:', stubUrl);
+          setModel(stubScene);
+          
+          // Then set the full model after a short delay
+          const timer = setTimeout(() => {
+            debug('Loading full model:', fullUrl);
+            setModel(fullScene);
+            setIsLoading(false);
+            modelLoadedRef.current = true;
+            debug('Models loaded successfully');
+          }, 100);
+          
+          return () => clearTimeout(timer);
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';

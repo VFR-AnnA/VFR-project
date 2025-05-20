@@ -6,10 +6,9 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent, useTransition } from "react";
+import { useRef, useState, ChangeEvent, useEffect } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
-import { getMeasurementsFromImage } from "../../../utils/measure";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
@@ -24,14 +23,44 @@ export default function BodyAIDemo() {
   const [status, setStatus] = useState<DetectionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
+  const [worker, setWorker] = useState<Worker | null>(null);
   
-  // Add useTransition hook to prevent blocking the main thread
-  const [isPending, startTransition] = useTransition();
+  // Initialize the worker
+  useEffect(() => {
+    // Create the worker only in the browser environment
+    if (typeof window !== 'undefined') {
+      const bodyAIWorker = new Worker(
+        new URL('../../../utils/bodyAIWorker.ts', import.meta.url),
+        { type: 'module' }
+      );
+      
+      // Set up message handler
+      bodyAIWorker.onmessage = (event) => {
+        const { type, measurements, error, success } = event.data;
+        
+        if (type === 'measurements-ready' && success) {
+          setAvatarParams(measurements);
+          setStatus("success");
+        } else if (type === 'error') {
+          console.error("Error from worker:", error);
+          setStatus("error");
+          setErrorMessage(error || "Failed to detect body measurements");
+        }
+      };
+      
+      setWorker(bodyAIWorker);
+      
+      // Clean up the worker when the component unmounts
+      return () => {
+        bodyAIWorker.terminate();
+      };
+    }
+  }, []);
   
   // Handle file selection
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !worker) return;
     
     try {
       // Create object URL for the selected image
@@ -44,23 +73,12 @@ export default function BodyAIDemo() {
       img.src = url;
       
       img.onload = () => {
-        // Use startTransition to avoid blocking the main thread during AI analysis
-        startTransition(async () => {
-          try {
-            // Dynamically import MediaPipe to avoid Next.js build issues
-            await import('@mediapipe/pose');
-            
-            // Process the image with MediaPipe
-            const measurements = await getMeasurementsFromImage(img);
-            
-            // Update avatar parameters with detected measurements
-            setAvatarParams(measurements);
-            setStatus("success");
-          } catch (error) {
-            console.error("Error detecting pose:", error);
-            setStatus("error");
-            setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
-          }
+        // Send the image URL to the worker for processing
+        worker.postMessage({
+          type: 'process-image',
+          imageUrl: url,
+          imageHeight: img.height,
+          referenceHeightCm: undefined // Use default height
         });
       };
       
@@ -131,7 +149,7 @@ export default function BodyAIDemo() {
                 </div>
               )}
               
-              {(status === "loading" || isPending) && (
+              {status === "loading" && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
                 </div>
