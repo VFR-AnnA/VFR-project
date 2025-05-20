@@ -1,170 +1,347 @@
-/**
- * Avatar-Wallet VFR – Proprietary Source
- * © 2025 Artur Gabrielian. All rights reserved.
- * Build-stamp: 2025-05-06T12:00+02:00  |  SHA256: 3dd4…ab9c
- */
-
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useRef, useEffect } from "react";
-import { Stage, OrbitControls } from "@react-three/drei";
-import { useLoader } from "@react-three/fiber";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import * as THREE from "three";
+import React, { Suspense, useEffect, useState, useRef, useMemo, useLayoutEffect, useCallback } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
+import { OrbitControls, Environment, Html, useGLTF } from "@react-three/drei";
+import * as THREE from 'three';
+import { Group, Bone, Object3D } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { AvatarParams } from "./VFRViewerWrapper";
+import { scaleSkeleton } from "../utils/scaleSkeleton";
+
+// Default avatar parameters (if not provided from external types)
+const DEFAULT_AVATAR_PARAMS = {
+  heightCm: 175,
+  chestCm: 95,
+  waistCm: 80,
+  hipCm: 100
+};
+
+// Default model URL - absoluut pad gebruiken voor zekerheid
+const DEFAULT_MODEL_URL = '/models/mannequin.glb';
+
+// Debug logging functie
+const debugError = (message: string, ...args: unknown[]) => {
+  console.error(`[VFRViewer] ${message}`, ...args);
+};
+
+// Debug logging function
+const debug = (message: string, ...args: unknown[]) => {
+  console.log(`[VFRViewer] ${message}`, ...args);
+};
+
+// Preload the default model to ensure it's available
+// This is critical for avoiding the "Error loading model: {}" issue
+
+// Helper function to convert measurement parameters to scale factors
+const paramsToScaleFactors = (params: AvatarParams) => {
+  const { heightCm, chestCm, waistCm, hipCm } = params;
+  
+  return {
+    height: heightCm / 175, // Scale based on default height of 175cm
+    chest: chestCm / 95,    // Scale based on default chest of 95cm
+    waist: waistCm / 80,    // Scale based on default waist of 80cm
+    hip: hipCm / 100        // Scale based on default hip of 100cm
+  };
+};
+
+function LoadingSpinner() {
+  return (
+    <Html center>
+      <div className="text-white">Loading model...</div>
+    </Html>
+  );
+}
+
+type ModelGLTF = {
+  scene: Group;
+  scenes: Group[];
+  animations: THREE.AnimationClip[];
+  cameras: THREE.Camera[];
+  asset: { version: string; generator: string; };
+};
 
 interface ModelProps {
   url: string;
-  avatarParams?: AvatarParams;
+  avatarParams: AvatarParams;
 }
 
-function Model({ url, avatarParams }: ModelProps) {
-  const gltf = useLoader(GLTFLoader, url) as { scene: THREE.Group };
+interface ModelProps {
+  url: string;
+  avatarParams: AvatarParams;
+  onLoaded?: () => void;
+}
+
+function Model({ url, avatarParams, onLoaded }: ModelProps) {
+  debug("Rendering Model with URL:", url);
+  
+  // Zorg ervoor dat we altijd een geldige URL hebben
+  const safeUrl = url && url.trim() !== "" ? url : DEFAULT_MODEL_URL;
+  debug("Using validated URL:", safeUrl);
+  
+  // Setup loaders for better compression
+  const draco = useMemo(() => {
+    const loader = new DRACOLoader();
+    loader.setDecoderPath('/draco/');
+    return loader;
+  }, []);
+  
+  // Gebruik useLoader met DRACO en Meshopt voor betere compressie en performance
+  const gltf = useLoader(
+    GLTFLoader,
+    safeUrl,
+    (loader: GLTFLoader) => {
+      loader.setDRACOLoader(draco);
+      loader.setMeshoptDecoder(MeshoptDecoder);
+    }
+  ) as ModelGLTF;
+  
+  const { scene } = gltf;
+  
+  // State voor error handling
+  const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
   
-  // Log model structure once on load to understand its components
+  // Log wanneer het model is geladen
   useEffect(() => {
-    if (modelRef.current) {
-      console.log("MODEL STRUCTURE:");
-      // Find bones/skeleton to work with
-      let skeletonFound = false;
-      let bonesFound: string[] = [];
-      
-      modelRef.current.traverse((node) => {
-        if (node instanceof THREE.Mesh) {
-          console.log(`Mesh name: ${node.name}`);
-          // Check for skeleton using a safer approach (assuming a SkinnedMesh would have this)
-          if ('skeleton' in node || node.type === 'SkinnedMesh') {
-            skeletonFound = true;
-            console.log("Skeleton found on mesh:", node.name);
-          }
-        } else if (node instanceof THREE.Object3D) {
-          console.log(`Object3D name: ${node.name}`);
-          // Check if this might be a bone based on naming
-          if (node.name.toLowerCase().includes("joint") ||
-              node.name.toLowerCase().includes("bone") ||
-              node.name.toLowerCase().includes("skeleton")) {
-            bonesFound.push(node.name);
+    if (scene) {
+      debug(`Model loaded successfully: ${safeUrl}`);
+      onLoaded?.();
+    }
+  }, [scene, safeUrl, onLoaded]);
+  
+  // Find and map bones for scaling
+  const bones = useMemo(() => {
+    const map: { spine?: Bone; chest?: Bone; hips?: Bone } = {};
+    
+    if (scene) {
+      scene.traverse((child: Object3D) => {
+        if (child instanceof THREE.Bone) {
+          const name = child.name.toLowerCase();
+          
+          if (name.includes('spine') || name.includes('abdomen') || name.includes('middle')) {
+            map.spine = child;
+          } else if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
+            map.chest = child;
+          } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
+            map.hips = child;
           }
         }
       });
-      
-      console.log("Skeleton found:", skeletonFound);
-      console.log("Possible bones:", bonesFound);
     }
-  }, [gltf]);
-
-  // Track previous values to detect changes
-  const prevAvatarParamsRef = useRef(avatarParams);
+    
+    debug(`Found bones: spine=${!!map.spine}, chest=${!!map.chest}, hips=${!!map.hips}`);
+    return map;
+  }, [scene]);
   
-  // Apply transformations with SUPER EXTREME exaggeration for demo visibility
-  useEffect(() => {
-    if (!modelRef.current || !avatarParams) return;
-    
-    // Check if values actually changed
-    const prev = prevAvatarParamsRef.current || {heightCm: 175, chestCm: 95, waistCm: 80, hipCm: 100};
-    const changed = prev?.heightCm !== avatarParams.heightCm ||
-                    prev?.chestCm !== avatarParams.chestCm ||
-                    prev?.waistCm !== avatarParams.waistCm ||
-                    prev?.hipCm !== avatarParams.hipCm;
-    
-    console.log("🔄 AVATAR PARAMS UPDATED:", avatarParams);
-    console.log("Values changed?", changed ? "YES! Applying new transformation" : "No");
-    
-    // Store current values for next comparison
-    prevAvatarParamsRef.current = {...avatarParams};
-    
-    // THE MOST EXTREME, VISIBLE TRANSFORMATIONS POSSIBLE
-    // Completely unrealistic but unmistakably visible changes
-    
-    // 1. Calculate extreme scaling factors (MASSIVE exaggeration)
-    const heightDelta = avatarParams.heightCm - 175; // Difference from default
-    const chestDelta = avatarParams.chestCm - 95;    // Difference from default
-    const waistDelta = avatarParams.waistCm - 80;    // Difference from default
-    const hipDelta = avatarParams.hipCm - 100;       // Difference from default
-    
-    // 2. RIDICULOUSLY amplify these deltas for unmissable visual effect
-    const heightFactor = 1.0 + (heightDelta / 25);     // 25cm change = 2x size!
-    const chestFactor = 1.0 + (chestDelta / 7.5) * 2;  // 7.5cm change = 3x width!!
-    const waistFactor = 1.0 + (waistDelta / 10) * 2;   // 10cm change = 3x depth!!
-    const hipFactor = 1.0 + (hipDelta / 10) * 2;       // 10cm change = 3x depth!!
-    
-    console.log(`🔄 RIDICULOUSLY EXAGGERATED scaling factors:
-      Height: ${heightFactor.toFixed(2)} (delta: ${heightDelta})
-      Chest: ${chestFactor.toFixed(2)} (delta: ${chestDelta})
-      Waist: ${waistFactor.toFixed(2)} (delta: ${waistDelta})
-      Hip: ${hipFactor.toFixed(2)} (delta: ${hipDelta})`);
-    
-    // Apply comically extreme non-uniform scaling to the ENTIRE model
-    modelRef.current.scale.set(
-      chestFactor * 1.5,    // Width (X) - MASSIVELY affected by chest (1.5x multiplier)
-      heightFactor * 1.2,   // Height (Y) - GREATLY affected by height (1.2x multiplier)
-      (waistFactor + hipFactor) / 2 * 1.8  // Depth (Z) - EXTREMELY affected by waist/hip (1.8x multiplier)
-    );
-    
-    // Add color changes based on measurements to make changes even more obvious
-    modelRef.current.traverse((node) => {
-      if (node instanceof THREE.Mesh && node.material) {
-        // Make model glow/change based on measurements
-        if (Math.abs(chestDelta) > 3 || Math.abs(waistDelta) > 3 || Math.abs(hipDelta) > 3) {
-          try {
-            // If any measurement is far from default, make the model visually different
-            if (node.material.color) {
-              // Add a slight color tint based on how far from defaults
-              const colorShift = Math.max(
-                Math.abs(chestDelta/25),
-                Math.abs(waistDelta/20),
-                Math.abs(hipDelta/30)
-              );
-              
-              // Tint toward red for bigger measurements
-              if (colorShift > 0.1) {
-                console.log(`🎨 Applied color shift: ${colorShift.toFixed(2)}`);
-                // This won't actually change the texture but will tint it
-                node.material.emissive = new THREE.Color(colorShift, 0, 0);
-                node.material.emissiveIntensity = colorShift * 2;
-              }
-            }
-          } catch (e) {
-            console.log("Material modification error (non-critical):", e);
-          }
-        }
-      }
-    });
-    
-    // Add dramatic rotation for even more obvious visual change
-    if (Math.abs(chestDelta) > 3 || Math.abs(hipDelta) > 3) {
-      // Create an extremely visible tilt effect based on chest vs hip difference
-      const tiltAmount = (chestDelta - hipDelta) / 50; // Much more dramatic tilt
-      modelRef.current.rotation.z = tiltAmount;
-      console.log(`🔄 Applied DRAMATIC tilt effect: ${tiltAmount.toFixed(2)} radians`);
-      
-      // Also add some Y-axis rotation for even more visibility
-      modelRef.current.rotation.y = (chestDelta + hipDelta) / 100;
-    }
-    
-    console.log("✅ Applied EXTREME transformations - changes should be impossible to miss");
-  }, [avatarParams, gltf]);
+  // Calculate scale factor based on avatar parameters
+  const calcScale = useCallback((params: AvatarParams) => {
+    const baseScale = params.heightCm / 175; // Base scale on height
+    return baseScale;
+  }, []);
 
-  return <primitive ref={modelRef} object={gltf.scene} dispose={null} />;
+  // Apply avatar parameters using scale transformations
+  useLayoutEffect(() => {
+    if (modelRef.current) {
+      try {
+        if (Object.keys(bones).length > 0) {
+          debug(`Applying scale factors using scaleSkeleton utility`);
+          
+          // Use the new utility for more dramatic scaling
+          scaleSkeleton(bones, avatarParams);
+          
+          // Force geometry update
+          modelRef.current.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.geometry) {
+              child.geometry.computeBoundingSphere();
+            }
+          });
+        } else {
+          // Fallback to transform scale if no bones found
+          debug("No specific bones found, applying transform scale to entire model");
+          
+          // Use transform scale instead of changing dimensions
+          const scaleFactor = calcScale(avatarParams);
+          modelRef.current.scale.setScalar(scaleFactor);
+          
+          // Apply additional scaling for width/depth based on other parameters
+          const widthScale = (avatarParams.chestCm / 95 + avatarParams.waistCm / 80 + avatarParams.hipCm / 100) / 3;
+          modelRef.current.scale.x *= widthScale;
+          modelRef.current.scale.z *= widthScale;
+        }
+      } catch (error) {
+        debugError("Error applying parameters:", error);
+        setError(`Error applying parameters: ${error}`);
+      }
+    }
+  }, [avatarParams, bones, calcScale]);
+  
+  // Clean up resources when component unmounts
+  useEffect(() => {
+    return () => {
+      debug(`Cleaning up model: ${safeUrl}`);
+    };
+  }, [safeUrl]);
+  
+  // Render error state
+  if (error) {
+    return (
+      <Html center>
+        <div className="text-red-500 p-4 bg-black bg-opacity-50 rounded">
+          <p>Error with 3D model</p>
+          <p className="text-xs mt-2">Using URL: {safeUrl}</p>
+          <p className="text-xs mt-1">{error}</p>
+        </div>
+      </Html>
+    );
+  }
+  
+  // Render the model
+  return (
+    <group position={[0, -0.5, 0]}>
+      <primitive
+        ref={modelRef}
+        object={scene}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
+        scale={0.9}
+      />
+    </group>
+  );
+}
+
+// Simple fallback model component
+function FallbackModel() {
+  return (
+    <group position={[0, 0, 0]}>
+      <mesh>
+        <boxGeometry args={[1, 1.7, 0.5]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+    </group>
+  );
 }
 
 interface VFRViewerProps {
   avatarParams?: AvatarParams;
+  meshUrl?: string;
 }
 
-export default function VFRViewer({ avatarParams }: VFRViewerProps) {
+export default function VFRViewer({
+  avatarParams = DEFAULT_AVATAR_PARAMS,
+  meshUrl = DEFAULT_MODEL_URL
+}: VFRViewerProps) {
+  // Uitgebreide validatie en debugging van de URL
+  console.log("[VFRViewer] Received meshUrl:", meshUrl);
+  
+  // Absolute URL validatie - check voor null, undefined, lege string, of 'not available'
+  const safeUrl = meshUrl && typeof meshUrl === 'string' && meshUrl.trim() !== "" && meshUrl !== "not available"
+    ? meshUrl
+    : DEFAULT_MODEL_URL;
+    
+  debug(`Rendering with meshUrl: ${safeUrl}`);
+  
+  // Error state voor top-level fouten
+  const [hasError, setHasError] = useState(false);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
+  
+  // Error boundary functie
+  const handleError = (error: Error) => {
+    console.error("[VFRViewer] Fatal rendering error:", error);
+    setHasError(true);
+    return null;
+  };
+  
   return (
-    <div className="w-full h-[480px]">
-      <Canvas camera={{ position: [0, 1.5, 2.5], fov: 35 }}>
-        <Suspense fallback={null}>
-          <Stage environment="city" intensity={0.6}>
-            <Model url="/models/mannequin.glb" avatarParams={avatarParams} />
-          </Stage>
-          <OrbitControls enablePan={false} />
-        </Suspense>
+    <div className="relative w-full max-w-[350px] h-[420px] mx-auto" style={{ background: '#1a1a1a' }}>
+      {/* Placeholder that shows until the model loads */}
+      {!isModelLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img src="/placeholder-avatar.svg" alt="Loading 3D Model" className="w-48 h-64" />
+        </div>
+      )}
+      
+      <Canvas
+        className="absolute inset-0"
+        camera={{
+          position: [0, 0.5, 2.5],
+          fov: 30,
+          near: 0.1,
+          far: 1000
+        }}
+        shadows
+        gl={{
+          antialias: true,
+          preserveDrawingBuffer: true,
+          alpha: true,
+          logarithmicDepthBuffer: true
+        }}
+      >
+        <color attach="background" args={['#1a1a1a']} />
+        
+        {/* Lighting setup */}
+        <ambientLight intensity={0.5} />
+        <directionalLight
+          position={[5, 5, 5]}
+          intensity={1}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+        />
+        
+        {hasError ? (
+          <FallbackModel />
+        ) : (
+          <Suspense fallback={<LoadingSpinner />}>
+            <ErrorBoundary fallbackComponent={FallbackModel}>
+              <Model
+                url={safeUrl}
+                avatarParams={avatarParams}
+                onLoaded={() => setIsModelLoaded(true)}
+              />
+              <Environment preset="city" />
+              <OrbitControls
+                enableDamping
+                dampingFactor={0.05}
+                minDistance={2}
+                maxDistance={15}  // Allow zooming out more
+                minPolarAngle={Math.PI / 8}  // Allow looking even more downward
+                maxPolarAngle={Math.PI / 1.2}  // Keep upward view the same
+              />
+            </ErrorBoundary>
+          </Suspense>
+        )}
       </Canvas>
     </div>
   );
+}
+
+// React Error Boundary component
+function ErrorBoundary({ 
+  children, 
+  fallbackComponent: FallbackComponent 
+}: {
+  children: React.ReactNode, 
+  fallbackComponent: () => React.ReactElement
+}) {
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    const errorHandler = (event: ErrorEvent) => {
+      console.error("[VFRViewer] Error boundary caught:", event.error);
+      setHasError(true);
+    };
+    
+    window.addEventListener('error', errorHandler);
+    return () => {
+      window.removeEventListener('error', errorHandler);
+    };
+  }, []);
+  
+  if (hasError) {
+    return <FallbackComponent />;
+  }
+  
+  return <>{children}</>;
 }

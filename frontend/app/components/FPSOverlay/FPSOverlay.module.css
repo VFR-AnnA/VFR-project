@@ -1,0 +1,65 @@
+.fpsOverlay {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  z-index: 1000;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.fpsValue {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.frameTime {
+  color: #aaffaa;
+  font-size: 11px;
+}
+
+.cpuLoad {
+  color: #aaffaa;
+  font-size: 11px;
+}
+
+/* Auto-hide on mobile */
+@media (max-width: 640px) {
+  .fpsOverlay {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Show briefly when tapped near the corner */
+  .fpsOverlay:hover,
+  .fpsOverlay:focus,
+  .fpsOverlay:active {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+  }
+}
+
+/* High FPS (green) */
+.high {
+  color: #00ff00;
+}
+
+/* Medium FPS (yellow) */
+.medium {
+  color: #ffff00;
+}
+
+/* Low FPS (red) */
+.low {
+  color: #ff3333;
+}
