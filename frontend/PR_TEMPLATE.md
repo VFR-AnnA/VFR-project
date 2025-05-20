@@ -31,7 +31,9 @@ This PR implements the Web Worker optimization for body measurements calculation
 
 ## Screenshots
 
-[Attach Lighthouse screenshot here]
+See Lighthouse reports in `docs/perf/` directory, particularly:
+- `perf_edge.json` - Latest performance metrics
+- `a11y_report.html` - Accessibility report
 
 ## Checklist
 
