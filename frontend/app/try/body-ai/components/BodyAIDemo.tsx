@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent } from "react";
+import { useRef, useState, ChangeEvent, useTransition } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage } from "../../../utils/measure";
@@ -25,6 +25,9 @@ export default function BodyAIDemo() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
   
+  // Add useTransition hook to prevent blocking the main thread
+  const [isPending, startTransition] = useTransition();
+  
   // Handle file selection
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,22 +43,25 @@ export default function BodyAIDemo() {
       const img = document.createElement('img');
       img.src = url;
       
-      img.onload = async () => {
-        try {
-          // Dynamically import MediaPipe to avoid Next.js build issues
-          await import('@mediapipe/pose');
-          
-          // Process the image with MediaPipe
-          const measurements = await getMeasurementsFromImage(img);
-          
-          // Update avatar parameters with detected measurements
-          setAvatarParams(measurements);
-          setStatus("success");
-        } catch (error) {
-          console.error("Error detecting pose:", error);
-          setStatus("error");
-          setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
-        }
+      img.onload = () => {
+        // Use startTransition to avoid blocking the main thread during AI analysis
+        startTransition(async () => {
+          try {
+            // Dynamically import MediaPipe to avoid Next.js build issues
+            await import('@mediapipe/pose');
+            
+            // Process the image with MediaPipe
+            const measurements = await getMeasurementsFromImage(img);
+            
+            // Update avatar parameters with detected measurements
+            setAvatarParams(measurements);
+            setStatus("success");
+          } catch (error) {
+            console.error("Error detecting pose:", error);
+            setStatus("error");
+            setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
+          }
+        });
       };
       
       img.onerror = () => {
@@ -101,22 +107,22 @@ export default function BodyAIDemo() {
           <h2 className="text-xl font-medium mb-4">Upload Your Photo</h2>
           
           <div className="mb-6">
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors"
+            <div
+              className="w-full aspect-[4/3] border-2 border-dashed border-gray-500/40 rounded-lg overflow-hidden bg-black/20 text-center cursor-pointer hover:bg-gray-50 transition-colors"
               onClick={handleUploadClick}
             >
               {imageUrl ? (
-                <div className="relative w-full h-[400px]">
+                <div className="relative w-full h-full">
                   {/* eslint-disable-next-line */}
                   <img
                     ref={imageRef}
                     src={imageUrl}
                     alt="Uploaded photo"
-                    className="mx-auto max-h-[400px] max-w-full object-contain"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               ) : (
-                <div className="py-12">
+                <div className="flex flex-col items-center justify-center h-full">
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -125,7 +131,7 @@ export default function BodyAIDemo() {
                 </div>
               )}
               
-              {status === "loading" && (
+              {(status === "loading" || isPending) && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
                 </div>
@@ -177,20 +183,22 @@ export default function BodyAIDemo() {
         <div className="bg-gray-100 p-6">
           <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
           
-          <div className="mb-6 bg-gray-800 rounded-lg overflow-hidden">
+          <div className="relative w-full aspect-[16/9] max-w-[600px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
             {/* Pass each parameter directly to ensure they're being passed correctly */}
-            <VFRViewerWrapper
-              params={{
-                heightCm: avatarParams.heightCm,
-                chestCm: avatarParams.chestCm,
-                waistCm: avatarParams.waistCm,
-                hipCm: avatarParams.hipCm
-              }}
-              showControls={false}
-            />
+            <div className="absolute inset-0">
+              <VFRViewerWrapper
+                params={{
+                  heightCm: avatarParams.heightCm,
+                  chestCm: avatarParams.chestCm,
+                  waistCm: avatarParams.waistCm,
+                  hipCm: avatarParams.hipCm
+                }}
+                showControls={false}
+              />
+            </div>
             
             {/* Log the current parameters for debugging */}
-            <div className="p-2 bg-black text-white text-xs">
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs">
               <pre>
                 {JSON.stringify(avatarParams, null, 2)}
               </pre>
