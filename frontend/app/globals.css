@@ -21,14 +21,7 @@ body {
 }
 
 .canvas-wrapper {
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-}
-
-.canvas-wrapper:focus-within {
-  border-color: rgba(59, 130, 246, 0.7); /* blue-500 with 70% opacity */
-}
-
-.canvas-wrapper:hover {
-  border-color: rgba(59, 130, 246, 0.5); /* blue-500 with 50% opacity */
+  @apply border-2 border-transparent transition-colors
+         focus-within:border-primary/70 hover:border-primary/50
+         rounded-md;
 }

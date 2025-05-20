@@ -2,13 +2,17 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, rnd/* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, rnd/* ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
+    # Determine if this is an R&D branch
+    env:
+      IS_RND_BRANCH: ${{ startsWith(github.ref, 'refs/heads/rnd/') || startsWith(github.head_ref, 'rnd/') }}
     
     steps:
     - uses: actions/checkout@v4
@@ -35,9 +39,11 @@ jobs:
       run: npm run test
     
     - name: Setup Lighthouse CI
+      if: env.IS_RND_BRANCH != 'true'
       run: npm install -g @lhci/cli@0.13.x
     
     - name: Run Lighthouse CI
+      if: env.IS_RND_BRANCH != 'true'
       run: |
         npm run build
         npx serve -s out &
@@ -59,7 +65,7 @@ jobs:
 
   deploy:
     needs: build-and-test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && !startsWith(github.ref, 'refs/heads/rnd/')
     runs-on: ubuntu-latest
     
     steps:

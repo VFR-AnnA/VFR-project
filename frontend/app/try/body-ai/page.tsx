@@ -4,7 +4,7 @@
  * Build-stamp: 2025-05-15T00:35+02:00
  */
 
-import BodyAIDemo from "./components/BodyAIDemo";
+import BodyAIDemoModern from "./components/BodyAIDemoModern";
 
 export default function BodyAIPage() {
   return (
@@ -16,7 +16,7 @@ export default function BodyAIPage() {
         <p className="text-gray-600 max-w-2xl text-center mb-8">
           Upload a full-body photo to automatically detect your measurements and customize your avatar.
         </p>
-        <BodyAIDemo />
+        <BodyAIDemoModern />
       </div>
     </main>
   );

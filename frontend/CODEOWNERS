@@ -1,0 +1,21 @@
+# VFR Project CODEOWNERS file
+# This file defines code ownership and review requirements
+
+# Default owners for everything in the repo
+* @Boyov69
+
+# R&D branch: requires at least one extra reviewer
+rnd/drape-webgpu @Boyov69 @ivo @jelena
+
+# Core components
+app/components/* @Boyov69 @ivo
+
+# WebGPU related files
+app/shaders/* @Boyov69 @ivo @jelena
+assets/mannequin_low.glb @Boyov69 @ivo
+
+# Performance benchmarking
+scripts/bench/* @Boyov69 @jelena
+
+# Documentation
+*.md @Boyov69
