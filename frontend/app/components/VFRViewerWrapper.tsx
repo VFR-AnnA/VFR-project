@@ -70,7 +70,7 @@ export default function VFRViewerWrapper({
   console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
 
   return (
-    <div className="vfr-viewer-container w-full h-full mx-auto">
+    <div className="vfr-viewer-container w-full h-full mx-auto canvas-wrapper">
       {/* Pass each parameter directly to ensure they're being passed correctly */}
       <VFRViewer
         avatarParams={{
