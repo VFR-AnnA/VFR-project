@@ -6,10 +6,10 @@
 
 "use client";
 
-import { useRef, useState, ChangeEvent, useTransition } from "react";
+import { useRef, useState, useEffect, ChangeEvent, useTransition } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
-import { getMeasurementsFromImage } from "../../../utils/measure";
+import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
@@ -24,14 +24,50 @@ export default function BodyAIDemo() {
   const [status, setStatus] = useState<DetectionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
+  const [worker, setWorker] = useState<Worker | null>(null);
   
   // Add useTransition hook to prevent blocking the main thread
   const [isPending, startTransition] = useTransition();
   
+  // Initialize the worker
+  useEffect(() => {
+    // Create the worker only in the browser environment
+    if (typeof window !== 'undefined') {
+      const bodyAIWorker = new Worker(
+        new URL('../../../../workers/bodyAIWorker.ts', import.meta.url),
+        { type: 'module' }
+      );
+      
+      // Set up message handler
+      bodyAIWorker.onmessage = (event) => {
+        const { type, measurements, error, success } = event.data;
+        
+        if (type === 'measurements-ready' && success) {
+          // Use startTransition to avoid blocking the main thread when updating state
+          startTransition(() => {
+            setAvatarParams(measurements);
+            setStatus("success");
+          });
+        } else if (type === 'error') {
+          console.error("Error from worker:", error);
+          setStatus("error");
+          setErrorMessage(error || "Failed to detect body measurements");
+        }
+      };
+      
+      setWorker(bodyAIWorker);
+      
+      // Clean up the worker when the component unmounts
+      return () => {
+        bodyAIWorker.terminate();
+      };
+    }
+  }, []);
+  
   // Handle file selection
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !worker) return;
     
     try {
       // Create object URL for the selected image
@@ -43,25 +79,30 @@ export default function BodyAIDemo() {
       const img = document.createElement('img');
       img.src = url;
       
-      img.onload = () => {
-        // Use startTransition to avoid blocking the main thread during AI analysis
-        startTransition(async () => {
-          try {
-            // Dynamically import MediaPipe to avoid Next.js build issues
-            await import('@mediapipe/pose');
-            
-            // Process the image with MediaPipe
-            const measurements = await getMeasurementsFromImage(img);
-            
-            // Update avatar parameters with detected measurements
-            setAvatarParams(measurements);
-            setStatus("success");
-          } catch (error) {
-            console.error("Error detecting pose:", error);
+      img.onload = async () => {
+        try {
+          // Dynamically import MediaPipe to avoid Next.js build issues
+          await import('@mediapipe/pose');
+          
+          // Process the image with MediaPipe in the main thread
+          const results = await getMeasurementsFromImage(img, true) as PoseResults;
+          
+          if (results && results.poseLandmarks) {
+            // Send landmarks to the worker for measurement calculations
+            worker.postMessage({
+              type: 'calculate-measurements',
+              poseLandmarks: results.poseLandmarks,
+              imageHeight: img.height
+            });
+          } else {
             setStatus("error");
-            setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
+            setErrorMessage("No pose landmarks detected");
           }
-        });
+        } catch (error) {
+          console.error("Error detecting pose:", error);
+          setStatus("error");
+          setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
+        }
       };
       
       img.onerror = () => {
@@ -197,15 +238,15 @@ export default function BodyAIDemo() {
               />
             </div>
             
-            {/* Log the current parameters for debugging */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs">
-              <pre>
-                {JSON.stringify(avatarParams, null, 2)}
-              </pre>
+            {/* Fixed height placeholder for parameters - no layout shift */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs h-[56px]">
+              <div className="text-center">
+                Height: {avatarParams.heightCm}cm | Chest: {avatarParams.chestCm}cm | Waist: {avatarParams.waistCm}cm | Hip: {avatarParams.hipCm}cm
+              </div>
             </div>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-[240px]">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Height: {avatarParams.heightCm} cm
