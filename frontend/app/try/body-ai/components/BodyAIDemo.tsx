@@ -6,10 +6,11 @@
 
 "use client";
 
-import { useRef, useState, useEffect, ChangeEvent, useTransition } from "react";
+import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
+import throttle from "lodash/throttle";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
@@ -31,6 +32,18 @@ export default function BodyAIDemo() {
   
   // Initialize the worker
   useEffect(() => {
+    // Hide MediaPipe logs in production
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      const originalConsoleWarn = console.warn;
+      
+      console.info = () => {};
+      console.warn = (msg) => {
+        if (!msg?.includes('OpenGL error checking is disabled')) {
+          originalConsoleWarn(msg);
+        }
+      };
+    }
+    
     // Create the worker only in the browser environment
     if (typeof window !== 'undefined') {
       const bodyAIWorker = new Worker(
@@ -43,15 +56,18 @@ export default function BodyAIDemo() {
         const { type, measurements, error, success } = event.data;
         
         if (type === 'measurements-ready' && success) {
-          // Use startTransition to avoid blocking the main thread when updating state
+          // Always use startTransition to avoid blocking the main thread when updating state
           startTransition(() => {
             setAvatarParams(measurements);
             setStatus("success");
           });
         } else if (type === 'error') {
           console.error("Error from worker:", error);
-          setStatus("error");
-          setErrorMessage(error || "Failed to detect body measurements");
+          // Use startTransition for error state updates too
+          startTransition(() => {
+            setStatus("error");
+            setErrorMessage(error || "Failed to detect body measurements");
+          });
         }
       };
       
@@ -122,18 +138,38 @@ export default function BodyAIDemo() {
     alert("Camera capture feature coming soon!");
   };
   
-  // Handle parameter change from sliders
-  const handleParamChange = (param: keyof AvatarParams, value: number) => {
+  // Handle parameter change from sliders with throttling to prevent bursts of state updates
+  const handleParamChange = useCallback((param: keyof AvatarParams, value: number) => {
     console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
-    setAvatarParams(prev => {
-      const newParams = {
-        ...prev,
-        [param]: value
-      };
-      console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
-      return newParams;
+    // Use startTransition to avoid blocking the main thread
+    startTransition(() => {
+      setAvatarParams(prev => {
+        const newParams = {
+          ...prev,
+          [param]: value
+        };
+        console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
+        return newParams;
+      });
     });
-  };
+  }, []);
+  
+  // Create throttled versions of handleParamChange for each parameter
+  const handleHeightChange = useCallback((value: number) => {
+    throttle((v: number) => handleParamChange("heightCm", v), 16)(value);
+  }, [handleParamChange]);
+  
+  const handleChestChange = useCallback((value: number) => {
+    throttle((v: number) => handleParamChange("chestCm", v), 16)(value);
+  }, [handleParamChange]);
+  
+  const handleWaistChange = useCallback((value: number) => {
+    throttle((v: number) => handleParamChange("waistCm", v), 16)(value);
+  }, [handleParamChange]);
+  
+  const handleHipChange = useCallback((value: number) => {
+    throttle((v: number) => handleParamChange("hipCm", v), 16)(value);
+  }, [handleParamChange]);
   
   // Trigger file input click
   const handleUploadClick = () => {
@@ -141,7 +177,7 @@ export default function BodyAIDemo() {
   };
   
   return (
-    <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="w-full max-w-screen-sm mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column: Image upload and detection */}
         <div className="p-6 flex flex-col">
@@ -224,7 +260,7 @@ export default function BodyAIDemo() {
         <div className="bg-gray-100 p-6">
           <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
           
-          <div className="relative w-full aspect-[16/9] max-w-[600px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
+          <div className="relative w-full aspect-[16/9] md:aspect-[21/9] md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent focus-within:border-purple-500 hover:border-purple-500">
             {/* Pass each parameter directly to ensure they're being passed correctly */}
             <div className="absolute inset-0">
               <VFRViewerWrapper
@@ -240,8 +276,13 @@ export default function BodyAIDemo() {
             
             {/* Fixed height placeholder for parameters - no layout shift */}
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs h-[56px]">
-              <div className="text-center">
-                Height: {avatarParams.heightCm}cm | Chest: {avatarParams.chestCm}cm | Waist: {avatarParams.waistCm}cm | Hip: {avatarParams.hipCm}cm
+              <div className="flex justify-center items-center h-full">
+                <div className="grid grid-cols-2 gap-x-4 tabular-nums">
+                  <div>Height: {avatarParams.heightCm}cm</div>
+                  <div>Chest: {avatarParams.chestCm}cm</div>
+                  <div>Waist: {avatarParams.waistCm}cm</div>
+                  <div>Hip: {avatarParams.hipCm}cm</div>
+                </div>
               </div>
             </div>
           </div>
@@ -256,8 +297,8 @@ export default function BodyAIDemo() {
                 min={AVATAR_PARAM_RANGES.heightCm.min}
                 max={AVATAR_PARAM_RANGES.heightCm.max}
                 value={avatarParams.heightCm}
-                onChange={(e) => handleParamChange("heightCm", parseInt(e.target.value))}
-                className="w-full"
+                onChange={(e) => handleHeightChange(parseInt(e.target.value))}
+                className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Height slider: ${avatarParams.heightCm} cm`}
                 title={`Adjust height: ${avatarParams.heightCm} cm`}
               />
@@ -272,8 +313,8 @@ export default function BodyAIDemo() {
                 min={AVATAR_PARAM_RANGES.chestCm.min}
                 max={AVATAR_PARAM_RANGES.chestCm.max}
                 value={avatarParams.chestCm}
-                onChange={(e) => handleParamChange("chestCm", parseInt(e.target.value))}
-                className="w-full"
+                onChange={(e) => handleChestChange(parseInt(e.target.value))}
+                className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Chest slider: ${avatarParams.chestCm} cm`}
                 title={`Adjust chest: ${avatarParams.chestCm} cm`}
               />
@@ -288,8 +329,8 @@ export default function BodyAIDemo() {
                 min={AVATAR_PARAM_RANGES.waistCm.min}
                 max={AVATAR_PARAM_RANGES.waistCm.max}
                 value={avatarParams.waistCm}
-                onChange={(e) => handleParamChange("waistCm", parseInt(e.target.value))}
-                className="w-full"
+                onChange={(e) => handleWaistChange(parseInt(e.target.value))}
+                className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Waist slider: ${avatarParams.waistCm} cm`}
                 title={`Adjust waist: ${avatarParams.waistCm} cm`}
               />
@@ -304,8 +345,8 @@ export default function BodyAIDemo() {
                 min={AVATAR_PARAM_RANGES.hipCm.min}
                 max={AVATAR_PARAM_RANGES.hipCm.max}
                 value={avatarParams.hipCm}
-                onChange={(e) => handleParamChange("hipCm", parseInt(e.target.value))}
-                className="w-full"
+                onChange={(e) => handleHipChange(parseInt(e.target.value))}
+                className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Hip slider: ${avatarParams.hipCm} cm`}
                 title={`Adjust hip: ${avatarParams.hipCm} cm`}
               />
