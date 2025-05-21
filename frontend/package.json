@@ -8,10 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "eslint . --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:inp": "node scripts/check-inp-performance.js",
-    "test:inp:ci": "start-server-and-test 'next start -p 3000' http://localhost:3000 'node scripts/check-inp-performance.js $TEST_URL $INP_THRESHOLD'"
+    "test:inp:ci": "start-server-and-test 'next start -p 3000' http://localhost:3000 'node scripts/check-inp-performance.js $TEST_URL $INP_THRESHOLD'",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@mediapipe/pose": "^0.5.1675469404",
@@ -61,6 +63,9 @@
     "ts-jest": "^29.3.3",
     "typescript": "^5",
     "vitest-vitals": "^1.0.0",
-    "webpack": "^5.99.8"
+    "webpack": "^5.99.8",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
   }
 }

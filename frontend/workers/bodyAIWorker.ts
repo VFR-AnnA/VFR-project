@@ -8,11 +8,12 @@
 // It runs in a separate thread to avoid blocking the main thread
 
 import { estimateBodyMeasurements } from '../app/utils/measure';
+import { PoseLandmarks } from '../types/pose-landmarks';
 
 // Define the types we need
 type WorkerMessage = {
   type: 'calculate-measurements';
-  poseLandmarks: any[];
+  poseLandmarks: PoseLandmarks;
   imageHeight: number;
   referenceHeightCm?: number;
 };

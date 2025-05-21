@@ -2,87 +2,39 @@ name: INP Performance Check
 
 on:
   push:
-    branches: [ main, master ]
-    paths:
-      - 'app/**'
-      - 'public/models/**'
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'app/**'
-      - 'public/models/**'
-  # Allow manual triggering
-  workflow_dispatch:
-  # Run weekly to catch regressions
-  schedule:
-    - cron: '0 0 * * 1' # Every Monday at midnight
+    branches: [ main ]
 
 jobs:
   check-inp:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build application
-        run: npm run build
-      
-      - name: Install Puppeteer dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgbm-dev libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
-      
-      - name: Ensure correct model URLs
-        run: node scripts/ensure-model-urls.js
-      
-      - name: Run INP performance check
-        run: npm run test:inp:ci
-        env:
-          # Set a higher threshold for CI environments which might be slower
-          INP_THRESHOLD: 250
-          # Specify the URL to test
-          TEST_URL: http://localhost:3000/try/body-ai
-      
-      - name: Upload performance results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: inp-performance-results
-          path: |
-            inp-results.json
-            inp-screenshots/
-          retention-days: 7
-
-  # Optional job to report results to a dashboard or monitoring service
-  report-results:
-    needs: check-inp
-    runs-on: ubuntu-latest
-    if: always()
+    - uses: actions/checkout@v3
     
-    steps:
-      - name: Download performance results
-        uses: actions/download-artifact@v4
-        with:
-          name: inp-performance-results
-          path: ./results
-      
-      - name: Report results
-        run: |
-          echo "Reporting INP performance results to monitoring service"
-          # This would be replaced with actual reporting code
-          # For example, sending results to Google Analytics, DataDog, etc.
-          if [ -f "./results/inp-results.json" ]; then
-            cat ./results/inp-results.json
-          else
-            echo "No results file found"
-          fi
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build
+      run: npm run build
+    
+    - name: Start server
+      run: npm start & npx wait-on http://localhost:3000
+    
+    - name: Check INP performance
+      run: node scripts/check-inp-performance.js http://localhost:3000/try/body-ai 200
+      env:
+        TEST_URL: http://localhost:3000/try/body-ai
+        INP_THRESHOLD: 200
+    
+    - name: Run Lighthouse CI
+      run: |
+        npm install -g @lhci/cli
+        lhci autorun --collect.url=http://localhost:3000/try/body-ai --assert.preset=lighthouse:recommended

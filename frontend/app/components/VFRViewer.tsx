@@ -63,6 +63,7 @@ interface ProgressiveModelProps {
   isPreloaded?: boolean;
 }
 
+// TODO: Remove after avatar-pipeline V2 implementation
 // This component is not currently used but kept for future reference
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false }: ProgressiveModelProps) {

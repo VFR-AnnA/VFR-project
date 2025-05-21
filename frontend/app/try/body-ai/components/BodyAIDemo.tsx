@@ -9,6 +9,7 @@
 import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback, useMemo } from "react";
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
+import { PoseLandmarks } from "../../../../types/pose-landmarks";
 import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
 import { useWebVitals } from "../../../utils/useWebVitals";
 import throttle from "lodash/throttle";
@@ -87,7 +88,7 @@ export default function BodyAIDemo() {
   // Create a function to process images in a non-blocking way
   const processImageNonBlocking = async (img: HTMLImageElement): Promise<{
     success: boolean;
-    poseLandmarks?: {x: number; y: number; z: number}[];
+    poseLandmarks?: PoseLandmarks;
     imageHeight?: number;
     error?: string;
   }> => {

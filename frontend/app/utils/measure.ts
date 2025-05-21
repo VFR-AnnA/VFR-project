@@ -5,6 +5,7 @@
  */
 
 import * as poseModule from '@mediapipe/pose';
+import { PoseLandmarks, POSE_LANDMARKS } from '../../types/pose-landmarks';
 
 // Define the types we need from MediaPipe
 // Use the actual type from MediaPipe
@@ -17,20 +18,6 @@ export interface BodyMeasurements {
   waistCm: number;
   hipCm: number;
 }
-
-// Define the landmarks we need for measurements
-// Using the constants from the MediaPipe package
-const POSE_LANDMARKS = {
-  NOSE: 0,
-  LEFT_SHOULDER: 11,
-  RIGHT_SHOULDER: 12,
-  LEFT_HIP: 23,
-  RIGHT_HIP: 24,
-  LEFT_KNEE: 25,
-  RIGHT_KNEE: 26,
-  LEFT_ANKLE: 27,
-  RIGHT_ANKLE: 28,
-};
 
 /**
  * Calculate Euclidean distance between two 3D points
