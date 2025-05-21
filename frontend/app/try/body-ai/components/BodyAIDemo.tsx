@@ -8,6 +8,7 @@
 
 import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback } from "react";
 import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
+import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
 import { useWebVitals } from "../../../utils/useWebVitals";
@@ -264,19 +265,9 @@ export default function BodyAIDemo() {
         <div className="bg-gray-100 p-6">
           <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
           
-          <div className="relative w-full aspect-[16/9] md:aspect-[21/9] md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent focus-within:border-purple-500 hover:border-purple-500">
-            {/* Pass each parameter directly to ensure they're being passed correctly */}
-            <div className="absolute inset-0 overflow-hidden">
-              <VFRViewerWrapper
-                params={{
-                  heightCm: avatarParams.heightCm,
-                  chestCm: avatarParams.chestCm,
-                  waistCm: avatarParams.waistCm,
-                  hipCm: avatarParams.hipCm
-                }}
-                showControls={false}
-              />
-            </div>
+          <div className="relative w-full md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
+            {/* Use the simplified viewer for guaranteed visibility */}
+            <SimpleVFRViewer height="400px" />
             
             {/* Fixed height placeholder for parameters - no layout shift */}
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs h-[56px]">

@@ -145,6 +145,11 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
         rotation={[0, 0, 0]}
         scale={0.9}
       />
+      {/* Add a debug box to ensure something is visible */}
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial color="hotpink" />
+      </mesh>
     </group>
   );
 }
@@ -163,7 +168,7 @@ export default function VFRViewer({
       <Canvas
         camera={{
           position: [0, 0.5, 2.5],
-          fov: 30,
+          fov: 50,
           near: 0.1,
           far: 1000
         }}
@@ -178,14 +183,15 @@ export default function VFRViewer({
       >
         <color attach="background" args={['#1a1a1a']} />
         
-        {/* Lighting setup */}
-        <ambientLight intensity={0.5} />
+        {/* Enhanced lighting setup */}
+        <ambientLight intensity={0.8} />
         <directionalLight
           position={[5, 5, 5]}
-          intensity={1}
+          intensity={1.5}
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
+        <pointLight position={[-5, 5, 5]} intensity={1} color="white" />
         
         <Suspense fallback={<LoadingSpinner />}>
           <ProgressiveModel
