@@ -159,7 +159,7 @@ export default function VFRViewer({
   isPreloaded = false
 }: VFRViewerProps) {
   return (
-    <div style={{ width: '100%', height: '100%', background: '#1a1a1a' }} className="mx-auto canvas-wrapper">
+    <div style={{ width: '100%', height: '100%', background: '#1a1a1a', overflow: 'hidden', position: 'relative' }} className="mx-auto canvas-wrapper">
       <Canvas
         camera={{
           position: [0, 0.5, 2.5],
@@ -168,6 +168,7 @@ export default function VFRViewer({
           far: 1000
         }}
         shadows
+        style={{ width: '100%', height: '100%', position: 'absolute' }}
         gl={{
           antialias: true,
           preserveDrawingBuffer: true,

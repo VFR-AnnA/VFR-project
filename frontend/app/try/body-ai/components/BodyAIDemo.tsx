@@ -266,7 +266,7 @@ export default function BodyAIDemo() {
           
           <div className="relative w-full aspect-[16/9] md:aspect-[21/9] md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent focus-within:border-purple-500 hover:border-purple-500">
             {/* Pass each parameter directly to ensure they're being passed correctly */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 overflow-hidden">
               <VFRViewerWrapper
                 params={{
                   heightCm: avatarParams.heightCm,
