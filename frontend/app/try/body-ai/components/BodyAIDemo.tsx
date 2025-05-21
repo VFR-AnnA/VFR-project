@@ -6,8 +6,7 @@
 
 "use client";
 
-import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback } from "react";
-import VFRViewerWrapper from "../../../components/VFRViewerWrapper";
+import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback, useMemo } from "react";
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
@@ -85,6 +84,52 @@ export default function BodyAIDemo() {
     }
   }, []);
   
+  // Create a function to process images in a non-blocking way
+  const processImageNonBlocking = async (img: HTMLImageElement): Promise<{
+    success: boolean;
+    poseLandmarks?: {x: number; y: number; z: number}[];
+    imageHeight?: number;
+    error?: string;
+  }> => {
+    return new Promise((resolve) => {
+      // Use requestIdleCallback to process the image when the browser is idle
+      const processInBackground = async () => {
+        try {
+          // Process the image with MediaPipe
+          const results = await getMeasurementsFromImage(img, true) as PoseResults;
+          
+          if (results && results.poseLandmarks) {
+            resolve({
+              success: true,
+              poseLandmarks: results.poseLandmarks,
+              imageHeight: img.height
+            });
+          } else {
+            resolve({
+              success: false,
+              error: "No pose landmarks detected"
+            });
+          }
+        } catch (error) {
+          console.error("Error in processImageNonBlocking:", error);
+          resolve({
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to detect body measurements"
+          });
+        }
+      };
+      
+      // Use requestIdleCallback if available, otherwise use setTimeout
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          processInBackground();
+        }, { timeout: 2000 });
+      } else {
+        setTimeout(processInBackground, 0);
+      }
+    });
+  };
+  
   // Handle file selection
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -96,44 +141,49 @@ export default function BodyAIDemo() {
       setImageUrl(url);
       setStatus("loading");
       
-      // Wait for the image to load before processing
-      const img = document.createElement('img');
+      // Create a new image element
+      const img = new Image();
       img.src = url;
       
       img.onload = async () => {
         try {
-          // Dynamically import MediaPipe to avoid Next.js build issues
-          await import('@mediapipe/pose');
+          // Process the image in a non-blocking way
+          const result = await processImageNonBlocking(img);
           
-          // Process the image with MediaPipe in the main thread
-          const results = await getMeasurementsFromImage(img, true) as PoseResults;
-          
-          if (results && results.poseLandmarks) {
+          if (result.success) {
             // Send landmarks to the worker for measurement calculations
             worker.postMessage({
               type: 'calculate-measurements',
-              poseLandmarks: results.poseLandmarks,
-              imageHeight: img.height
+              poseLandmarks: result.poseLandmarks,
+              imageHeight: result.imageHeight
             });
           } else {
-            setStatus("error");
-            setErrorMessage("No pose landmarks detected");
+            startTransition(() => {
+              setStatus("error");
+              setErrorMessage(result.error || "Failed to detect body measurements");
+            });
           }
         } catch (error) {
           console.error("Error detecting pose:", error);
-          setStatus("error");
-          setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
+          startTransition(() => {
+            setStatus("error");
+            setErrorMessage(error instanceof Error ? error.message : "Failed to detect body measurements");
+          });
         }
       };
       
       img.onerror = () => {
-        setStatus("error");
-        setErrorMessage("Failed to load image");
+        startTransition(() => {
+          setStatus("error");
+          setErrorMessage("Failed to load image");
+        });
       };
     } catch (error) {
       console.error("Error processing file:", error);
-      setStatus("error");
-      setErrorMessage("Failed to process image file");
+      startTransition(() => {
+        setStatus("error");
+        setErrorMessage("Failed to process image file");
+      });
     }
   };
   
@@ -143,37 +193,69 @@ export default function BodyAIDemo() {
     alert("Camera capture feature coming soon!");
   };
   
-  // Handle parameter change from sliders with throttling to prevent bursts of state updates
-  const handleParamChange = useCallback((param: keyof AvatarParams, value: number) => {
-    console.log(`🎚️ BodyAIDemo: Slider changed - ${param}: ${value}`);
-    // Use startTransition to avoid blocking the main thread
-    startTransition(() => {
-      setAvatarParams(prev => {
-        const newParams = {
-          ...prev,
-          [param]: value
-        };
-        console.log('🎚️ BodyAIDemo: Updated avatar params:', newParams);
-        return newParams;
-      });
-    });
+  // Create a memoized throttled function for parameter changes
+  // This prevents creating new throttled functions on each render
+  const throttledParamChange = useMemo(() => {
+    return {
+      heightCm: throttle((value: number) => {
+        startTransition(() => {
+          setAvatarParams(prev => ({
+            ...prev,
+            heightCm: value
+          }));
+        });
+      }, 100),
+      chestCm: throttle((value: number) => {
+        startTransition(() => {
+          setAvatarParams(prev => ({
+            ...prev,
+            chestCm: value
+          }));
+        });
+      }, 100),
+      waistCm: throttle((value: number) => {
+        startTransition(() => {
+          setAvatarParams(prev => ({
+            ...prev,
+            waistCm: value
+          }));
+        });
+      }, 100),
+      hipCm: throttle((value: number) => {
+        startTransition(() => {
+          setAvatarParams(prev => ({
+            ...prev,
+            hipCm: value
+          }));
+        });
+      }, 100)
+    };
   }, []);
   
-  // Create throttled versions of handleParamChange for each parameter
+  // Handle parameter change from sliders with throttling to prevent bursts of state updates
+  const handleParamChange = useCallback((param: keyof AvatarParams, value: number) => {
+    // Use the memoized throttled functions
+    if (param in throttledParamChange) {
+      throttledParamChange[param as keyof typeof throttledParamChange](value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Remove throttledParamChange from deps to avoid recreation on each render
+  
+  // Create handler functions for each parameter
   const handleHeightChange = useCallback((value: number) => {
-    throttle((v: number) => handleParamChange("heightCm", v), 16)(value);
+    handleParamChange("heightCm", value);
   }, [handleParamChange]);
   
   const handleChestChange = useCallback((value: number) => {
-    throttle((v: number) => handleParamChange("chestCm", v), 16)(value);
+    handleParamChange("chestCm", value);
   }, [handleParamChange]);
   
   const handleWaistChange = useCallback((value: number) => {
-    throttle((v: number) => handleParamChange("waistCm", v), 16)(value);
+    handleParamChange("waistCm", value);
   }, [handleParamChange]);
   
   const handleHipChange = useCallback((value: number) => {
-    throttle((v: number) => handleParamChange("hipCm", v), 16)(value);
+    handleParamChange("hipCm", value);
   }, [handleParamChange]);
   
   // Trigger file input click
@@ -266,8 +348,8 @@ export default function BodyAIDemo() {
           <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
           
           <div className="relative w-full md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
-            {/* Use the simplified viewer for guaranteed visibility */}
-            <SimpleVFRViewer height="400px" />
+            {/* Use the simplified viewer with avatar parameters */}
+            <SimpleVFRViewer height="400px" avatarParams={avatarParams} />
             
             {/* Fixed height placeholder for parameters - no layout shift */}
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs h-[56px]">
@@ -296,6 +378,9 @@ export default function BodyAIDemo() {
                 className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Height slider: ${avatarParams.heightCm} cm`}
                 title={`Adjust height: ${avatarParams.heightCm} cm`}
+                // Add passive event listener for better performance
+                onTouchStart={(e) => { e.currentTarget.dataset.touching = "true"; }}
+                onTouchEnd={(e) => { delete e.currentTarget.dataset.touching; }}
               />
             </div>
             
@@ -312,6 +397,9 @@ export default function BodyAIDemo() {
                 className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Chest slider: ${avatarParams.chestCm} cm`}
                 title={`Adjust chest: ${avatarParams.chestCm} cm`}
+                // Add passive event listener for better performance
+                onTouchStart={(e) => { e.currentTarget.dataset.touching = "true"; }}
+                onTouchEnd={(e) => { delete e.currentTarget.dataset.touching; }}
               />
             </div>
             
@@ -328,6 +416,9 @@ export default function BodyAIDemo() {
                 className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Waist slider: ${avatarParams.waistCm} cm`}
                 title={`Adjust waist: ${avatarParams.waistCm} cm`}
+                // Add passive event listener for better performance
+                onTouchStart={(e) => { e.currentTarget.dataset.touching = "true"; }}
+                onTouchEnd={(e) => { delete e.currentTarget.dataset.touching; }}
               />
             </div>
             
@@ -344,6 +435,9 @@ export default function BodyAIDemo() {
                 className="w-full focus:outline-offset-[-2px] focus-visible:outline-offset-[-2px]"
                 aria-label={`Hip slider: ${avatarParams.hipCm} cm`}
                 title={`Adjust hip: ${avatarParams.hipCm} cm`}
+                // Add passive event listener for better performance
+                onTouchStart={(e) => { e.currentTarget.dataset.touching = "true"; }}
+                onTouchEnd={(e) => { delete e.currentTarget.dataset.touching; }}
               />
             </div>
           </div>

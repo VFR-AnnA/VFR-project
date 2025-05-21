@@ -8,6 +8,7 @@
 
 import { useEffect } from 'react';
 import type { ReportHandler } from 'web-vitals';
+import { initINPMonitoring } from './inp-monitoring';
 
 /**
  * Web Vitals hook for client-side monitoring
@@ -20,9 +21,12 @@ export function useWebVitals(onPerfEntry?: ReportHandler): void {
       return;
     }
 
-    // Only run in production or when explicitly enabled
+    // Initialize INP monitoring (this will work in both dev and prod)
+    initINPMonitoring();
+
+    // Only run analytics in production or when explicitly enabled
     if (
-      process.env.NODE_ENV !== 'production' && 
+      process.env.NODE_ENV !== 'production' &&
       process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'true'
     ) {
       return;

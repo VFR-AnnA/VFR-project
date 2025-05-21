@@ -18,12 +18,20 @@ if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
   };
 }
 
-import { Canvas } from "@react-three/fiber";
+// Add type declaration for window
+declare global {
+  interface Window {
+    invalidateFrameloop: () => void;
+  }
+}
+
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
+import RealisticAvatar from "./RealisticAvatar";
 
 const MODELS_PATH = '/models';
 
@@ -55,15 +63,31 @@ interface ProgressiveModelProps {
   isPreloaded?: boolean;
 }
 
+// This component is not currently used but kept for future reference
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false }: ProgressiveModelProps) {
-  // Use the useGLTF hook at the component level
-  const { scene: fullScene } = useGLTF(fullUrl) as ModelGLTF;
+  // Use the useGLTF hook at the component level with draco decoder
+  const { scene: fullScene } = useGLTF(fullUrl, true) as ModelGLTF; // Enable draco decoder
   const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
   
   const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+  
+  // Listen for render requests (for demand-driven rendering)
+  useEffect(() => {
+    const handleRenderRequest = () => {
+      if (typeof window !== 'undefined' && window.invalidateFrameloop) {
+        window.invalidateFrameloop();
+      }
+    };
+    
+    window.addEventListener('request-render', handleRenderRequest);
+    return () => {
+      window.removeEventListener('request-render', handleRenderRequest);
+    };
+  }, []);
 
   // Apply avatar parameters as scale factors
   useEffect(() => {
@@ -106,15 +130,28 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
         debug('Loading stub model:', stubUrl);
         setModel(stubScene);
         
-        // Then set the full model after a short delay
-        const timer = setTimeout(() => {
+        // Use requestIdleCallback to load the full model when the browser is idle
+        // This helps prevent blocking the main thread during initial interaction
+        const loadFullModel = () => {
           debug('Loading full model:', fullUrl);
-          setModel(fullScene);
-          setIsLoading(false);
-          debug('Models loaded successfully');
-        }, 100);
+          // Use a microtask to avoid blocking the main thread
+          setTimeout(() => {
+            setModel(fullScene);
+            setIsLoading(false);
+            debug('Models loaded successfully');
+            // Request a render after model change
+            window.dispatchEvent(new CustomEvent('request-render'));
+          }, 0);
+        };
         
-        return () => clearTimeout(timer);
+        if ('requestIdleCallback' in window) {
+          const idleCallbackId = window.requestIdleCallback(loadFullModel, { timeout: 2000 });
+          return () => window.cancelIdleCallback(idleCallbackId);
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          const timer = setTimeout(loadFullModel, 100);
+          return () => clearTimeout(timer);
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -144,12 +181,18 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
         scale={0.9}
+        // Add onUpdate to trigger a render when the model changes
+        onUpdate={() => {
+          window.dispatchEvent(new CustomEvent('request-render'));
+        }}
       />
-      {/* Add a debug box to ensure something is visible */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial color="hotpink" />
-      </mesh>
+      {/* Remove debug box in production */}
+      {process.env.NODE_ENV !== 'production' && (
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial color="hotpink" />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -159,13 +202,42 @@ interface VFRViewerProps {
   isPreloaded?: boolean;
 }
 
+// This component will be rendered inside the Canvas and handle the invalidateFrameloop setup
+function CanvasSetup() {
+  // Set up the window.invalidateFrameloop function using useFrame
+  useFrame((state) => {
+    if (typeof window !== 'undefined' && !window.invalidateFrameloop) {
+      window.invalidateFrameloop = () => {
+        state.invalidate();
+      };
+    }
+    return null;
+  });
+  
+  return null;
+}
+
 export default function VFRViewer({
   avatarParams = DEFAULT_AVATAR_PARAMS,
   isPreloaded = false
 }: VFRViewerProps) {
+  // Create a memoized callback for OrbitControls onChange
+  const handleControlsChange = useCallback(() => {
+    // Request a single render frame when controls change
+    if (typeof window !== 'undefined') {
+      if (window.invalidateFrameloop) {
+        window.invalidateFrameloop();
+      } else {
+        // Fallback if invalidateFrameloop is not set yet
+        window.dispatchEvent(new CustomEvent('request-render'));
+      }
+    }
+  }, []);
+
   return (
     <div style={{ width: '100%', height: '100%', background: '#1a1a1a', overflow: 'hidden', position: 'relative' }} className="mx-auto canvas-wrapper">
       <Canvas
+        frameloop="demand" // Only render when needed to reduce INP
         camera={{
           position: [0, 0.5, 2.5],
           fov: 50,
@@ -178,7 +250,8 @@ export default function VFRViewer({
           antialias: true,
           preserveDrawingBuffer: true,
           alpha: true,
-          logarithmicDepthBuffer: true
+          logarithmicDepthBuffer: true,
+          powerPreference: 'high-performance' // Prefer GPU performance
         }}
       >
         <color attach="background" args={['#1a1a1a']} />
@@ -193,21 +266,25 @@ export default function VFRViewer({
         />
         <pointLight position={[-5, 5, 5]} intensity={1} color="white" />
         
+        <CanvasSetup />
         <Suspense fallback={<LoadingSpinner />}>
-          <ProgressiveModel
-            stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
-            fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
+          {/* Use the new RealisticAvatar component */}
+          <RealisticAvatar
             avatarParams={avatarParams}
             isPreloaded={isPreloaded}
+            useRealisticModel={true}
           />
           <Environment preset="city" />
           <OrbitControls
             enableDamping
             dampingFactor={0.05}
             minDistance={2}
-            maxDistance={15}  // Allow zooming out more
-            minPolarAngle={Math.PI / 8}  // Allow looking even more downward
-            maxPolarAngle={Math.PI / 1.2}  // Keep upward view the same
+            maxDistance={15}
+            minPolarAngle={Math.PI / 8}
+            maxPolarAngle={Math.PI / 1.2}
+            makeDefault // Ensure controls are properly disposed
+            // Use the memoized callback
+            onChange={handleControlsChange}
           />
         </Suspense>
       </Canvas>
@@ -215,6 +292,20 @@ export default function VFRViewer({
   );
 }
 
-// Preload models
-useGLTF.preload(`${MODELS_PATH}/mannequin-stub.glb`);
+// Preload models with link rel="preload"
 useGLTF.preload(`${MODELS_PATH}/mannequin-draco.glb`);
+
+// Add preload link for HD model to load it when browser is idle
+if (typeof document !== 'undefined') {
+  const linkExists = document.querySelector(`link[href="${MODELS_PATH}/mannequin-draco.glb"][rel="preload"]`);
+  
+  if (!linkExists) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = `${MODELS_PATH}/mannequin-draco.glb`;
+    link.as = 'fetch';
+    link.crossOrigin = 'anonymous';
+    link.setAttribute('importance', 'low');
+    document.head.appendChild(link);
+  }
+}
