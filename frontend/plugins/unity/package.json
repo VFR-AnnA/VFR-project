@@ -1,0 +1,10 @@
+{
+  "name": "unity-plugin",
+  "version": "0.1.0",
+  "description": "Unity plugin for VFR project",
+  "scripts": {
+    "pack": "node scripts/pack-unity-plugin.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

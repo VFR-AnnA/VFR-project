@@ -93,27 +93,37 @@ export default function BodyAIDemo() {
   // Create a function to process images in a non-blocking way
   const processImageNonBlocking = async (img: HTMLImageElement): Promise<{
     success: boolean;
-    poseLandmarks?: PoseLandmarks;
-    imageHeight?: number;
+    measurements?: AvatarParams;
     error?: string;
   }> => {
     return new Promise((resolve) => {
       // Use requestIdleCallback to process the image when the browser is idle
       const processInBackground = async () => {
         try {
-          // Process the image with MediaPipe
-          const results = await getMeasurementsFromImage(img, true) as PoseResults;
+          // Process the image with MediaPipe - returns heightCm directly now
+          const measurements = await getMeasurementsFromImage(img);
           
-          if (results && results.poseLandmarks) {
+          if (measurements && measurements.heightCm) {
+            // Construct a full AvatarParams object from the height
+            // Using standard proportions based on height
+            const heightCm = measurements.heightCm;
+            const chestCm = Math.round(heightCm * 0.54); // Approximate chest size from height
+            const waistCm = Math.round(heightCm * 0.45); // Approximate waist size from height
+            const hipCm = Math.round(heightCm * 0.57); // Approximate hip size from height
+            
             resolve({
               success: true,
-              poseLandmarks: results.poseLandmarks,
-              imageHeight: img.height
+              measurements: {
+                heightCm,
+                chestCm,
+                waistCm,
+                hipCm
+              }
             });
           } else {
             resolve({
               success: false,
-              error: "No pose landmarks detected"
+              error: "No measurements detected"
             });
           }
         } catch (error) {
@@ -156,13 +166,16 @@ export default function BodyAIDemo() {
           // Process the image in a non-blocking way
           const result = await processImageNonBlocking(img);
           
-          if (result.success) {
-            // Send landmarks to the worker for measurement calculations
-            worker.postMessage({
-              type: 'calculate-measurements',
-              poseLandmarks: result.poseLandmarks,
-              imageHeight: result.imageHeight
+          if (result.success && result.measurements) {
+            // We now have measurements directly, no need for worker calculations
+            const measurements = result.measurements; // TypeScript safety
+            startTransition(() => {
+              setAvatarParams(measurements);
+              setStatus("success");
             });
+            
+            // For debugging, log measurements
+            console.log("Detected measurements:", measurements);
           } else {
             startTransition(() => {
               setStatus("error");
@@ -355,7 +368,21 @@ export default function BodyAIDemo() {
           
           <div className="relative w-full md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
             {/* Use the simplified viewer with avatar parameters */}
-            <SimpleVFRViewer height="400px" avatarParams={avatarParams} />
+            <SimpleVFRViewer
+              height="400px"
+              avatarParams={avatarParams}
+            />
+            
+            {/* Fallback in case SimpleVFRViewer fails to render */}
+            {status === "success" && (
+              <div
+                className="absolute top-0 left-0 right-0 text-center p-1 bg-black bg-opacity-50 text-white text-xs"
+                style={{ display: "none" }} // Hidden by default, shown via CSS if SimpleVFRViewer fails
+                id="mannequin-fallback-message"
+              >
+                <p>Using fallback model viewer</p>
+              </div>
+            )}
             
             {/* Fixed height placeholder for parameters - no layout shift */}
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-black text-white text-xs h-[56px]">
