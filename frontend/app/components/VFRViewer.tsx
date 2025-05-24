@@ -18,34 +18,27 @@ if (typeof window !== 'undefined' && typeof ProgressEvent === 'undefined') {
   };
 }
 
-import { Canvas, useLoader } from "@react-three/fiber";
+// Add type declaration for window
+declare global {
+  interface Window {
+    invalidateFrameloop: () => void;
+  }
+}
+
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
+import RealisticAvatar from "./RealisticAvatar";
 
 const MODELS_PATH = '/models';
 
-// Debug logging function - using direct console.log for maximum visibility
+// Debug logging function
 const debug = (message: string, ...args: unknown[]) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[VFRViewer] ${message}`, ...args);
-  }
-};
-
-// Debug function to log morph targets
-const logMorphTargets = (mesh: THREE.Mesh) => {
-  debug('🔍 Checking mesh for morph targets:', mesh.name);
-  
-  if (mesh.morphTargetDictionary) {
-    debug('✅ FOUND MORPH TARGETS:', Object.keys(mesh.morphTargetDictionary));
-    debug('Current morph influences:', [...(mesh.morphTargetInfluences || [])]);
-  } else {
-    debug('❌ NO MORPH TARGETS found on mesh:', mesh.name);
-  }
+  console.log(`[VFRViewer] ${message}`, ...args);
 };
 
 function LoadingSpinner() {
@@ -68,29 +61,21 @@ interface ProgressiveModelProps {
   stubUrl: string;
   fullUrl: string;
   avatarParams: AvatarParams;
+  isPreloaded?: boolean;
 }
 
-function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelProps) {
+// Enhanced version of ProgressiveModel with improved model loading
+// This component is not currently used but kept for future reference
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false }: ProgressiveModelProps) {
   const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
 
-  const draco = useMemo(() => {
-    const loader = new DRACOLoader();
-    loader.setDecoderPath('/draco/');
-    return loader;
-  }, []);
-
-  const { scene: fullScene } = useLoader(GLTFLoader, fullUrl, loader => {
-    loader.setDRACOLoader(draco);
-    loader.manager.onError = () => setError(`Failed to load ${fullUrl}`);
-  }) as ModelGLTF;
-
-  const { scene: stubScene } = useLoader(GLTFLoader, stubUrl, loader => {
-    loader.setDRACOLoader(draco);
-    loader.manager.onError = () => setError(`Failed to load ${stubUrl}`);
-  }) as ModelGLTF;
+  // Use useGLTF which has built-in DRACO support
+  const { scene: fullScene } = useGLTF(fullUrl, true) as ModelGLTF; // Enable draco decoder
+  const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
 
   // Mapping from parameter names to possible morph target names
   // We include multiple possible names for each parameter to increase chances of finding a match
@@ -102,92 +87,43 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
     hip: ['HipWidth', 'Hip', 'hip', 'HipGirth', 'Pelvis', 'LowerBodyWidth']
   };
   
-  // Function to find the best matching morph target
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const findMorphTarget = (dictionary: Record<string, number>, possibleNames: string[]): number | undefined => {
-    for (const name of possibleNames) {
-      if (dictionary[name] !== undefined) {
-        debug(`Found morph target match: ${name}`);
-        return dictionary[name];
-      }
-    }
-    return undefined;
-  };
-
-  // Apply avatar parameters as morph targets and scale factors
+  // Listen for render requests (for demand-driven rendering)
   useEffect(() => {
-    // Log the current avatar parameters
-    debug('🔄 APPLYING AVATAR PARAMETERS:', avatarParams);
+    const handleRenderRequest = () => {
+      if (typeof window !== 'undefined' && window.invalidateFrameloop) {
+        window.invalidateFrameloop();
+      }
+    };
     
+    window.addEventListener('request-render', handleRenderRequest);
+    return () => {
+      window.removeEventListener('request-render', handleRenderRequest);
+    };
+  }, []);
+
+  // Apply avatar parameters as scale factors
+  useEffect(() => {
     if (modelRef.current) {
       const { height, chest, waist, hip } = paramsToScaleFactors(avatarParams);
-      debug('📏 Converted to scale factors:', { height, chest, waist, hip });
       
-      // Apply overall scaling based on all parameters
-      modelRef.current.scale.y = 0.9 * height;  // Height affects Y scale
-      modelRef.current.scale.x = 0.9 * chest;   // Chest affects X scale
-      modelRef.current.scale.z = 0.9 * waist;   // Waist affects Z scale
+      // Apply overall height scaling
+      modelRef.current.scale.y = 0.9 * height;
       
-      debug('📏 Applied direct scaling to model:', {
-        scaleY: modelRef.current.scale.y,
-        scaleX: modelRef.current.scale.x,
-        scaleZ: modelRef.current.scale.z
-      });
-      
-      // Find meshes with morph targets
+      // Find and scale specific body parts if they exist
       modelRef.current.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-          // Log available morph targets for debugging
-          if (process.env.NODE_ENV === 'development') {
-            logMorphTargets(child);
-          }
+          const name = child.name.toLowerCase();
           
-          // Try a direct approach to apply morph targets
-          let morphTargetsApplied = false;
-          
-          if (child.morphTargetDictionary && child.morphTargetInfluences) {
-            debug('✅ FOUND MESH WITH MORPH TARGETS:', child.name);
-            debug('Available morph targets:', Object.keys(child.morphTargetDictionary));
-            
-            // Try to apply each parameter directly to all available morph targets
-            // This is a brute force approach to see if any morph target responds
-            Object.keys(child.morphTargetDictionary).forEach(morphName => {
-              if (child.morphTargetDictionary && child.morphTargetInfluences) {
-                const morphIndex = child.morphTargetDictionary[morphName];
-                
-                // Apply a significant value to see if it has any effect
-                const value = 1.0; // Maximum influence
-                child.morphTargetInfluences[morphIndex] = value;
-                
-                debug(`✅ APPLIED MORPH TARGET: ${morphName} (index: ${morphIndex}) = ${value}`);
-                morphTargetsApplied = true;
-              }
-            });
-          } else {
-            debug('❌ NO MORPH TARGETS on mesh:', child.name);
-          }
-          
-          // Fallback: If no morph targets were applied, use scaling as a fallback
-          if (!morphTargetsApplied) {
-            const name = child.name.toLowerCase();
-            const { chest, waist, hip } = paramsToScaleFactors(avatarParams);
-            
-            debug(`⚠️ NO MORPH TARGETS FOUND, using fallback scaling for mesh: ${child.name}`);
-            
-            // Apply specific scaling to body parts based on name
-            if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
-              child.scale.x = chest;
-              child.scale.z = chest;
-              debug(`📏 Applied CHEST scaling: ${chest} to ${child.name}`);
-            } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
-              child.scale.x = waist;
-              child.scale.z = waist;
-              debug(`📏 Applied WAIST scaling: ${waist} to ${child.name}`);
-            } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
-              child.scale.x = hip;
-              child.scale.z = hip;
-              debug(`📏 Applied HIP scaling: ${hip} to ${child.name}`);
-            }
+          // Apply specific scaling to body parts
+          if (name.includes('chest') || name.includes('torso') || name.includes('upper')) {
+            child.scale.x = chest;
+            child.scale.z = chest;
+          } else if (name.includes('waist') || name.includes('abdomen') || name.includes('middle')) {
+            child.scale.x = waist;
+            child.scale.z = waist;
+          } else if (name.includes('hip') || name.includes('pelvis') || name.includes('lower')) {
+            child.scale.x = hip;
+            child.scale.z = hip;
           }
         }
       });
@@ -195,30 +131,20 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
   }, [avatarParams, model]);
 
   useEffect(() => {
-    // First set the stub model
-    debug('🔄 Loading stub model:', stubUrl);
-    setModel(stubScene);
-      
-      // Log the model structure to check for morph targets
-      debug('🔍 STUB MODEL STRUCTURE:');
-      stubScene.traverse((child) => {
-        debug(`- ${child.type}: ${child.name}`);
-        if (child instanceof THREE.Mesh) {
-          debug(`  Has morph targets: ${!!child.morphTargetDictionary}`);
-          if (child.morphTargetDictionary) {
-            debug(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
-          }
-        }
-      });
-      
-      // Then set the full model after a short delay
-      const timer = setTimeout(() => {
-        debug('🔄 Loading full model:', fullUrl);
+    try {
+      // If the model is already preloaded, use the full model directly
+      if (isPreloaded) {
+        debug('Using preloaded model');
         setModel(fullScene);
+        setIsLoading(false);
+      } else {
+        // First set the stub model
+        debug('🔄 Loading stub model:', stubUrl);
+        setModel(stubScene);
         
         // Log the model structure to check for morph targets
-        debug('🔍 FULL MODEL STRUCTURE:');
-        fullScene.traverse((child) => {
+        debug('🔍 STUB MODEL STRUCTURE:');
+        stubScene.traverse((child) => {
           debug(`- ${child.type}: ${child.name}`);
           if (child instanceof THREE.Mesh) {
             debug(`  Has morph targets: ${!!child.morphTargetDictionary}`);
@@ -228,12 +154,36 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
           }
         });
         
-        setIsLoading(false);
-        debug('✅ Models loaded successfully');
-      }, 100);
-      
-    return () => clearTimeout(timer);
-  }, [stubScene, fullScene, stubUrl, fullUrl]);
+        // Use requestIdleCallback to load the full model when the browser is idle
+        // This helps prevent blocking the main thread during initial interaction
+        const loadFullModel = () => {
+          debug('🔄 Loading full model:', fullUrl);
+          // Use a microtask to avoid blocking the main thread
+          setTimeout(() => {
+            setModel(fullScene);
+            setIsLoading(false);
+            debug('✅ Models loaded successfully');
+            // Request a render after model change
+            window.dispatchEvent(new CustomEvent('request-render'));
+          }, 0);
+        };
+        
+        if ('requestIdleCallback' in window) {
+          const idleCallbackId = window.requestIdleCallback(loadFullModel, { timeout: 2000 });
+          return () => window.cancelIdleCallback(idleCallbackId);
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          const timer = setTimeout(loadFullModel, 100);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      debug('Error loading models:', errorMessage);
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  }, [stubScene, fullScene, stubUrl, fullUrl, isPreloaded]);
 
   if (error) {
     return (
@@ -255,69 +205,112 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams }: ProgressiveModelPr
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
         scale={0.9}
+        // Add onUpdate to trigger a render when the model changes
+        onUpdate={() => {
+          window.dispatchEvent(new CustomEvent('request-render'));
+        }}
       />
+      {/* Remove debug box in production */}
+      {process.env.NODE_ENV !== 'production' && (
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial color="hotpink" />
+        </mesh>
+      )}
     </group>
   );
 }
 
 interface VFRViewerProps {
   avatarParams?: AvatarParams;
+  isPreloaded?: boolean;
+  useWebGPU?: boolean;
 }
 
-export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRViewerProps) {
-  // Log the received avatar parameters
-  debug('🔍 VFRViewer: Received avatarParams:', avatarParams);
+// This component will be rendered inside the Canvas and handle the invalidateFrameloop setup
+function CanvasSetup() {
+  // Set up the window.invalidateFrameloop function using useFrame
+  useFrame((state) => {
+    if (typeof window !== 'undefined' && !window.invalidateFrameloop) {
+      window.invalidateFrameloop = () => {
+        state.invalidate();
+      };
+    }
+    return null;
+  });
   
-  // Log the parameters being passed to ProgressiveModel
-  debug('🔍 VFRViewer: Passing to ProgressiveModel:', avatarParams);
+  return null;
+}
+
+export default function VFRViewer({
+  avatarParams = DEFAULT_AVATAR_PARAMS,
+  isPreloaded = false,
+  useWebGPU = false
+}: VFRViewerProps) {
+  // Create a memoized callback for OrbitControls onChange
+  const handleControlsChange = useCallback(() => {
+    // Request a single render frame when controls change
+    if (typeof window !== 'undefined') {
+      if (window.invalidateFrameloop) {
+        window.invalidateFrameloop();
+      } else {
+        // Fallback if invalidateFrameloop is not set yet
+        window.dispatchEvent(new CustomEvent('request-render'));
+      }
+    }
+  }, []);
+
   return (
-    <div style={{ width: '100%', height: '540px', background: '#1a1a1a' }}>
+    <div style={{ width: '100%', height: '100%', background: '#1a1a1a', overflow: 'hidden', position: 'relative' }} className="mx-auto canvas-wrapper">
       <Canvas
+        frameloop="demand" // Only render when needed to reduce INP
         camera={{
           position: [0, 0.5, 2.5],
-          fov: 30,
+          fov: 50,
           near: 0.1,
           far: 1000
         }}
         shadows
+        style={{ width: '100%', height: '100%', position: 'absolute' }}
         gl={{
           antialias: true,
           preserveDrawingBuffer: true,
           alpha: true,
-          logarithmicDepthBuffer: true
+          logarithmicDepthBuffer: true,
+          powerPreference: 'high-performance' // Prefer GPU performance
         }}
       >
         <color attach="background" args={['#1a1a1a']} />
         
-        {/* Lighting setup */}
-        <ambientLight intensity={0.5} />
+        {/* Enhanced lighting setup */}
+        <ambientLight intensity={0.8} />
         <directionalLight
           position={[5, 5, 5]}
-          intensity={1}
+          intensity={1.5}
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
+        <pointLight position={[-5, 5, 5]} intensity={1} color="white" />
         
+        <CanvasSetup />
         <Suspense fallback={<LoadingSpinner />}>
-          {/* Pass each parameter directly to ensure they're being passed correctly */}
-          <ProgressiveModel
-            stubUrl={`${MODELS_PATH}/mannequin-stub.glb`}
-            fullUrl={`${MODELS_PATH}/mannequin-draco.glb`}
-            avatarParams={{
-              heightCm: avatarParams.heightCm,
-              chestCm: avatarParams.chestCm,
-              waistCm: avatarParams.waistCm,
-              hipCm: avatarParams.hipCm
-            }}
+          {/* Use the RealisticAvatar component */}
+          <RealisticAvatar
+            avatarParams={avatarParams}
+            isPreloaded={isPreloaded}
+            useRealisticModel={true}
           />
           <Environment preset="city" />
           <OrbitControls
             enableDamping
             dampingFactor={0.05}
             minDistance={2}
-            maxDistance={15}  // Allow zooming out more
-            minPolarAngle={Math.PI / 8}  // Allow looking even more downward
-            maxPolarAngle={Math.PI / 1.2}  // Keep upward view the same
+            maxDistance={15}
+            minPolarAngle={Math.PI / 8}
+            maxPolarAngle={Math.PI / 1.2}
+            makeDefault // Ensure controls are properly disposed
+            // Use the memoized callback
+            onChange={handleControlsChange}
           />
         </Suspense>
       </Canvas>
@@ -325,6 +318,21 @@ export default function VFRViewer({ avatarParams = DEFAULT_AVATAR_PARAMS }: VFRV
   );
 }
 
-// Preload models
-useLoader.preload(GLTFLoader, `${MODELS_PATH}/mannequin-stub.glb`);
-useLoader.preload(GLTFLoader, `${MODELS_PATH}/mannequin-draco.glb`);
+// Preload models using useGLTF.preload which has built-in DRACO support
+useGLTF.preload(`${MODELS_PATH}/mannequin-stub.glb`);
+useGLTF.preload(`${MODELS_PATH}/mannequin-draco.glb`);
+
+// Add preload link for HD model to load it when browser is idle
+if (typeof document !== 'undefined') {
+  const linkExists = document.querySelector(`link[href="${MODELS_PATH}/mannequin-draco.glb"][rel="preload"]`);
+  
+  if (!linkExists) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = `${MODELS_PATH}/mannequin-draco.glb`;
+    link.as = 'fetch';
+    link.crossOrigin = 'anonymous';
+    link.setAttribute('importance', 'low');
+    document.head.appendChild(link);
+  }
+}

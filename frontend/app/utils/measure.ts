@@ -5,6 +5,7 @@
  */
 
 import * as poseModule from '@mediapipe/pose';
+import { PoseLandmarks, POSE_LANDMARKS } from '../../types/pose-landmarks';
 
 // Define the types we need from MediaPipe
 // Use the actual type from MediaPipe
@@ -17,20 +18,6 @@ export interface BodyMeasurements {
   waistCm: number;
   hipCm: number;
 }
-
-// Define the landmarks we need for measurements
-// Using the constants from the MediaPipe package
-const POSE_LANDMARKS = {
-  NOSE: 0,
-  LEFT_SHOULDER: 11,
-  RIGHT_SHOULDER: 12,
-  LEFT_HIP: 23,
-  RIGHT_HIP: 24,
-  LEFT_KNEE: 25,
-  RIGHT_KNEE: 26,
-  LEFT_ANKLE: 27,
-  RIGHT_ANKLE: 28,
-};
 
 /**
  * Calculate Euclidean distance between two 3D points
@@ -148,8 +135,9 @@ export async function initPoseDetector(): Promise<poseModule.Pose> {
  */
 export async function getMeasurementsFromImage(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+  returnRawResults?: boolean,
   referenceHeightCm?: number
-): Promise<BodyMeasurements> {
+): Promise<BodyMeasurements | PoseResults> {
   try {
     const pose = await initPoseDetector() as poseModule.Pose;
     
@@ -157,28 +145,28 @@ export async function getMeasurementsFromImage(
       pose.onResults((results: poseModule.Results) => {
         if (results.poseLandmarks) {
           try {
-            const measurements = estimateBodyMeasurements(
-              results.poseLandmarks,
-              imageSource.height,
-              referenceHeightCm
-            );
-            resolve(measurements);
-            pose.close();
+            // If returnRawResults is true, return the raw results
+            if (returnRawResults) {
+              resolve(results);
+            } else {
+              // Otherwise, calculate and return the measurements
+              const measurements = estimateBodyMeasurements(
+                results.poseLandmarks,
+                imageSource.height,
+                referenceHeightCm
+              );
+              resolve(measurements);
+            }
           } catch (error) {
             reject(error);
-            pose.close();
           }
         } else {
           reject(new Error('No pose landmarks detected'));
-          pose.close();
         }
       });
-
+      
       // Process the image
-      pose.send({ image: imageSource }).catch(err => {
-        pose.close();
-        reject(err);
-      });
+      pose.send({ image: imageSource }).catch(reject);
     });
   } catch (error) {
     console.error('Error initializing pose detector:', error);
