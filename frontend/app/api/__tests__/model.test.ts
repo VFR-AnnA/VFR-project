@@ -4,6 +4,16 @@
  */
 
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { NextRequest } from 'next/server';
+
+// Mock Request class
+class MockRequest extends Request {
+  constructor(input: string | URL, init?: RequestInit) {
+    super(input, init);
+  }
+}
+
+global.Request = MockRequest as any;
 import { GET } from '../model/route';
 
 // Mock the fetch function
@@ -26,7 +36,7 @@ describe('Model Proxy API Route', () => {
 
   it('should return 400 when no URL is provided', async () => {
     // Arrange
-    const mockRequest = new Request('https://example.com/api/model');
+    const mockRequest = new NextRequest('https://example.com/api/model');
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
@@ -44,7 +54,7 @@ describe('Model Proxy API Route', () => {
 
   it('should return 404 when upstream returns 404', async () => {
     // Arrange
-    const mockRequest = new Request('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
+    const mockRequest = new NextRequest('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
@@ -70,7 +80,7 @@ describe('Model Proxy API Route', () => {
 
   it('should return 200 with CORS headers when upstream returns 200', async () => {
     // Arrange
-    const mockRequest = new Request('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
+    const mockRequest = new NextRequest('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
@@ -115,7 +125,7 @@ describe('Model Proxy API Route', () => {
 
   it('should handle fetch errors gracefully', async () => {
     // Arrange
-    const mockRequest = new Request('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
+    const mockRequest = new NextRequest('https://example.com/api/model?url=https://assets.meshy.ai/test.glb');
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
