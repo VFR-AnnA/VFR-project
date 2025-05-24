@@ -1,5 +1,5 @@
-// Note: You'll need to install zustand with: pnpm add zustand
-// import { create } from 'zustand';
+// Since we can't install zustand in this environment, we'll use a placeholder implementation
+// that mimics the Zustand API
 
 // Define the GeneratorResult interface locally since it's not exported from the route
 interface GeneratorResult {
