@@ -31,6 +31,12 @@ interface GeneratorResult {
   createdAt: string;
   metadata: Record<string, unknown>;
   textureUrls?: string[];
+  measurements?: {
+    heightCm: number;
+    chestCm: number;
+    waistCm: number;
+    hipCm: number;
+  }; // Object with semantic measurement fields
 }
 
 /**
@@ -55,6 +61,28 @@ function sanitizeErrorMessage(message: string): string {
   }
   
   return message;
+}
+
+/**
+ * Compute measurements from model data
+ * @param data The model data from the provider
+ * @returns Object with semantic measurement fields
+ */
+function computeMeasurements(data: any): {
+  heightCm: number;
+  chestCm: number;
+  waistCm: number;
+  hipCm: number;
+} {
+  // This is a placeholder implementation
+  // In a real implementation, you would extract measurements from the model data
+  // For now, we'll return some dummy values
+  return {
+    heightCm: 175, // Height in centimeters
+    chestCm: 95,   // Chest circumference in centimeters
+    waistCm: 80,   // Waist circumference in centimeters
+    hipCm: 100     // Hip circumference in centimeters
+  };
 }
 
 /**
@@ -405,7 +433,8 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
           quality: options.quality || 'standard',
           isPBR: true
         },
-        textureUrls: refineResultData.texture_urls || []
+        textureUrls: refineResultData.texture_urls || [],
+        measurements: computeMeasurements(refineResultData)
       };
     } else {
       // If enablePBR is false, return the preview model
@@ -438,7 +467,8 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
           modelType: options.modelType || 'avatar',
           quality: options.quality || 'standard',
           isPBR: false
-        }
+        },
+        measurements: computeMeasurements(previewData)
       };
     }
   } catch (error) {
