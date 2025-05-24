@@ -31,7 +31,12 @@ interface GeneratorResult {
     [key: string]: unknown;
   };
   textureUrls?: string[];
-  measurements?: number[]; // Array of model measurements
+  measurements?: {
+    heightCm: number;
+    chestCm: number;
+    waistCm: number;
+    hipCm: number;
+  }; // Object with semantic measurement fields
 }
 
 type ModelType = 'avatar' | 'clothing' | 'accessory';
@@ -96,8 +101,30 @@ export default function GeneratorDemo() {
   const setGeneratorResponse = useStore.getState().setGeneratorResponse;
 
   // Handle generation completion from the progress component
-  const handleGenerationComplete = (modelUrl: string, textureUrls?: any[], measurements?: number[]) => {
+  const handleGenerationComplete = (
+    modelUrl: string,
+    textureUrls?: any[],
+    rawMeasurements?: number[] | {
+      heightCm: number;
+      chestCm: number;
+      waistCm: number;
+      hipCm: number;
+    }
+  ) => {
     console.log('Generation complete with model URL:', modelUrl);
+    
+    // Convert measurements to the correct format if they're an array
+    let formattedMeasurements;
+    if (Array.isArray(rawMeasurements) && rawMeasurements.length >= 4) {
+      formattedMeasurements = {
+        heightCm: rawMeasurements[0] * 100, // Convert to cm if in meters
+        chestCm: rawMeasurements[1] * 100,
+        waistCm: rawMeasurements[2] * 100,
+        hipCm: rawMeasurements[3] * 100
+      };
+    } else if (rawMeasurements && !Array.isArray(rawMeasurements)) {
+      formattedMeasurements = rawMeasurements;
+    }
     
     // Create a result object similar to what the API would return
     const generationResult: GeneratorResult = {
@@ -113,7 +140,7 @@ export default function GeneratorDemo() {
         texturePrompt: enablePBR ? texturePrompt : undefined
       },
       textureUrls: textureUrls,
-      measurements: measurements
+      measurements: formattedMeasurements
     };
     
     // Update local state
@@ -123,7 +150,7 @@ export default function GeneratorDemo() {
     
     // Update the global store
     setGeneratorResponse(generationResult);
-    console.log('Updated store with generator response including measurements:', measurements);
+    console.log('Updated store with generator response including measurements:', formattedMeasurements);
   };
   
   // Handle generation error from the progress component

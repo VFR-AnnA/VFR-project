@@ -9,7 +9,12 @@ interface GeneratorResult {
   createdAt: string;
   metadata: Record<string, unknown>;
   textureUrls?: string[];
-  measurements?: number[];
+  measurements?: {
+    heightCm: number;
+    chestCm: number;
+    waistCm: number;
+    hipCm: number;
+  };
 }
 
 interface StoreState {

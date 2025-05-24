@@ -31,7 +31,12 @@ interface GeneratorResult {
   createdAt: string;
   metadata: Record<string, unknown>;
   textureUrls?: string[];
-  measurements?: number[]; // Array of model measurements
+  measurements?: {
+    heightCm: number;
+    chestCm: number;
+    waistCm: number;
+    hipCm: number;
+  }; // Object with semantic measurement fields
 }
 
 /**
@@ -61,13 +66,23 @@ function sanitizeErrorMessage(message: string): string {
 /**
  * Compute measurements from model data
  * @param data The model data from the provider
- * @returns Array of measurements
+ * @returns Object with semantic measurement fields
  */
-function computeMeasurements(data: any): number[] {
+function computeMeasurements(data: any): {
+  heightCm: number;
+  chestCm: number;
+  waistCm: number;
+  hipCm: number;
+} {
   // This is a placeholder implementation
   // In a real implementation, you would extract measurements from the model data
   // For now, we'll return some dummy values
-  return [1.75, 0.45, 0.65, 0.4]; // Example: height, shoulder width, chest, waist
+  return {
+    heightCm: 175, // Height in centimeters
+    chestCm: 95,   // Chest circumference in centimeters
+    waistCm: 80,   // Waist circumference in centimeters
+    hipCm: 100     // Hip circumference in centimeters
+  };
 }
 
 /**
