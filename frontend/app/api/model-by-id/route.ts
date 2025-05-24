@@ -3,40 +3,114 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'edge';
 
 /**
- * Edge API route that proxies requests to Meshy's model assets
+ * Edge API route that proxies requests to model assets
  * and adds the necessary CORS headers to allow browser access
- * Uses query parameter instead of path parameter to avoid type issues
+ *
+ * Supports multiple ways to reference models:
+ * - /api/model-by-id?taskId=... - For Meshy generated models
+ * - /api/model-by-id?url=... - For any remote model URL
+ * - /api/model-by-id?path=... - For local models in public directory
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const taskId = searchParams.get('taskId');
-  
-  if (!taskId) {
-    return NextResponse.json({ error: 'Missing taskId parameter' }, { status: 400 });
-  }
-  
-  const url = `https://assets.meshy.ai/${taskId}/output/model.glb`;
-  
   try {
-    // Fetch the model from Meshy's servers without caching
-    const meshyResponse = await fetch(url, { cache: 'no-store' });
+    const { searchParams } = new URL(request.url);
+    const taskId = searchParams.get('taskId');
+    const url = searchParams.get('url');
+    const path = searchParams.get('path');
     
-    // If the model couldn't be fetched, return a 404
-    if (!meshyResponse.ok) {
-      console.error(`Failed to fetch model from Meshy: ${meshyResponse.status} ${meshyResponse.statusText}`);
-      return new NextResponse('Model not found', { status: 404 });
+    let modelUrl: string;
+    
+    // Determine which parameter to use
+    if (taskId) {
+      // Meshy model with task ID
+      modelUrl = `https://assets.meshy.ai/${taskId}/output/model.glb`;
+      console.log(`[ModelProxy] Fetching Meshy model with ID: ${taskId}`);
+    } else if (url) {
+      // Direct URL to a model
+      modelUrl = url;
+      console.log(`[ModelProxy] Fetching model from URL: ${url}`);
+    } else if (path) {
+      // Path to a local model in public directory
+      const modelPath = path.startsWith('/') ? path : `/${path}`;
+      return NextResponse.redirect(new URL(modelPath, request.url));
+    } else {
+      // Default to mannequin model if no parameters provided
+      return NextResponse.redirect(new URL('/models/mannequin.glb', request.url));
+    }
+    
+    // Validate URL if provided directly
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      return NextResponse.json(
+        { error: 'URL must be absolute (start with http:// or https://)' },
+        { status: 400 }
+      );
+    }
+    
+    // Handle local models (redirect to static files)
+    if (modelUrl.startsWith('/')) {
+      return NextResponse.redirect(new URL(modelUrl, request.url));
+    }
+    
+    // For remote models, proxy the request
+    const modelResponse = await fetch(modelUrl, {
+      cache: 'no-store',
+      headers: {
+        // Add authorization header if needed for Meshy
+        ...(modelUrl.includes('assets.meshy.ai') && process.env.MESHY_KEY
+            ? { 'Authorization': `Bearer ${process.env.MESHY_KEY}` }
+            : {})
+      }
+    });
+    
+    // If the model couldn't be fetched, return a meaningful error
+    if (!modelResponse.ok) {
+      console.error(`[ModelProxy] Error fetching model: ${modelResponse.status} ${modelResponse.statusText}`);
+      
+      let errorBody: string;
+      try {
+        errorBody = await modelResponse.text();
+      } catch (e) {
+        errorBody = 'Could not read error response';
+      }
+      
+      return NextResponse.json(
+        {
+          error: `Error ${modelResponse.status}: ${modelResponse.statusText}`,
+          details: errorBody
+        },
+        {
+          status: modelResponse.status,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
 
-    // Return the model with CORS headers
-    return new NextResponse(meshyResponse.body, {
+    // Return the model with appropriate headers
+    return new NextResponse(modelResponse.body, {
       headers: {
         'Content-Type': 'model/gltf-binary',
-        'Access-Control-Allow-Origin': '*',  // Allow access from any origin
-        'Cache-Control': 'public, max-age=31536000, immutable',  // Cache for 1 year
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error) {
-    console.error('Error proxying model from Meshy:', error);
-    return new NextResponse('Error fetching model', { status: 500 });
+    console.error('[ModelProxy] Exception:', error);
+    
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Unknown error fetching model',
+        timestamp: new Date().toISOString()
+      },
+      {
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 }

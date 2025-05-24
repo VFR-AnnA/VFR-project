@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  MESHY_KEY:   ${{ secrets.MESHY_KEY }}
+  HY3D_KEY:    ${{ secrets.HY3D_KEY }}
+  HY3D_REGION: cn-shenzhen
+  GEN_PROVIDER: hunyuan
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.x
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+        
+      - name: API Key Smoke Test
+        run: |
+          echo "Testing API key validity without making real generation requests"
+          node scripts/smoke-test-keys.js
+          node scripts/test-production-performance.js --dry-run
+
+      - name: Build generator
+        run: pnpm --filter generator build
+
+      - name: Package Unity plugin
+        run: pnpm --filter unity-plugin run pack
+
+      - name: Build Next.js app
+        run: pnpm build
+
+      - name: Upload generator artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generator-dist
+          path: services/generator/dist
+          if-no-files-found: error
+
+      - name: Upload Unity plugin artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-plugin
+          path: plugins/unity/AvatarWalletVFR.unitypackage
+          if-no-files-found: error
+
+      - name: Upload Next.js build
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: .next
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Setup for deployment
+        run: |
+          echo "Setting up deployment..."
+          # This would be replaced with actual deployment steps
+          # For example, deploying to Vercel or Cloudflare Pages
+
+      - name: Deploy
+        run: |
+          echo "Deploying to production..."
+          # Uncomment to deploy with Vercel
+          npx vercel --token ${{ secrets.VERCEL_TOKEN }} --prod --confirm

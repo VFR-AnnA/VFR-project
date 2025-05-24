@@ -8,6 +8,28 @@ import webpack from 'webpack';
  */
 
 const nextConfig: NextConfig = {
+  // Expose environment variables to the client
+  // SECURITY: API keys should NOT be exposed to the client
+  env: {
+    // REMOVED: MESHY_KEY and HUNYUAN_KEY for security reasons
+    GEN_PROVIDER: process.env.GEN_PROVIDER,
+    NEXT_PUBLIC_FEATURE_GEN: process.env.NEXT_PUBLIC_FEATURE_GEN,
+    NEXT_PUBLIC_FEATURE_REFINE_PBR: process.env.NEXT_PUBLIC_FEATURE_REFINE_PBR
+  },
+  
+  // Add explicit redirect for root path in development mode
+  async redirects() {
+    return process.env.NODE_ENV === "development"
+      ? [
+          {
+            source: "/",
+            destination: "/generator-demo",
+            permanent: false,
+          },
+        ]
+      : [];
+  },
+  
   webpack(config) {
     // Add banner plugin
     config.plugins.push(

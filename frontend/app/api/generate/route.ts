@@ -4,8 +4,10 @@ import '../../../lib/gen3d/serverProviderRegistration';
 import { NextRequest, NextResponse } from 'next/server';
 import { isFeatureEnabled } from '../../config/featureFlags';
 import { getProvider } from '../../utils/providerFactory';
+import { getSecureKey, verifyApiKeys } from '../../../lib/gen3d/SecureKeyProvider';
 
-export const runtime = 'edge';
+// Force Node.js runtime to ensure environment variables work correctly
+export const runtime = 'nodejs';
 
 // Meshy API configuration - using the correct endpoint from the docs
 const MESHY_URL = 'https://api.meshy.ai/openapi/v2/text-to-3d';
@@ -32,6 +34,30 @@ interface GeneratorResult {
 }
 
 /**
+ * Sanitize error messages to prevent leaking sensitive information
+ * @param message Original error message
+ * @returns Sanitized message
+ */
+function sanitizeErrorMessage(message: string): string {
+  // Don't expose API keys in error messages
+  if (message.includes('Bearer ')) {
+    message = message.replace(/Bearer [^\s]+/, 'Bearer [REDACTED]');
+  }
+  
+  // Don't expose full error responses that might contain sensitive data
+  if (message.includes('errorText')) {
+    message = message.replace(/errorText:.*/, 'errorText: [REDACTED]');
+  }
+  
+  // Generic provider errors without revealing implementation details
+  if (message.toLowerCase().includes('api key') && message.toLowerCase().includes('invalid')) {
+    return 'Provider authentication failed. Please check API key configuration.';
+  }
+  
+  return message;
+}
+
+/**
  * Generate a 3D model using Meshy.ai API
  * For testing purposes, this function returns a local model
  * In a production environment, this would call the Meshy.ai API
@@ -39,49 +65,114 @@ interface GeneratorResult {
 async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
   console.log('Generating model with options:', options);
   
-  // Verify API key is available
-  if (!process.env.MESHY_KEY || process.env.MESHY_KEY === 'your_meshy_api_key_here') {
-    throw new Error('API key for Meshy is missing or invalid. Please set MESHY_KEY in your environment variables.');
-  }
+  // Determine which provider to use
+  const providerName = options.provider || process.env.GEN_PROVIDER || 'meshy';
   
   try {
-    console.log('Starting Meshy generation with options:', JSON.stringify(options, null, 2));
+    // Debug logging for environment variables
+    if (process.env.DEBUG_PROVIDERS === 'true') {
+      console.log('[debug] Meshy key preset?', !!process.env.MESHY_KEY);
+      console.log('[debug] Hunyuan key preset?', !!process.env.HY3D_KEY);
+      console.log('[debug] Current provider:', providerName);
+      console.log('[debug] HY3D_REGION:', process.env.HY3D_REGION || 'not set');
+    }
     
-    // 1. Start the preview generation job
-    const startResponse = await fetch(MESHY_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MESHY_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    // Verify required API key is available - this will throw if missing
+    const apiKey = providerName === 'hunyuan'
+      ? getSecureKey('HY3D_KEY')
+      : getSecureKey('MESHY_KEY');
+    
+    // Basic key format validation - don't log the actual key
+    if (providerName === 'meshy' && !apiKey.startsWith('msy_')) {
+      console.warn('Warning: MESHY_KEY format appears invalid (should start with msy_)');
+    }
+    
+    if (providerName === 'hunyuan' && !apiKey.startsWith('hy_') && !apiKey.startsWith('hunyuan_')) {
+      console.warn('Warning: HY3D_KEY format appears invalid (should start with hy_ or hunyuan_)');
+    }
+    
+    // Use the appropriate provider's API
+    let startResponse;
+    
+    if (providerName === 'hunyuan') {
+      console.log('Starting Hunyuan generation with options:', JSON.stringify(options, null, 2));
+      
+      // Prepare the request body
+      const requestBody = {
         prompt: options.prompt,
-        mode: 'preview', // Required parameter for Meshy API v2
-        art_style: 'realistic',
-        topology: 'triangle',
-        embed: options.embed || false
-      })
-    });
-    
-    // Log the full response for debugging
-    console.log('Meshy preview start response status:', startResponse.status);
+        mode: options.modelType || 'avatar',
+        quality: options.quality || 'high',
+        embed: options.embed !== undefined ? options.embed : true
+      };
+      
+      // Debug the request details
+      if (process.env.DEBUG_PROVIDERS === 'true') {
+        console.log('[debug] → POST https://hunyuan.tencentcloudapi.com/v2/text-to-3d');
+        console.log('[debug] Request body:', JSON.stringify(requestBody, null, 2));
+        console.log('[debug] Headers:', {
+          'Content-Type': 'application/json',
+          'X-Api-Key': 'REDACTED', // Don't log the actual key
+          'X-Api-Region': process.env.HY3D_REGION || 'cn-shenzhen'
+        });
+      }
+      
+      // 1. Start the Hunyuan generation job with correct endpoint and version parameter
+      const hunyuanUrl = 'https://hunyuan.tencentcloudapi.com/v2/text-to-3d';
+
+      startResponse = await fetch(hunyuanUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': apiKey,
+          'X-Api-Region': process.env.HY3D_REGION || 'cn-shenzhen',
+          'X-TC-Version': '2023-11-27' // Required parameter from test results
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      // Log the full response for debugging
+      console.log('Hunyuan start response status:', startResponse.status);
+    } else {
+      console.log('Starting Meshy generation with options:', JSON.stringify(options, null, 2));
+      
+      // 1. Start the Meshy preview generation job
+      startResponse = await fetch(MESHY_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: options.prompt,
+          mode: 'preview', // Required parameter for Meshy API v2
+          art_style: 'realistic',
+          topology: 'triangle',
+          embed: options.embed || false
+        })
+      });
+      
+      // Log the full response for debugging
+      console.log('Meshy preview start response status:', startResponse.status);
+    }
     
     if (!startResponse.ok) {
       let errorMessage = `HTTP Error ${startResponse.status}: ${startResponse.statusText}`;
       
       try {
         const errorText = await startResponse.text();
-        console.error('Meshy API error response:', errorText);
+        // Log full error details for internal debugging without exposing sensitive data
+        console.error(`${providerName} API error response:`, errorText);
         
         // Try to parse as JSON for structured error
         try {
           const errorJson = JSON.parse(errorText);
           if (errorJson.message) {
-            errorMessage = `Meshy API error: ${errorJson.message}`;
+            // Sanitize error message to avoid leaking sensitive information
+            errorMessage = sanitizeErrorMessage(`${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} API error: ${errorJson.message}`);
           }
         } catch (e) {
-          // Not JSON, use as plain text
-          errorMessage = `Meshy API error: ${startResponse.status} ${startResponse.statusText} - ${errorText}`;
+          // Not JSON, use as plain text with sanitization
+          errorMessage = sanitizeErrorMessage(`${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} API error: ${startResponse.status} ${startResponse.statusText}`);
         }
       } catch (e) {
         // If we can't read the response body
@@ -92,62 +183,113 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
     }
     
     const startData = await startResponse.json();
-    console.log('Meshy preview start response data:', JSON.stringify(startData, null, 2));
+    console.log(`${providerName} start response data:`, JSON.stringify(startData, null, 2));
     
-    // Extract task ID from response - Meshy API v2 returns it in the 'result' field
-    const previewTaskId = startData.result || startData.id;
-    
-    if (!previewTaskId) {
-      throw new Error('Failed to get preview task ID from Meshy API');
+    // DEBUG: Log the raw response for debugging
+    if (process.env.DEBUG_PROVIDERS === "true") {
+      console.log("📦 Raw response from provider:", JSON.stringify(startData, null, 2));
     }
     
-    console.log('Successfully started Meshy preview generation with task ID:', previewTaskId);
+    // Extract task ID from response based on provider
+    let previewTaskId;
+    
+    if (providerName === 'hunyuan') {
+      // Hunyuan response might be nested in Response object
+      const hunyuanData = startData.Response || startData;
+      
+      // Check for RequestId in Hunyuan response
+      if (hunyuanData.RequestId) {
+        previewTaskId = hunyuanData.RequestId;
+      } else if (hunyuanData.Error) {
+        // Handle error case but still try to get RequestId
+        previewTaskId = hunyuanData.RequestId;
+        console.warn(`Hunyuan API returned error: ${hunyuanData.Error.Message || 'Unknown error'}`);
+      } else {
+        // Look for various possible field names
+        previewTaskId = hunyuanData.task_id || hunyuanData.taskId || hunyuanData.request_id || hunyuanData.id;
+      }
+      
+      console.log("Extracted Hunyuan task ID:", previewTaskId);
+    } else {
+      // Meshy API v2 returns it in the 'result' field or 'id' field
+      previewTaskId = startData.result || startData.id;
+    }
+    
+    if (!previewTaskId) {
+      throw new Error(`Failed to get task ID from ${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} API`);
+    }
+    
+    console.log(`Successfully started ${providerName} generation with task ID:`, previewTaskId);
     
     // 2. Poll for preview job completion
     // In a production environment, this should be handled by a background job
     // For simplicity in this demo, we'll poll synchronously
     let previewData;
     let attempts = 0;
+    let currentStatus = ''; // Add status variable with wider scope
     const maxAttempts = 30; // Increased max attempts to allow for longer processing
     const baseDelay = 5000; // Base delay in milliseconds (5 seconds)
     
     do {
       // Calculate delay with exponential backoff (5s, 10s, 20s, etc.)
       const delay = Math.min(baseDelay * Math.pow(1.2, attempts), 15000); // Cap at 15 seconds
-      console.log(`Waiting ${delay/1000} seconds before polling preview attempt ${attempts + 1}/${maxAttempts}...`);
+      console.log(`Waiting ${delay/1000} seconds before polling attempt ${attempts + 1}/${maxAttempts}...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      console.log(`Polling Meshy API for preview status (attempt ${attempts + 1}/${maxAttempts})...`);
-      const statusResponse = await fetch(`${MESHY_URL}/${previewTaskId}`, {
-        headers: {
-          'Authorization': `Bearer ${process.env.MESHY_KEY!}`
-        }
-      });
+      let statusResponse;
       
-      console.log('Meshy preview status response status:', statusResponse.status);
+      if (providerName === 'hunyuan') {
+        console.log(`Polling Hunyuan API for status (attempt ${attempts + 1}/${maxAttempts})...`);
+        // Add required version parameter for status endpoint too
+        const statusUrl = `https://hunyuan.tencentcloudapi.com/v2/status/${previewTaskId}`;
+
+        statusResponse = await fetch(statusUrl, {
+          headers: {
+            'X-Api-Key': apiKey,
+            'X-Api-Region': process.env.HY3D_REGION || 'cn-shenzhen',
+            'X-TC-Version': '2023-11-27'
+          }
+        });
+        
+        console.log('Hunyuan status response status:', statusResponse.status);
+      } else {
+        console.log(`Polling Meshy API for preview status (attempt ${attempts + 1}/${maxAttempts})...`);
+        statusResponse = await fetch(`${MESHY_URL}/${previewTaskId}`, {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          }
+        });
+        
+        console.log('Meshy preview status response status:', statusResponse.status);
+      }
       
       if (!statusResponse.ok) {
         const errorText = await statusResponse.text();
-        console.error('Meshy API preview status error response:', errorText);
-        throw new Error(`Meshy API preview status error: ${statusResponse.status} ${statusResponse.statusText} - ${errorText}`);
+        // Log full error details internally
+        console.error(`${providerName} API status error response:`, errorText);
+        // Return sanitized error to client
+        throw new Error(sanitizeErrorMessage(`${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} API status error: ${statusResponse.status} ${statusResponse.statusText}`));
       }
       
       previewData = await statusResponse.json();
-      console.log('Meshy preview status response data:', JSON.stringify(previewData, null, 2));
-      console.log(`Current preview status: ${previewData.status}, attempt ${attempts + 1}/${maxAttempts}`);
+      console.log(`${providerName} status response data:`, JSON.stringify(previewData, null, 2));
+      
+      // Normalize status field name (Hunyuan uses 'state', Meshy uses 'status')
+      currentStatus = providerName === 'hunyuan' ? previewData.state : previewData.status;
+      console.log(`Current status: ${currentStatus}, attempt ${attempts + 1}/${maxAttempts}`);
       
       attempts++;
       
       // Check for terminal states other than SUCCEEDED
-      if (previewData.status === 'FAILED' || previewData.status === 'CANCELED') {
-        throw new Error(`Meshy preview generation ${previewData.status.toLowerCase()}: ${previewData.message || 'No error message provided'}`);
+      if (currentStatus === 'FAILED' || currentStatus === 'CANCELED') {
+        throw new Error(`${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} generation ${currentStatus.toLowerCase()}: ${previewData.message || 'No error message provided'}`);
       }
       
-      if (attempts >= maxAttempts && previewData.status !== 'SUCCEEDED') {
-        throw new Error(`Meshy preview generation timed out after ${Math.round((maxAttempts * baseDelay * 1.5) / 1000)} seconds. Last status: ${previewData.status}`);
+      if (attempts >= maxAttempts && currentStatus !== 'SUCCEEDED') {
+        throw new Error(`${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} generation timed out after ${Math.round((maxAttempts * baseDelay * 1.5) / 1000)} seconds. Last status: ${currentStatus}`);
       }
       
-    } while ((previewData.status === 'PENDING' || previewData.status === 'IN_PROGRESS') && attempts < maxAttempts);
+    } while ((currentStatus === 'PENDING' || currentStatus === 'IN_PROGRESS') && attempts < maxAttempts);
     
     // Check if PBR refine is enabled via feature flag and options
     const refinePBREnabled = isFeatureEnabled('REFINE_PBR') && options.enablePBR;
@@ -160,7 +302,7 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
       const refineResponse = await fetch(MESHY_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.MESHY_KEY!}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -176,8 +318,10 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
       
       if (!refineResponse.ok) {
         const errorText = await refineResponse.text();
+        // Log full error details internally
         console.error('Meshy API refine error response:', errorText);
-        throw new Error(`Meshy API refine error: ${refineResponse.status} ${refineResponse.statusText} - ${errorText}`);
+        // Return sanitized error to client
+        throw new Error(sanitizeErrorMessage(`Meshy API refine error: ${refineResponse.status} ${refineResponse.statusText}`));
       }
       
       const refineData = await refineResponse.json();
@@ -206,7 +350,7 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
         console.log(`Polling Meshy API for refine status (attempt ${attempts + 1}/${refineMaxAttempts})...`);
         const refineStatusResponse = await fetch(`${MESHY_URL}/${refineTaskId}`, {
           headers: {
-            'Authorization': `Bearer ${process.env.MESHY_KEY!}`
+            'Authorization': `Bearer ${apiKey}`
           }
         });
         
@@ -214,8 +358,10 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
         
         if (!refineStatusResponse.ok) {
           const errorText = await refineStatusResponse.text();
+          // Log full error details internally
           console.error('Meshy API refine status error response:', errorText);
-          throw new Error(`Meshy API refine status error: ${refineStatusResponse.status} ${refineStatusResponse.statusText} - ${errorText}`);
+          // Return sanitized error to client
+          throw new Error(sanitizeErrorMessage(`Meshy API refine status error: ${refineStatusResponse.status} ${refineStatusResponse.statusText}`));
         }
         
         refineResultData = await refineStatusResponse.json();
@@ -263,14 +409,23 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
       };
     } else {
       // If enablePBR is false, return the preview model
-      const modelUrl = previewData.model_urls?.glb;
+      let modelUrl;
       
-      if (!modelUrl) {
-        console.error('No model URL found in response:', previewData);
-        throw new Error('No model URL found in the Meshy API response');
+      // Extract model URL based on provider - they have different response formats
+      if (providerName === 'hunyuan') {
+        // Hunyuan stores the URL in asset_url_glb
+        modelUrl = previewData.asset_url_glb;
+      } else {
+        // Meshy stores URLs in model_urls.glb
+        modelUrl = previewData.model_urls?.glb;
       }
       
-      console.log('Successfully generated preview model with URL:', modelUrl);
+      if (!modelUrl) {
+        console.error(`No model URL found in ${providerName} response:`, previewData);
+        throw new Error(`No model URL found in the ${providerName === 'hunyuan' ? 'Hunyuan' : 'Meshy'} API response`);
+      }
+      
+      console.log(`Successfully generated ${providerName} model with URL:`, modelUrl);
       
       // Return the preview result
       return {
@@ -290,7 +445,7 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
     console.error('Error generating model:', error);
     // Add more context to the error for better debugging
     const enhancedError = new Error(
-      `Failed to generate model: ${error instanceof Error ? error.message : 'Unknown error'}`
+      sanitizeErrorMessage(`Failed to generate model: ${error instanceof Error ? error.message : 'Unknown error'}`)
     );
     // Preserve the stack trace
     if (error instanceof Error) {
@@ -308,7 +463,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.prompt) {
       return NextResponse.json(
@@ -316,7 +471,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
+    // Get the provider from the request body or fallback to env setting
+    const providerName = body.provider || process.env.GEN_PROVIDER || 'meshy';
+
+    // Log which provider is being used (for debugging)
+    console.info('[Gen3D] using provider:', providerName);
+
     // Prepare generator options
     const options: GeneratorOptions = {
       prompt: body.prompt,
@@ -327,11 +488,34 @@ export async function POST(request: NextRequest) {
       enablePBR: isFeatureEnabled('REFINE_PBR') && body.enablePBR !== false,
       texturePrompt: body.texturePrompt || 'realistic fabrics and denim',
       embed: body.embed || false,
-      provider: body.provider || process.env.GEN_PROVIDER as 'meshy' | 'hunyuan' || 'meshy'
+      provider: providerName
     };
+
+    // Safe debug logging that doesn't expose full keys
+    if (process.env.DEBUG_PROVIDERS === 'true') {
+      try {
+        // Check keys through secure provider
+        const results = await verifyApiKeys();
+        console.info('[Gen3D] Environment variables check:');
+        console.info('- MESHY_KEY:', results.meshy ? 'Set (starts with: your_mes...)' : 'Not set');
+        console.info('- HY3D_KEY:', results.hunyuan ? 'Set (starts with: hunyuan_...)' : 'Not set');
+        console.info('- GEN_PROVIDER:', process.env.GEN_PROVIDER || 'Not set');
+        
+        if (results.errors && results.errors.length > 0) {
+          console.warn('[Gen3D] Key validation warnings:', results.errors);
+        }
+      } catch (error) {
+        console.error('[Gen3D] Error validating API keys:', error);
+      }
+    }
     
     // Get the appropriate provider
-    const provider = getProvider(options.provider);
+    const provider = getProvider(providerName);
+    
+    // If provider selection is 'hunyuan' but we're still using Meshy, log a warning
+    if (providerName === 'hunyuan' && provider.constructor.name !== 'HunyuanProvider') {
+      console.warn('[Gen3D] Warning: Requested Hunyuan provider but got', provider.constructor.name);
+    }
     
     // Call generator function
     const result = await generate(options);
@@ -383,6 +567,14 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/generate
  * Returns information about the generator service
+} catch (err) {
+    // ⬇︎ Add these three lines
+    console.error('[generate] fatal error', err);
+    return NextResponse.json(
+      { ok: false, message: (err as Error).message, stack: (err as Error).stack },
+      { status: 500 }
+    );
+  }
  */
 export async function GET() {
   return NextResponse.json({

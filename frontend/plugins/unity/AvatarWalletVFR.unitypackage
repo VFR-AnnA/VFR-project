@@ -1,0 +1,11 @@
+AvatarWalletVFR Unity Plugin v0.1.0
+Generated: Placeholder file
+
+This is a placeholder for the actual Unity package that would be generated
+in a real CI environment using Unity's command-line tools.
+
+The package would include the following files:
+- AvatarWalletVFR.cs
+- README.md
+- Documentation
+- Example scenes
