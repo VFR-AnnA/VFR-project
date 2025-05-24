@@ -29,6 +29,10 @@ const config = {
   ],
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  // Ignore problematic paths
+  modulePathIgnorePatterns: [
+    '<rootDir>/services/generator/'
+  ],
 };
 
 module.exports = config;
