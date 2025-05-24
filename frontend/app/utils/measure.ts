@@ -22,10 +22,10 @@ export interface BodyMeasurements {
 /**
  * Calculate Euclidean distance between two 3D points
  */
-function distance3D(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }): number {
+function distance3D(a: poseModule.NormalizedLandmark, b: poseModule.NormalizedLandmark): number {
   return Math.sqrt(
-    Math.pow(a.x - b.x, 2) + 
-    Math.pow(a.y - b.y, 2) + 
+    Math.pow(a.x - b.x, 2) +
+    Math.pow(a.y - b.y, 2) +
     Math.pow(a.z - b.z, 2)
   );
 }
@@ -38,7 +38,7 @@ function distance3D(a: { x: number; y: number; z: number }, b: { x: number; y: n
  * @returns Body measurements in centimeters
  */
 export function estimateBodyMeasurements(
-  landmarks: poseModule.NormalizedLandmarkList,
+  landmarks: PoseLandmarks,
   imageHeight: number,
   referenceHeightCm?: number
 ): BodyMeasurements {
@@ -100,32 +100,8 @@ export function estimateBodyMeasurements(
   };
 }
 
-/**
- * Initialize MediaPipe Pose detector
- * @returns Promise that resolves to a MediaPipe Pose instance
- */
-export async function initPoseDetector(): Promise<poseModule.Pose> {
-  // Dynamically import the Pose class to avoid Next.js build issues
-  // This is a workaround for the MediaPipe module loading in Next.js
-  const { Pose } = await import('@mediapipe/pose');
-  
-  const pose = new Pose({
-    locateFile: (file: string) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-    }
-  });
-  
-  await pose.setOptions({
-    modelComplexity: 1,
-    smoothLandmarks: true,
-    enableSegmentation: false,
-    smoothSegmentation: false,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5
-  });
-  
-  return pose;
-}
+// Initialize the MediaPipe Pose solution
+let pose: poseModule.Pose | null = null;
 
 /**
  * Process an image with MediaPipe Pose and return body measurements
@@ -139,9 +115,34 @@ export async function getMeasurementsFromImage(
   referenceHeightCm?: number
 ): Promise<BodyMeasurements | PoseResults> {
   try {
-    const pose = await initPoseDetector() as poseModule.Pose;
+    // Create a canvas to draw the image
+    const canvas = document.createElement('canvas');
+    canvas.width = imageSource.width;
+    canvas.height = imageSource.height;
+    const ctx = canvas.getContext('2d');
+    
+    // Initialize MediaPipe Pose if not already initialized
+    if (!pose) {
+      pose = new poseModule.Pose({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`;
+        }
+      });
+      
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+    }
     
     return new Promise((resolve, reject) => {
+      if (!pose) {
+        reject(new Error('Failed to initialize MediaPipe Pose'));
+        return;
+      }
+
       pose.onResults((results: poseModule.Results) => {
         if (results.poseLandmarks) {
           try {
@@ -166,10 +167,14 @@ export async function getMeasurementsFromImage(
       });
       
       // Process the image
-      pose.send({ image: imageSource }).catch(reject);
+      if (pose) {
+        pose.send({ image: imageSource }).catch(reject);
+      } else {
+        reject(new Error('MediaPipe Pose is not initialized'));
+      }
     });
   } catch (error) {
-    console.error('Error initializing pose detector:', error);
-    throw new Error('Failed to initialize pose detector');
+    console.error('Error detecting pose:', error);
+    throw new Error('Failed to detect body measurements');
   }
 }

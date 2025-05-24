@@ -10,12 +10,17 @@ import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback, u
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import { PoseLandmarks } from "../../../../types/pose-landmarks";
-import { getMeasurementsFromImage, PoseResults } from "../../../utils/measure";
+import { getMeasurementsFromImage } from "../../../utils/measure";
 import { useWebVitals } from "../../../utils/useWebVitals";
 import throttle from "lodash/throttle";
 
 // Status states for the detection process
 type DetectionStatus = "idle" | "loading" | "success" | "error";
+
+// Define the PoseResults type
+export type PoseResults = {
+  poseLandmarks: PoseLandmarks;
+};
 
 export default function BodyAIDemo() {
   // Enable web vitals monitoring
@@ -268,8 +273,8 @@ export default function BodyAIDemo() {
     <div className="w-full max-w-screen-sm mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column: Image upload and detection */}
-        <div className="p-6 flex flex-col">
-          <h2 className="text-xl font-medium mb-4">Upload Your Photo</h2>
+        <div className="p-4 md:p-6 flex flex-col">
+          <h2 className="text-xl font-medium mb-3 md:mb-4">Upload Your Photo</h2>
           
           <div className="mb-6">
             <div
@@ -314,39 +319,39 @@ export default function BodyAIDemo() {
             />
           </div>
           
-          <div className="flex space-x-4">
+          <div className="flex space-x-2 md:space-x-4">
             <button
               onClick={handleUploadClick}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 bg-blue-600 text-white py-2 px-3 md:px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
             >
               Upload Photo
             </button>
             <button
               onClick={handleCameraCapture}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              className="flex-1 bg-gray-200 text-gray-800 py-2 px-3 md:px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
             >
               Use Camera
             </button>
           </div>
           
           {status === "error" && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-              <p className="font-medium">Detection Error</p>
-              <p className="text-sm">{errorMessage}</p>
+            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-red-100 text-red-700 rounded-lg">
+              <p className="font-medium text-sm md:text-base">Detection Error</p>
+              <p className="text-xs md:text-sm">{errorMessage}</p>
             </div>
           )}
           
           {status === "success" && (
-            <div className="mt-4 p-3 bg-green-100 text-green-700 rounded-lg">
-              <p className="font-medium">Measurements Detected!</p>
-              <p className="text-sm">Adjust the sliders to fine-tune your avatar.</p>
+            <div className="mt-3 md:mt-4 p-2 md:p-3 bg-green-100 text-green-700 rounded-lg">
+              <p className="font-medium text-sm md:text-base">Measurements Detected!</p>
+              <p className="text-xs md:text-sm">Adjust the sliders to fine-tune your avatar.</p>
             </div>
           )}
         </div>
         
         {/* Right column: 3D viewer and sliders */}
-        <div className="bg-gray-100 p-6">
-          <h2 className="text-xl font-medium mb-4">Your Custom Avatar</h2>
+        <div className="bg-gray-100 p-4 md:p-6">
+          <h2 className="text-xl font-medium mb-3 md:mb-4">Your Custom Avatar</h2>
           
           <div className="relative w-full md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
             {/* Use the simplified viewer with avatar parameters */}

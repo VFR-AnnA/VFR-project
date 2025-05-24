@@ -34,6 +34,9 @@ export default function VFRViewerWrapper({
     ...params
   });
 
+  // Use a ref to store previous params for comparison
+  const prevParamsRef = useRef(params);
+  
   // Update avatarParams when params prop changes
   useEffect(() => {
     // If the avatar is already loaded, we only need to update the morph targets
