@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import styles from './styles.module.css';
 import GenerationProgress from '../GenerationProgress';
+import { useStore } from '../../hooks/useGeneratorStore';
 
 // Dynamically import the PBRViewer component with SSR disabled
 // This improves initial page load performance
@@ -30,6 +31,7 @@ interface GeneratorResult {
     [key: string]: unknown;
   };
   textureUrls?: string[];
+  measurements?: number[]; // Array of model measurements
 }
 
 type ModelType = 'avatar' | 'clothing' | 'accessory';
@@ -90,8 +92,11 @@ export default function GeneratorDemo() {
     }
   }, [result]);
 
+  // Get the store's setGeneratorResponse function
+  const setGeneratorResponse = useStore.getState().setGeneratorResponse;
+
   // Handle generation completion from the progress component
-  const handleGenerationComplete = (modelUrl: string, textureUrls?: any[]) => {
+  const handleGenerationComplete = (modelUrl: string, textureUrls?: any[], measurements?: number[]) => {
     console.log('Generation complete with model URL:', modelUrl);
     
     // Create a result object similar to what the API would return
@@ -107,12 +112,18 @@ export default function GeneratorDemo() {
         isPBR: enablePBR,
         texturePrompt: enablePBR ? texturePrompt : undefined
       },
-      textureUrls: textureUrls
+      textureUrls: textureUrls,
+      measurements: measurements
     };
     
+    // Update local state
     setResult(generationResult);
     setGenerationProgress(100);
     setIsLoading(false);
+    
+    // Update the global store
+    setGeneratorResponse(generationResult);
+    console.log('Updated store with generator response including measurements:', measurements);
   };
   
   // Handle generation error from the progress component
