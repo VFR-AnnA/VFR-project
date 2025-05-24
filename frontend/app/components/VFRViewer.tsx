@@ -227,7 +227,6 @@ interface VFRViewerProps {
   useWebGPU?: boolean;
 }
 
-<<<<<<< HEAD
 // This component will be rendered inside the Canvas and handle the invalidateFrameloop setup
 function CanvasSetup() {
   // Set up the window.invalidateFrameloop function using useFrame
@@ -263,42 +262,6 @@ export default function VFRViewer({
 
   return (
     <div style={{ width: '100%', height: '100%', background: '#1a1a1a', overflow: 'hidden', position: 'relative' }} className="mx-auto canvas-wrapper">
-=======
-// This component will be rendered inside the Canvas and handle the invalidateFrameloop setup
-function CanvasSetup() {
-  // Set up the window.invalidateFrameloop function using useFrame
-  useFrame((state) => {
-    if (typeof window !== 'undefined' && !window.invalidateFrameloop) {
-      window.invalidateFrameloop = () => {
-        state.invalidate();
-      };
-    }
-    return null;
-  });
-  
-  return null;
-}
-
-export default function VFRViewer({
-  avatarParams = DEFAULT_AVATAR_PARAMS,
-  isPreloaded = false
-}: VFRViewerProps) {
-  // Create a memoized callback for OrbitControls onChange
-  const handleControlsChange = useCallback(() => {
-    // Request a single render frame when controls change
-    if (typeof window !== 'undefined') {
-      if (window.invalidateFrameloop) {
-        window.invalidateFrameloop();
-      } else {
-        // Fallback if invalidateFrameloop is not set yet
-        window.dispatchEvent(new CustomEvent('request-render'));
-      }
-    }
-  }, []);
-
-  return (
-    <div style={{ width: '100%', height: '100%', background: '#1a1a1a', overflow: 'hidden', position: 'relative' }} className="mx-auto canvas-wrapper">
->>>>>>> origin/main
       <Canvas
         frameloop="demand" // Only render when needed to reduce INP
         camera={{
