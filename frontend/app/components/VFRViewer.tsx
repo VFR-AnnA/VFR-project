@@ -25,9 +25,10 @@ declare global {
   }
 }
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, Html } from "@react-three/drei";
-import { Suspense, useEffect, useState, useRef, useCallback } from "react";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Suspense, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import * as THREE from 'three';
 import { Group } from 'three';
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
@@ -63,18 +64,28 @@ interface ProgressiveModelProps {
   isPreloaded?: boolean;
 }
 
-// TODO: Remove after avatar-pipeline V2 implementation
+// Enhanced version of ProgressiveModel with improved model loading
 // This component is not currently used but kept for future reference
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false }: ProgressiveModelProps) {
-  // Use the useGLTF hook at the component level with draco decoder
-  const { scene: fullScene } = useGLTF(fullUrl, true) as ModelGLTF; // Enable draco decoder
-  const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
-  
   const [model, setModel] = useState<THREE.Group | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+
+  // Use useGLTF which has built-in DRACO support
+  const { scene: fullScene } = useGLTF(fullUrl, true) as ModelGLTF; // Enable draco decoder
+  const { scene: stubScene } = useGLTF(stubUrl) as ModelGLTF;
+
+  // Mapping from parameter names to possible morph target names
+  // We include multiple possible names for each parameter to increase chances of finding a match
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const MORPH_MAP = {
+    height: ['Height', 'height', 'Stature', 'stature', 'BodyHeight'],
+    chest: ['ChestWidth', 'Chest', 'chest', 'ChestGirth', 'TorsoWidth', 'UpperBodyWidth'],
+    waist: ['WaistGirth', 'Waist', 'waist', 'WaistWidth', 'Abdomen', 'MiddleBodyWidth'],
+    hip: ['HipWidth', 'Hip', 'hip', 'HipGirth', 'Pelvis', 'LowerBodyWidth']
+  };
   
   // Listen for render requests (for demand-driven rendering)
   useEffect(() => {
@@ -128,18 +139,30 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
         setIsLoading(false);
       } else {
         // First set the stub model
-        debug('Loading stub model:', stubUrl);
+        debug('🔄 Loading stub model:', stubUrl);
         setModel(stubScene);
+        
+        // Log the model structure to check for morph targets
+        debug('🔍 STUB MODEL STRUCTURE:');
+        stubScene.traverse((child) => {
+          debug(`- ${child.type}: ${child.name}`);
+          if (child instanceof THREE.Mesh) {
+            debug(`  Has morph targets: ${!!child.morphTargetDictionary}`);
+            if (child.morphTargetDictionary) {
+              debug(`  Morph targets: ${Object.keys(child.morphTargetDictionary)}`);
+            }
+          }
+        });
         
         // Use requestIdleCallback to load the full model when the browser is idle
         // This helps prevent blocking the main thread during initial interaction
         const loadFullModel = () => {
-          debug('Loading full model:', fullUrl);
+          debug('🔄 Loading full model:', fullUrl);
           // Use a microtask to avoid blocking the main thread
           setTimeout(() => {
             setModel(fullScene);
             setIsLoading(false);
-            debug('Models loaded successfully');
+            debug('✅ Models loaded successfully');
             // Request a render after model change
             window.dispatchEvent(new CustomEvent('request-render'));
           }, 0);
@@ -201,6 +224,7 @@ function ProgressiveModel({ stubUrl, fullUrl, avatarParams, isPreloaded = false 
 interface VFRViewerProps {
   avatarParams?: AvatarParams;
   isPreloaded?: boolean;
+  useWebGPU?: boolean;
 }
 
 <<<<<<< HEAD
@@ -221,7 +245,8 @@ function CanvasSetup() {
 
 export default function VFRViewer({
   avatarParams = DEFAULT_AVATAR_PARAMS,
-  isPreloaded = false
+  isPreloaded = false,
+  useWebGPU = false
 }: VFRViewerProps) {
   // Create a memoized callback for OrbitControls onChange
   const handleControlsChange = useCallback(() => {
@@ -306,7 +331,7 @@ export default function VFRViewer({
         
         <CanvasSetup />
         <Suspense fallback={<LoadingSpinner />}>
-          {/* Use the new RealisticAvatar component */}
+          {/* Use the RealisticAvatar component */}
           <RealisticAvatar
             avatarParams={avatarParams}
             isPreloaded={isPreloaded}
@@ -330,7 +355,8 @@ export default function VFRViewer({
   );
 }
 
-// Preload models with link rel="preload"
+// Preload models using useGLTF.preload which has built-in DRACO support
+useGLTF.preload(`${MODELS_PATH}/mannequin-stub.glb`);
 useGLTF.preload(`${MODELS_PATH}/mannequin-draco.glb`);
 
 // Add preload link for HD model to load it when browser is idle
