@@ -34,6 +34,9 @@ export default function VFRViewerWrapper({
   showControls = false,
   className = ''
 }: VFRViewerWrapperProps = {}) {
+  // Reference to track if the avatar has been loaded
+  const avatarLoadedRef = useRef<boolean>(false);
+  
   // Merge params with defaults
   const [avatarParams, setAvatarParams] = useState<AvatarParams>({
     ...DEFAULT_AVATAR_PARAMS,
@@ -45,24 +48,22 @@ export default function VFRViewerWrapper({
   
   // Update avatarParams when params prop changes
   useEffect(() => {
-    // Only update if params actually changed
-    const hasChanged =
-      prevParamsRef.current.heightCm !== params.heightCm ||
-      prevParamsRef.current.chestCm !== params.chestCm ||
-      prevParamsRef.current.waistCm !== params.waistCm ||
-      prevParamsRef.current.hipCm !== params.hipCm;
-    
-    if (hasChanged) {
-      // Update the ref
-      prevParamsRef.current = params;
-      
-      // Update state
+    // If the avatar is already loaded, we only need to update the morph targets
+    // instead of reloading the entire model
+    if (avatarLoadedRef.current) {
       setAvatarParams(prevParams => ({
         ...prevParams,
         ...params
       }));
+    } else {
+      setAvatarParams(prevParams => ({
+        ...prevParams,
+        ...params
+      }));
+      // Mark the avatar as loaded after the first render
+      avatarLoadedRef.current = true;
     }
-  }, [params.heightCm, params.chestCm, params.waistCm, params.hipCm]);
+  }, [params]);
 
   // Set up throttled parameter change handler
   const handleParamChange = useRef<(param: keyof AvatarParams, value: number) => void>(null);
@@ -96,7 +97,7 @@ export default function VFRViewerWrapper({
   console.log('🎮 VFRViewerWrapper: Current avatarParams:', avatarParams);
 
   return (
-    <div className={`vfr-viewer-container ${className}`}>
+    <div className={`vfr-viewer-container w-full h-full mx-auto canvas-wrapper overflow-hidden ${className}`}>
       {/* Pass each parameter directly to ensure they're being passed correctly */}
       <VFRViewer
         avatarParams={{
@@ -105,6 +106,7 @@ export default function VFRViewerWrapper({
           waistCm: avatarParams.waistCm,
           hipCm: avatarParams.hipCm
         }}
+        isPreloaded={avatarLoadedRef.current}
       />
       
       {showControls && (
