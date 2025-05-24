@@ -12,13 +12,31 @@ type MannequinViewerProps = {
   src?: string;
   autoSpin?: boolean;
   height?: string;
+  scale?: number; // Add scale prop for height-based scaling
 };
+
+import useGeneratorStore from '../hooks/useGeneratorStore';
 
 export default function MannequinViewer({
   src = '/models/mannequin.glb',
   autoSpin = false,
-  height = '450px'
+  height = '450px',
+  scale
 }: MannequinViewerProps) {
+  // Only get height from store if scale is not provided
+  const heightCm = scale ? undefined : useGeneratorStore((s) => s.generatorResponse?.measurements?.heightCm);
+  
+  // Calculate scale based on height (default rig = 180 cm)
+  const calculatedScale = scale ?? (heightCm ? heightCm / 180 : 1);
+  
+  // Log the scale factor for debugging
+  useEffect(() => {
+    if (!scale && heightCm) {
+      console.log(`MannequinViewer: Using height-based scale factor: ${(heightCm / 180).toFixed(2)} (${heightCm}cm / 180cm)`);
+    } else if (scale) {
+      console.log(`MannequinViewer: Using fixed scale: ${scale}`);
+    }
+  }, [heightCm, calculatedScale, scale]);
   // Track loading status for debugging
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -65,6 +83,7 @@ export default function MannequinViewer({
           <Model
             src={src}
             autoSpin={autoSpin}
+            scale={scale}
             onLoad={() => setIsLoading(false)}
             onError={(msg) => {
               setHasError(true);
@@ -111,6 +130,7 @@ function LoadingFallback() {
 function Model({
   src,
   autoSpin,
+  scale,
   onLoad,
   onError
 }: MannequinViewerProps & {
@@ -139,8 +159,22 @@ function Model({
       console.log(`MannequinViewer: Model loaded successfully from ${src}`);
     }, [src, onLoad]);
     
+    // Only get height from store if scale is not provided
+    const heightCm = scale ? undefined : useGeneratorStore((s) => s.generatorResponse?.measurements?.heightCm);
+    
+    // Calculate scale based on height (default rig = 180 cm)
+    const baseScale = 1.5; // Original base scale
+    const calculatedScale = scale ?? (heightCm ? (heightCm / 180) * baseScale : baseScale);
+    
+    // Only log height-based scaling when actually using it
+    if (!scale && heightCm) {
+      console.log(`MannequinViewer: Using height-based scale factor: ${(heightCm / 180).toFixed(2)} (${heightCm}cm / 180cm)`);
+    } else if (scale) {
+      console.log(`MannequinViewer: Using fixed scale: ${scale}`);
+    }
+    
     return (
-      <group ref={group} position={[0, -1, 0]} scale={1.5}>
+      <group ref={group} position={[0, -1, 0]} scale={calculatedScale}>
         <primitive object={model} />
       </group>
     );
