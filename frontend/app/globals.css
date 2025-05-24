@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import model debugging styles */
+@import './components/model-debug.css';
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -34,4 +37,16 @@ body {
 
 .canvas-wrapper:hover {
   border-color: rgba(59, 130, 246, 0.5); /* blue-500 with 50% opacity */
+}
+
+/* Fix for 3D model canvas containers */
+.three-container {
+  position: relative;
+  min-height: 300px;
+  background-color: #1a1a1a;
+}
+
+/* Fix height issue with canvas elements */
+canvas {
+  display: block;
 }
