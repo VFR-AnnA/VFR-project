@@ -33,7 +33,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <a href="#main" className="sr-only focus:not-sr-only">
+          Skip to main content
+        </a>
+        <main id="main">{children}</main>
       </body>
     </html>
   );

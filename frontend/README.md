@@ -47,3 +47,9 @@ Dit project kan gecombineerd worden met een lokale AI-ontwikkelstack. Dit is nie
 - Cloud fallback: GPT‑4o voor complexe brainstorms (zonder directe code)
 
 ➡️ Zie `docs/AI-workflow.md` voor de volledige optionele handleiding.
+
+## Legal Information
+
+i-DEPOT nummer: 152010
+Op naam van: Artur Gabrielian
+Vervaldatum: 14-05-2030

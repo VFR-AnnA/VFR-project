@@ -1,0 +1,5 @@
+mannequin-glb: 1.09 s, 264.10 KB, cost €0.00031
+
+mannequin-stub-glb: 1.05 s, 294.76 KB, cost €0.00029
+
+mannequin-draco-glb: 1.05 s, 264.53 KB, cost €0.00029
