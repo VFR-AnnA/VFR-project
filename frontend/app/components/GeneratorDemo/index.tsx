@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import styles from './styles.module.css';
 import GenerationProgress from '../GenerationProgress';
-import { useStore } from '../../hooks/useGeneratorStore';
+import useGeneratorStore from '../../hooks/useGeneratorStore';
 
 // Dynamically import the PBRViewer component with SSR disabled
 // This improves initial page load performance
@@ -98,7 +98,7 @@ export default function GeneratorDemo() {
   }, [result]);
 
   // Get the store's setGeneratorResponse function
-  const setGeneratorResponse = useStore.getState().setGeneratorResponse;
+  const setGeneratorResponse = useGeneratorStore.getState().setGeneratorResponse;
 
   // Handle generation completion from the progress component
   const handleGenerationComplete = (

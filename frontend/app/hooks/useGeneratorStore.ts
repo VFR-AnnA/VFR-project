@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 
 // Define the GeneratorResult interface locally since it's not exported from the route
-interface GeneratorResult {
+export interface GeneratorResult {
   id: string;
   url: string;
   format: string;
@@ -17,27 +17,29 @@ interface GeneratorResult {
   };
 }
 
-interface StoreState {
+export interface StoreState {
   generatorResponse?: GeneratorResult;
   setGeneratorResponse: (resp: GeneratorResult) => void;
 }
 
 // Real Zustand implementation
-export const useStore = create<StoreState>((set) => ({
+const useGeneratorStore = create<StoreState>((set) => ({
   generatorResponse: undefined,
   setGeneratorResponse: (resp: GeneratorResult) => set({ generatorResponse: resp }),
 }));
 
+export default useGeneratorStore;
+
 // Example usage in components:
 /*
 // Import the store
-import { useStore } from '../hooks/useGeneratorStore';
+import useGeneratorStore from '../hooks/useGeneratorStore';
 
 // In your component:
-const measurements = useStore((s) => s.generatorResponse?.measurements);
+const measurements = useGeneratorStore((s) => s.generatorResponse?.measurements);
 console.log('Height:', measurements?.heightCm);
 
 // For 3D team to scale mannequin:
-const height = useStore((s) => s.generatorResponse?.measurements?.heightCm);
+const height = useGeneratorStore((s) => s.generatorResponse?.measurements?.heightCm);
 const scale = height ? height / 180 : 1;  // assuming 180 cm base rig
 */
