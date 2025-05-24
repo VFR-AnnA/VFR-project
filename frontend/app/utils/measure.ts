@@ -60,9 +60,40 @@ export async function getMeasurementsFromImage(img: HTMLImageElement) {
     
     // Process the image
     const results = await pose.send({ image: img });
-    const landmarks = results.poseLandmarks;
     
-    if (!landmarks || landmarks.length < 32) {
+    // Handle different result structures from different MediaPipe versions
+    let landmarks;
+    
+    // Debug the result structure to help diagnose issues
+    console.log('MediaPipe results received:', results);
+    
+    // Safely check what kind of result we received
+    if (!results) {
+      console.warn('MediaPipe returned empty results');
+      return { heightCm: 175 }; // Default fallback
+    }
+    
+    // Safe debugging of object structure
+    if (typeof results === 'object' && results !== null) {
+      console.log('MediaPipe result keys:', Object.keys(results));
+    }
+    
+    // Try different result formats
+    if (results.poseLandmarks) {
+      // Standard MediaPipe Pose format
+      landmarks = results.poseLandmarks;
+    } else if (results.landmarks) {
+      // Alternative format seen in some versions
+      landmarks = results.landmarks;
+    } else if (Array.isArray(results)) {
+      // Some versions might return landmarks array directly
+      landmarks = results;
+    } else {
+      console.warn('Unexpected MediaPipe result format', results);
+      return { heightCm: 175 }; // Default fallback
+    }
+    
+    if (!landmarks || !Array.isArray(landmarks) || landmarks.length < 32) {
       console.warn('No pose landmarks detected or incomplete pose');
       return { heightCm: 175 }; // Default fallback
     }
