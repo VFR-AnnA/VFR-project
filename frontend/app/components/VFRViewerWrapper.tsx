@@ -34,25 +34,28 @@ export default function VFRViewerWrapper({
     ...params
   });
 
-  // Use a ref to store previous params for comparison
+  // Use a ref to store previous params for comparison to prevent unnecessary updates
   const prevParamsRef = useRef(params);
   
-  // Update avatarParams when params prop changes
+  // Update avatarParams when params prop changes - but only if the values actually changed
   useEffect(() => {
-    // If the avatar is already loaded, we only need to update the morph targets
-    // instead of reloading the entire model
-    if (avatarLoadedRef.current) {
+    // Check if params actually changed
+    const paramsChanged = JSON.stringify(prevParamsRef.current) !== JSON.stringify(params);
+    
+    if (paramsChanged) {
+      // Update prevParamsRef with the new params
+      prevParamsRef.current = params;
+      
+      // Update avatar params state
       setAvatarParams(prevParams => ({
         ...prevParams,
         ...params
       }));
-    } else {
-      setAvatarParams(prevParams => ({
-        ...prevParams,
-        ...params
-      }));
-      // Mark the avatar as loaded after the first render
-      avatarLoadedRef.current = true;
+      
+      // Mark the avatar as loaded after the first render if not already done
+      if (!avatarLoadedRef.current) {
+        avatarLoadedRef.current = true;
+      }
     }
   }, [params]);
 
