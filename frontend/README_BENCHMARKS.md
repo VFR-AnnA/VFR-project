@@ -45,3 +45,18 @@ All processing runs locally with no server round-trip, meeting the requirement f
 - Largest Contentful Paint (LCP): 0.56s
 - Interaction to Next Paint (INP): 24ms
 - Accessibility Score: 99%
+
+## UI Enhancements (v0.5.0-ui-polish)
+
+### Drag-and-Drop Uploader (Sprint 4, Task #2.2)
+- Commit: 51115c7 (feature/drag-drop-uploader)
+- Performance Impact:
+  - INP: ~190ms (< 200ms target)
+  - Memory Usage: No significant increase
+  - CPU Usage: < 0.1% during idle state
+- Features:
+  - Visual feedback for drag, hover, and rejected states
+  - File size validation (4MB limit)
+  - Multi-file guard
+  - Improved accessibility for keyboard and screen reader users
+  - Mobile-friendly touch interaction

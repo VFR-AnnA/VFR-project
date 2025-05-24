@@ -4,13 +4,12 @@
  * Build-stamp: 2025-05-15T00:33+02:00
  */
 
-import {
-  FilesetResolver,
-  PoseLandmarker,
-  PoseLandmarkerOptions,
-  PoseLandmarkerResult,
-  NormalizedLandmark
-} from '@mediapipe/tasks-vision';
+import * as poseModule from '@mediapipe/pose';
+import { PoseLandmarks, POSE_LANDMARKS } from '../../types/pose-landmarks';
+
+// Define the types we need from MediaPipe
+// Use the actual type from MediaPipe
+export type PoseResults = poseModule.Results;
 
 // Define the measurement result type
 export interface BodyMeasurements {
@@ -20,24 +19,10 @@ export interface BodyMeasurements {
   hipCm: number;
 }
 
-// Define the landmarks we need for measurements
-// Using the constants from the MediaPipe package
-const POSE_LANDMARKS = {
-  NOSE: 0,
-  LEFT_SHOULDER: 11,
-  RIGHT_SHOULDER: 12,
-  LEFT_HIP: 23,
-  RIGHT_HIP: 24,
-  LEFT_KNEE: 25,
-  RIGHT_KNEE: 26,
-  LEFT_ANKLE: 27,
-  RIGHT_ANKLE: 28,
-};
-
 /**
  * Calculate Euclidean distance between two 3D points
  */
-function distance3D(a: NormalizedLandmark, b: NormalizedLandmark): number {
+function distance3D(a: poseModule.NormalizedLandmark, b: poseModule.NormalizedLandmark): number {
   return Math.sqrt(
     Math.pow(a.x - b.x, 2) +
     Math.pow(a.y - b.y, 2) +
@@ -53,7 +38,7 @@ function distance3D(a: NormalizedLandmark, b: NormalizedLandmark): number {
  * @returns Body measurements in centimeters
  */
 export function estimateBodyMeasurements(
-  landmarks: NormalizedLandmark[],
+  landmarks: PoseLandmarks,
   imageHeight: number,
   referenceHeightCm?: number
 ): BodyMeasurements {
@@ -102,7 +87,7 @@ export function estimateBodyMeasurements(
     z: landmarks[POSE_LANDMARKS.RIGHT_HIP].z
   };
   
-  const hipWidth = distance3D(hipLeftPoint as NormalizedLandmark, hipRightPoint as NormalizedLandmark) * imageHeight * pixelToCm;
+  const hipWidth = distance3D(hipLeftPoint, hipRightPoint) * imageHeight * pixelToCm;
   
   // Estimate hip circumference (approximation)
   const hipCm = hipWidth * Math.PI * 1.1; // Approximation factor
@@ -115,44 +100,8 @@ export function estimateBodyMeasurements(
   };
 }
 
-// Cache the pose landmarker to avoid recreating it
-let poseLandmarker: PoseLandmarker | null = null;
-
-/**
- * Initialize MediaPipe Pose detector using the new Tasks Vision API
- * @returns Promise that resolves to a MediaPipe PoseLandmarker instance
- */
-export async function initPoseDetector(): Promise<PoseLandmarker> {
-  if (poseLandmarker) return poseLandmarker;
-
-  try {
-    // Use FilesetResolver to load the wasm files from CDN
-    const fileset = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-    );
-
-    // Create the pose landmarker using the CDN model
-    poseLandmarker = await PoseLandmarker.createFromOptions(
-      fileset,
-      {
-        baseOptions: {
-          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
-          // Use WebGL for better performance if available
-          delegate: 'GPU'
-        },
-        runningMode: 'IMAGE',
-        numPoses: 1
-      } as PoseLandmarkerOptions
-    );
-
-    console.log('✅ Pose landmarker initialized successfully');
-
-    return poseLandmarker;
-  } catch (error) {
-    console.error('Error initializing pose landmarker:', error);
-    throw new Error('Failed to initialize pose detector');
-  }
-}
+// Initialize the MediaPipe Pose solution
+let pose: poseModule.Pose | null = null;
 
 /**
  * Process an image with MediaPipe Pose and return body measurements
@@ -162,8 +111,9 @@ export async function initPoseDetector(): Promise<PoseLandmarker> {
  */
 export async function getMeasurementsFromImage(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+  returnRawResults?: boolean,
   referenceHeightCm?: number
-): Promise<BodyMeasurements> {
+): Promise<BodyMeasurements | PoseResults> {
   try {
     // Create a canvas to draw the image
     const canvas = document.createElement('canvas');
@@ -171,34 +121,58 @@ export async function getMeasurementsFromImage(
     canvas.height = imageSource.height;
     const ctx = canvas.getContext('2d');
     
-    if (!ctx) {
-      throw new Error('Failed to create canvas context');
+    // Initialize MediaPipe Pose if not already initialized
+    if (!pose) {
+      pose = new poseModule.Pose({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`;
+        }
+      });
+      
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
     }
     
-    // Draw the image to the canvas
-    ctx.drawImage(imageSource, 0, 0);
-    
-    // Get the image data as ImageBitmap
-    const imageBitmap = await createImageBitmap(canvas);
-    
-    // Initialize the pose detector
-    const detector = await initPoseDetector();
-    
-    // Detect poses in the image
-    const results = detector.detect(imageBitmap);
-    
-    if (!results.landmarks || results.landmarks.length === 0) {
-      throw new Error('No pose landmarks detected');
-    }
-    
-    // Estimate body measurements from the landmarks
-    const measurements = estimateBodyMeasurements(
-      results.landmarks[0],
-      imageSource.height,
-      referenceHeightCm
-    );
-    
-    return measurements;
+    return new Promise((resolve, reject) => {
+      if (!pose) {
+        reject(new Error('Failed to initialize MediaPipe Pose'));
+        return;
+      }
+
+      pose.onResults((results: poseModule.Results) => {
+        if (results.poseLandmarks) {
+          try {
+            // If returnRawResults is true, return the raw results
+            if (returnRawResults) {
+              resolve(results);
+            } else {
+              // Otherwise, calculate and return the measurements
+              const measurements = estimateBodyMeasurements(
+                results.poseLandmarks,
+                imageSource.height,
+                referenceHeightCm
+              );
+              resolve(measurements);
+            }
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error('No pose landmarks detected'));
+        }
+      });
+      
+      // Process the image
+      if (pose) {
+        pose.send({ image: imageSource }).catch(reject);
+      } else {
+        reject(new Error('MediaPipe Pose is not initialized'));
+      }
+    });
   } catch (error) {
     console.error('Error detecting pose:', error);
     throw new Error('Failed to detect body measurements');
