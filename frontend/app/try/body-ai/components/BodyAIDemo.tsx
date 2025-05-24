@@ -8,7 +8,9 @@
 
 import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback, useMemo } from "react";
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
+import MannequinViewer from "../../../components/MannequinViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
+import useGeneratorStore from "../../../hooks/useGeneratorStore";
 import { PoseLandmarks } from "../../../../types/pose-landmarks";
 import { getMeasurementsFromImage } from "../../../utils/measure";
 import { useWebVitals } from "../../../utils/useWebVitals";
@@ -36,6 +38,7 @@ export default function BodyAIDemo() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [avatarParams, setAvatarParams] = useState<AvatarParams>(DEFAULT_AVATAR_PARAMS);
   const [worker, setWorker] = useState<Worker | null>(null);
+  const setGeneratorResponse = useGeneratorStore((s) => s.setGeneratorResponse);
   
   // Add useTransition hook to prevent blocking the main thread
   const [isPending, startTransition] = useTransition();
@@ -172,6 +175,16 @@ export default function BodyAIDemo() {
             startTransition(() => {
               setAvatarParams(measurements);
               setStatus("success");
+              
+              // Update the generator store with the measurements
+              setGeneratorResponse({
+                id: 'body-ai-' + Date.now(),
+                url: '/models/mannequin.glb',
+                format: 'glb',
+                createdAt: new Date().toISOString(),
+                metadata: {},
+                measurements: measurements
+              });
             });
             
             // For debugging, log measurements
@@ -367,11 +380,10 @@ export default function BodyAIDemo() {
           <h2 className="text-xl font-medium mb-3 md:mb-4">Your Custom Avatar</h2>
           
           <div className="relative w-full md:max-w-[800px] mx-auto mb-6 bg-gray-800 rounded-lg overflow-hidden">
-            {/* Use the simplified viewer with avatar parameters */}
-            <SimpleVFRViewer
-              height="400px"
-              avatarParams={avatarParams}
-            />
+            {/* Use the MannequinViewer with height-based scaling */}
+            <div style={{ height: "400px" }}>
+              <MannequinViewer />
+            </div>
             
             {/* Fallback in case SimpleVFRViewer fails to render */}
             {status === "success" && (
