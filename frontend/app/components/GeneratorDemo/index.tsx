@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import styles from './styles.module.css';
 import GenerationProgress from '../GenerationProgress';
+import useGeneratorStore from '../../hooks/useGeneratorStore';
 
 // Dynamically import the PBRViewer component with SSR disabled
 // This improves initial page load performance
@@ -30,6 +31,12 @@ interface GeneratorResult {
     [key: string]: unknown;
   };
   textureUrls?: string[];
+  measurements?: {
+    heightCm: number;
+    chestCm: number;
+    waistCm: number;
+    hipCm: number;
+  }; // Object with semantic measurement fields
 }
 
 type ModelType = 'avatar' | 'clothing' | 'accessory';
@@ -90,9 +97,34 @@ export default function GeneratorDemo() {
     }
   }, [result]);
 
+  // Get the store's setGeneratorResponse function
+  const setGeneratorResponse = useGeneratorStore.getState().setGeneratorResponse;
+
   // Handle generation completion from the progress component
-  const handleGenerationComplete = (modelUrl: string, textureUrls?: any[]) => {
+  const handleGenerationComplete = (
+    modelUrl: string,
+    textureUrls?: any[],
+    rawMeasurements?: number[] | {
+      heightCm: number;
+      chestCm: number;
+      waistCm: number;
+      hipCm: number;
+    }
+  ) => {
     console.log('Generation complete with model URL:', modelUrl);
+    
+    // Convert measurements to the correct format if they're an array
+    let formattedMeasurements;
+    if (Array.isArray(rawMeasurements) && rawMeasurements.length >= 4) {
+      formattedMeasurements = {
+        heightCm: rawMeasurements[0] * 100, // Convert to cm if in meters
+        chestCm: rawMeasurements[1] * 100,
+        waistCm: rawMeasurements[2] * 100,
+        hipCm: rawMeasurements[3] * 100
+      };
+    } else if (rawMeasurements && !Array.isArray(rawMeasurements)) {
+      formattedMeasurements = rawMeasurements;
+    }
     
     // Create a result object similar to what the API would return
     const generationResult: GeneratorResult = {
@@ -107,12 +139,18 @@ export default function GeneratorDemo() {
         isPBR: enablePBR,
         texturePrompt: enablePBR ? texturePrompt : undefined
       },
-      textureUrls: textureUrls
+      textureUrls: textureUrls,
+      measurements: formattedMeasurements
     };
     
+    // Update local state
     setResult(generationResult);
     setGenerationProgress(100);
     setIsLoading(false);
+    
+    // Update the global store
+    setGeneratorResponse(generationResult);
+    console.log('Updated store with generator response including measurements:', formattedMeasurements);
   };
   
   // Handle generation error from the progress component

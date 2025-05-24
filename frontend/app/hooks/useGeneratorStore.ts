@@ -33,13 +33,13 @@ export default useGeneratorStore;
 // Example usage in components:
 /*
 // Import the store
-import { useStore } from '../hooks/useGeneratorStore';
+import useGeneratorStore from '../hooks/useGeneratorStore';
 
 // In your component:
-const measurements = useStore((s) => s.generatorResponse?.measurements);
+const measurements = useGeneratorStore((s) => s.generatorResponse?.measurements);
 console.log('Height:', measurements?.heightCm);
 
 // For 3D team to scale mannequin:
-const height = useStore((s) => s.generatorResponse?.measurements?.heightCm);
+const height = useGeneratorStore((s) => s.generatorResponse?.measurements?.heightCm);
 const scale = height ? height / 180 : 1;  // assuming 180 cm base rig
 */
