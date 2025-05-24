@@ -3,17 +3,17 @@
  * © 2025 Artur Gabrielian. All rights reserved.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { GET } from '../model/route';
 
 // Mock the fetch function
-global.fetch = vi.fn();
+global.fetch = jest.fn();
 
 // Mock the NextResponse constructor
-vi.mock('next/server', () => {
+jest.mock('next/server', () => {
   return {
     NextResponse: {
-      json: vi.fn((body, options) => ({ body, options })),
+      json: jest.fn((body, options) => ({ body, options })),
       __esModule: true
     }
   };
@@ -21,7 +21,7 @@ vi.mock('next/server', () => {
 
 describe('Model Proxy API Route', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   it('should return 400 when no URL is provided', async () => {
@@ -30,8 +30,8 @@ describe('Model Proxy API Route', () => {
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
-      get: vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue(null) // No URL parameter
+      get: jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue(null) // No URL parameter
       })
     });
     
@@ -48,13 +48,13 @@ describe('Model Proxy API Route', () => {
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
-      get: vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
+      get: jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
       })
     });
     
     // Mock fetch to return a 404
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 404,
       statusText: 'Not Found'
@@ -74,18 +74,18 @@ describe('Model Proxy API Route', () => {
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
-      get: vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
+      get: jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
       })
     });
     
     // Mock fetch to return a 200
     const mockArrayBuffer = new ArrayBuffer(8);
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
       statusText: 'OK',
-      arrayBuffer: vi.fn().mockResolvedValue(mockArrayBuffer),
+      arrayBuffer: jest.fn().mockResolvedValue(mockArrayBuffer),
       redirect: 'follow'
     });
     
@@ -99,7 +99,7 @@ describe('Model Proxy API Route', () => {
     });
     
     // Mock the NextResponse.constructor
-    vi.spyOn(global, 'Response').mockImplementation(() => mockResponse);
+    jest.spyOn(global, 'Response').mockImplementation(() => mockResponse);
     
     // Act
     const response = await GET(mockRequest);
@@ -119,13 +119,13 @@ describe('Model Proxy API Route', () => {
     
     // Mock the URL constructor
     Object.defineProperty(URL.prototype, 'searchParams', {
-      get: vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
+      get: jest.fn().mockReturnValue({
+        get: jest.fn().mockReturnValue('https://assets.meshy.ai/test.glb')
       })
     });
     
     // Mock fetch to throw an error
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
     
     // Act
     const response = await GET(mockRequest);

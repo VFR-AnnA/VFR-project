@@ -1,5 +1,13 @@
 // utils/measure.ts
-import type { NormalizedLandmark } from '@mediapipe/pose';
+import type { NormalizedLandmark, NormalizedLandmarkList } from '@mediapipe/pose';
+
+// Body measurement interface
+export interface BodyMeasurements {
+  heightCm: number;
+  chestCm?: number;
+  waistCm?: number;
+  hipCm?: number;
+}
 
 /* ---------- helpers ---------- */
 const dist = (a: NormalizedLandmark, b: NormalizedLandmark) =>
@@ -114,4 +122,71 @@ export async function getMeasurementsFromImage(img: HTMLImageElement) {
       heightCm: 175 // Default height in cm
     };
   }
+}
+
+/**
+ * Estimates body measurements from pose landmarks
+ * @param landmarks - MediaPipe pose landmarks
+ * @param imageHeight - Height of the image in pixels
+ * @param referenceHeight - Optional reference height in cm (default: 175cm)
+ * @returns Body measurements in cm
+ */
+export function estimateBodyMeasurements(
+  landmarks: NormalizedLandmarkList,
+  imageHeight: number,
+  referenceHeight: number = 175
+): BodyMeasurements {
+  if (!landmarks || landmarks.length === 0) {
+    throw new Error('No pose landmarks detected');
+  }
+
+  // Basic validation
+  if (landmarks.length < 33) {
+    console.warn('Incomplete pose landmarks, measurements may be inaccurate');
+  }
+
+  // Calculate body proportions based on landmarks
+  // For simplicity, we'll use a few key points to estimate measurements
+  
+  // Get key landmarks (if available)
+  const nose = landmarks[0] || { x: 0.5, y: 0, z: 0, visibility: 1 };
+  const leftShoulder = landmarks[11] || { x: 0.4, y: 0.2, z: 0, visibility: 1 };
+  const rightShoulder = landmarks[12] || { x: 0.6, y: 0.2, z: 0, visibility: 1 };
+  const leftHip = landmarks[23] || { x: 0.4, y: 0.5, z: 0, visibility: 1 };
+  const rightHip = landmarks[24] || { x: 0.6, y: 0.5, z: 0, visibility: 1 };
+  const leftAnkle = landmarks[27] || { x: 0.4, y: 1.0, z: 0, visibility: 1 };
+  const rightAnkle = landmarks[28] || { x: 0.6, y: 1.0, z: 0, visibility: 1 };
+  
+  // Calculate height in normalized coordinates
+  const height = Math.max(
+    leftAnkle.y - nose.y,
+    rightAnkle.y - nose.y
+  );
+  
+  // Calculate shoulder width
+  const shoulderWidth = dist(leftShoulder, rightShoulder);
+  
+  // Calculate hip width
+  const hipWidth = dist(leftHip, rightHip);
+  
+  // Calculate waist (approximate as slightly above hips)
+  const waistY = (leftHip.y + rightHip.y) / 2 - 0.05;
+  const waistLeft = { x: leftHip.x, y: waistY, z: leftHip.z, visibility: 1 };
+  const waistRight = { x: rightHip.x, y: waistY, z: rightHip.z, visibility: 1 };
+  const waistWidth = dist(waistLeft, waistRight);
+  
+  // Convert to cm using the reference height
+  const pixelToCm = referenceHeight / (height * imageHeight);
+  
+  // Calculate measurements
+  const chestCm = shoulderWidth * imageHeight * pixelToCm * 1.1; // Chest slightly wider than shoulders
+  const waistCm = waistWidth * imageHeight * pixelToCm * 0.95;
+  const hipCm = hipWidth * imageHeight * pixelToCm * 1.05;
+  
+  return {
+    heightCm: referenceHeight,
+    chestCm: Math.round(chestCm),
+    waistCm: Math.round(waistCm),
+    hipCm: Math.round(hipCm)
+  };
 }
