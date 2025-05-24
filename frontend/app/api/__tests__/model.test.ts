@@ -5,15 +5,6 @@
 
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { NextRequest } from 'next/server';
-
-// Mock Request class
-class MockRequest extends Request {
-  constructor(input: string | URL, init?: RequestInit) {
-    super(input, init);
-  }
-}
-
-global.Request = MockRequest as any;
 import { GET } from '../model/route';
 
 // Mock the fetch function
