@@ -15,11 +15,11 @@ import { AvatarParams, paramsToScaleFactors } from "../../types/avatar-params";
 
 // Define the paths to the models
 const MODELS = {
-  STUB: "/models/mannequin-stub.glb",
-  DRACO: "/models/mannequin-draco.glb",
+  STUB: "/models-draco/mannequin-stub.glb",
+  DRACO: "/models-draco/mannequin.glb",
   // These would be the paths to the new realistic models
-  REALISTIC_STUB: "/models/mannequin-stub.glb", // Fallback to existing model for now
-  REALISTIC_DRACO: "/models/mannequin-draco.glb", // Fallback to existing model for now
+  REALISTIC_STUB: "/models-draco/mannequin-stub.glb", // Fallback to existing model for now
+  REALISTIC_DRACO: "/models-draco/mannequin.glb", // Fallback to existing model for now
 };
 
 // Preload the stub model

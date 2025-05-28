@@ -1,8 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import MannequinViewer from './MannequinViewer';
+import dynamic from 'next/dynamic';
 import useGeneratorStore from '../hooks/useGeneratorStore';
+
+// Dynamically import MannequinViewer with SSR disabled to prevent Three.js errors
+const MannequinViewer = dynamic(() => import('./MannequinViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 bg-gray-800 flex items-center justify-center">
+      <p className="text-white">Loading 3D Viewer...</p>
+    </div>
+  )
+});
 
 /**
  * Test component to verify height-based mannequin scaling

@@ -5,6 +5,9 @@ import dynamic from 'next/dynamic';
 import styles from './styles.module.css';
 import GenerationProgress from '../GenerationProgress';
 import useGeneratorStore from '../../hooks/useGeneratorStore';
+import useGeneratorSettingsStore from '../../hooks/useGeneratorSettingsStore';
+import ImageUpload from './ImageUpload';
+import { fileToBase64 } from '../../utils/fileUtils';
 
 // Dynamically import the PBRViewer component with SSR disabled
 // This improves initial page load performance
@@ -28,6 +31,7 @@ interface GeneratorResult {
     quality: string;
     isPBR?: boolean;
     texturePrompt?: string;
+    hasImagePrompt?: boolean;
     [key: string]: unknown;
   };
   textureUrls?: string[];
@@ -48,16 +52,25 @@ type QualityLevel = 'draft' | 'standard' | 'high';
  * @returns The proxy URL
  */
 function getProxyUrl(originalUrl: string): string {
-  // If the URL doesn't look like a Meshy URL, return it unchanged
-  if (!originalUrl || !originalUrl.includes('assets.meshy.ai')) {
+  // If the URL is empty or null, return it unchanged
+  if (!originalUrl) {
     return originalUrl;
+  }
+  
+  // Check if the URL is from an external domain that might have CORS issues
+  const isExternalUrl = originalUrl.includes('assets.meshy.ai') ||
+                        originalUrl.includes('hunyuan.tencentcloudapi.com') ||
+                        !originalUrl.startsWith('/');
+  
+  if (!isExternalUrl) {
+    return originalUrl; // Local URL, no need to proxy
   }
   
   // Log the URL being proxied for debugging
   console.log('Proxying URL:', originalUrl);
   
-  // Return the proxy URL with the original URL as a query parameter
-  const proxyUrl = `/api/model?url=${encodeURIComponent(originalUrl)}`;
+  // Use our new asset proxy route
+  const proxyUrl = `/api/asset?url=${encodeURIComponent(originalUrl)}`;
   console.log('Proxy URL:', proxyUrl);
   
   return proxyUrl;
@@ -70,7 +83,9 @@ export default function GeneratorDemo() {
   const [quality, setQuality] = useState<QualityLevel>('standard');
   const [enablePBR, setEnablePBR] = useState(true);
   const [texturePrompt, setTexturePrompt] = useState('realistic fabrics and denim');
-  const [provider, setProvider] = useState<'meshy'|'hunyuan'>('meshy');
+  // Use the provider and mode from the store instead of local state
+  const { provider, setProvider, mode, setMode } = useGeneratorSettingsStore();
+  const [imageData, setImageData] = useState<{ file: File; dataUrl: string } | null>(null);
   
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +95,15 @@ export default function GeneratorDemo() {
   const [result, setResult] = useState<GeneratorResult | null>(null);
   const [readyToRender, setReadyToRender] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
+  
+  // State for the model URL, initialize from sessionStorage if available
+  const [modelUrl, setModelUrl] = useState<string | null>(() => {
+    // Only run in browser
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('lastModelUrl');
+    }
+    return null;
+  });
   
   // Add a small delay before loading the model to ensure the proxy has time to process
   useEffect(() => {
@@ -97,6 +121,35 @@ export default function GeneratorDemo() {
     }
   }, [result]);
 
+  // Save model URL to sessionStorage when it changes
+  useEffect(() => {
+    if (result?.url) {
+      const url = result.url;
+      sessionStorage.setItem('lastModelUrl', url);
+      setModelUrl(url);
+    }
+  }, [result]);
+  
+  // Function to download the model
+  const handleDownload = () => {
+    if (!result?.url) return;
+    
+    const url = getProxyUrl(result.url);
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'vfr-model.glb';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(err => {
+        console.error('Error downloading model:', err);
+        alert('Failed to download model. Please try again.');
+      });
+  };
+  
   // Get the store's setGeneratorResponse function
   const setGeneratorResponse = useGeneratorStore.getState().setGeneratorResponse;
 
@@ -159,6 +212,29 @@ export default function GeneratorDemo() {
     setIsLoading(false);
   };
 
+  // Handle image selection
+  const handleImageSelect = async (data: { file: File; dataUrl: string }) => {
+    try {
+      // We already have the dataUrl from the ImageUpload component,
+      // but we're using fileToBase64 here to demonstrate the utility function
+      const base64Data = await fileToBase64(data.file);
+      console.log('Image converted to base64 successfully');
+      
+      setImageData({
+        file: data.file,
+        dataUrl: base64Data
+      });
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      alert('Error processing the image. Please try again.');
+    }
+  };
+
+  // Handle image clearing
+  const handleImageClear = () => {
+    setImageData(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -180,21 +256,29 @@ export default function GeneratorDemo() {
     try {
       console.log('Submitting generation request with prompt:', prompt);
       
+      // Prepare request body
+      const requestBody: any = {
+        prompt: mode !== 'image' ? prompt.trim() : 'Generated from image', // Ensure prompt is trimmed
+        modelType,
+        quality,
+        format: 'glb',
+        enablePBR,
+        texturePrompt: texturePrompt.trim(),
+        provider // Include the selected provider
+      };
+      
+      // Add image data if available
+      if (imageData) {
+        requestBody.imagePrompt = imageData.dataUrl;
+      }
+      
       // Call the API
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: prompt.trim(), // Ensure prompt is trimmed
-          modelType,
-          quality,
-          format: 'glb',
-          enablePBR,
-          texturePrompt: texturePrompt.trim(),
-          provider // Include the selected provider
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       // Log the raw response for debugging
@@ -253,19 +337,35 @@ export default function GeneratorDemo() {
       </p>
       
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Image Upload Component */}
         <div className={styles.inputGroup}>
-          <label htmlFor="prompt" className={styles.label}>Prompt</label>
-          <textarea
-            id="prompt"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe what you want to generate..."
-            className={styles.textarea}
-            rows={3}
+          <label className={styles.label}>Image Prompt (Optional)</label>
+          <ImageUpload
+            onImageSelect={handleImageSelect}
+            onImageClear={handleImageClear}
             disabled={isLoading}
-            required
           />
+          <p className={styles.helpText}>
+            Upload an image to use as a reference for the generation
+          </p>
         </div>
+
+        {/* Only show text prompt if not in image-only mode */}
+        {mode !== 'image' && (
+          <div className={styles.inputGroup}>
+            <label htmlFor="prompt" className={styles.label}>Text Prompt</label>
+            <textarea
+              id="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe what you want to generate..."
+              className={styles.textarea}
+              rows={3}
+              disabled={isLoading}
+              required
+            />
+          </div>
+        )}
         
         <div className={styles.inputRow}>
           <div className={styles.inputGroup}>
@@ -303,10 +403,11 @@ export default function GeneratorDemo() {
             <select
               id="provider"
               value={provider}
-              onChange={(e) => setProvider(e.target.value as 'meshy'|'hunyuan')}
+              onChange={(e) => setProvider(e.target.value as 'spar3d'|'meshy'|'hunyuan')}
               className={styles.select}
               disabled={isLoading}
             >
+              <option value="spar3d">Local (SPAR3D)</option>
               <option value="meshy">Meshy</option>
               <option value="hunyuan">Hunyuan</option>
             </select>
@@ -348,6 +449,16 @@ export default function GeneratorDemo() {
             </p>
           </div>
         )}
+        
+        {/* UI hint to show what's being sent */}
+        <div className={styles.helpText} style={{ marginTop: '1rem', textAlign: 'center' }}>
+          {imageData ?
+            mode !== 'image' && prompt.trim() ?
+              '🖼️ 1 image & 📝 prompt will be used' :
+              '🖼️ 1 image will be used (with default prompt)'
+            : mode !== 'image' ? '📝 Text prompt only' : 'Please upload an image'
+          }
+        </div>
         
         <button
           type="submit" 
@@ -404,6 +515,9 @@ export default function GeneratorDemo() {
             {result.metadata.isPBR === true && result.metadata.texturePrompt && (
               <p><strong>Texture Prompt:</strong> {result.metadata.texturePrompt}</p>
             )}
+            {result.metadata.hasImagePrompt && (
+              <p><strong>Image Prompt:</strong> Used as reference</p>
+            )}
             <a
               href={result.url}
               target="_blank"
@@ -418,19 +532,37 @@ export default function GeneratorDemo() {
             )}
           </div>
           
-          {/* 3D Model Viewer */}
-          <div className={styles.modelPreview}>
-            {!readyToRender ? (
+          {/* 3D Model Viewer with fixed aspect ratio */}
+          <div className="relative w-full aspect-[4/3] bg-neutral-100 overflow-hidden">
+            {/* Skeleton always present, opacity changes */}
+            <div className={result && readyToRender ? 'opacity-0' : 'opacity-100'} style={{ position: 'absolute', inset: 0 }}>
               <div className={styles.previewPlaceholder}>
                 <p>Preparing model viewer...</p>
               </div>
-            ) : (
-              <PBRViewer
-                modelUrl={getProxyUrl(result.url)}
-                crossOrigin="anonymous"
-              />
+            </div>
+            
+            {/* Model viewer */}
+            {result && readyToRender && (
+              <div className="absolute inset-0">
+                <PBRViewer
+                  modelUrl={getProxyUrl(result.url)}
+                  crossOrigin="anonymous"
+                />
+              </div>
             )}
           </div>
+          
+          {/* Download button */}
+          {result && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={handleDownload}
+                className={styles.secondaryButton || "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"}
+              >
+                Download Model
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

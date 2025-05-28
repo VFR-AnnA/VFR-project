@@ -61,6 +61,36 @@ export function initGLTFLoader(renderer: THREE.WebGLRenderer): GLTFLoader {
  * @param renderer - THREE.WebGLRenderer instance
  * @returns Promise that resolves to the loaded model
  */
+/**
+ * Get a proxy URL for external assets to avoid CORS issues
+ * @param originalUrl - Original URL of the asset
+ * @returns Proxied URL
+ */
+export function getProxyUrl(originalUrl: string): string {
+  // If the URL is empty or null, return it unchanged
+  if (!originalUrl) {
+    return originalUrl;
+  }
+  
+  // Check if the URL is from an external domain that might have CORS issues
+  const isExternalUrl = originalUrl.includes('assets.meshy.ai') ||
+                        originalUrl.includes('hunyuan.tencentcloudapi.com') ||
+                        (!originalUrl.startsWith('/') && !originalUrl.startsWith('http://localhost'));
+  
+  if (!isExternalUrl) {
+    return originalUrl; // Local URL, no need to proxy
+  }
+  
+  // Log the URL being proxied for debugging
+  console.log('Proxying URL:', originalUrl);
+  
+  // Use our asset proxy route
+  const proxyUrl = `/api/asset?url=${encodeURIComponent(originalUrl)}`;
+  console.log('Proxy URL:', proxyUrl);
+  
+  return proxyUrl;
+}
+
 export function loadModel(url: string, renderer: THREE.WebGLRenderer): Promise<THREE.Group> {
   // Check if the model is already cached
   if (modelCache.has(url)) {
@@ -72,26 +102,45 @@ export function loadModel(url: string, renderer: THREE.WebGLRenderer): Promise<T
   // Initialize the loader
   const loader = initGLTFLoader(renderer);
   
+  // Use proxy URL for external assets
+  const proxyUrl = getProxyUrl(url);
+  
   // Load the model
   return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      (gltf) => {
-        // Cache the model
-        modelCache.set(url, gltf.scene.clone());
-        resolve(gltf.scene);
-      },
-      (progress) => {
-        // Log progress if needed
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`Loading model: ${Math.round(progress.loaded / progress.total * 100)}%`);
+    try {
+      loader.load(
+        proxyUrl,
+        (gltf) => {
+          // Cache the model
+          modelCache.set(url, gltf.scene.clone());
+          resolve(gltf.scene);
+        },
+        (progress) => {
+          // Log progress if needed
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Loading model: ${Math.round(progress.loaded / progress.total * 100)}%`);
+          }
+        },
+        (error) => {
+          console.error('Error loading model:', error);
+          // Try to provide a more helpful error message
+          let errorMessage = 'Failed to load model';
+          
+          // Safely extract error message if available
+          if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+            errorMessage = `${errorMessage}: ${error.message}`;
+          }
+          
+          if (url.includes('assets.meshy.ai') || url.includes('hunyuan.tencentcloudapi.com')) {
+            errorMessage = `${errorMessage}. This may be due to CORS restrictions or an expired URL.`;
+          }
+          reject(new Error(errorMessage));
         }
-      },
-      (error) => {
-        console.error('Error loading model:', error);
-        reject(error);
-      }
-    );
+      );
+    } catch (error) {
+      console.error('Exception during model loading:', error);
+      reject(error);
+    }
   });
 }
 
@@ -106,8 +155,13 @@ export function preloadModel(url: string, renderer: THREE.WebGLRenderer): Promis
     return Promise.resolve();
   }
   
+  // We don't need to explicitly use getProxyUrl here since loadModel already does that
   return loadModel(url, renderer).then(() => {
     console.log(`Model preloaded: ${url}`);
+  }).catch((error) => {
+    console.error(`Failed to preload model ${url}:`, error);
+    // We don't rethrow the error for preloading since it's not critical
+    // The actual model loading will handle errors when needed
   });
 }
 
@@ -126,26 +180,45 @@ export function loadKTX2Texture(url: string, renderer: THREE.WebGLRenderer): Pro
   // Initialize the loader
   const loader = initKTX2Loader(renderer);
   
+  // Use proxy URL for external assets
+  const proxyUrl = getProxyUrl(url);
+  
   // Load the texture
   return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      (texture) => {
-        // Cache the texture
-        textureCache.set(url, texture);
-        resolve(texture);
-      },
-      (progress) => {
-        // Log progress if needed
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`Loading texture: ${Math.round(progress.loaded / progress.total * 100)}%`);
+    try {
+      loader.load(
+        proxyUrl,
+        (texture) => {
+          // Cache the texture
+          textureCache.set(url, texture);
+          resolve(texture);
+        },
+        (progress) => {
+          // Log progress if needed
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Loading texture: ${Math.round(progress.loaded / progress.total * 100)}%`);
+          }
+        },
+        (error) => {
+          console.error('Error loading texture:', error);
+          // Try to provide a more helpful error message
+          let errorMessage = 'Failed to load texture';
+          
+          // Safely extract error message if available
+          if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+            errorMessage = `${errorMessage}: ${error.message}`;
+          }
+          
+          if (url.includes('assets.meshy.ai') || url.includes('hunyuan.tencentcloudapi.com')) {
+            errorMessage = `${errorMessage}. This may be due to CORS restrictions or an expired URL.`;
+          }
+          reject(new Error(errorMessage));
         }
-      },
-      (error) => {
-        console.error('Error loading texture:', error);
-        reject(error);
-      }
-    );
+      );
+    } catch (error) {
+      console.error('Exception during texture loading:', error);
+      reject(error);
+    }
   });
 }
 

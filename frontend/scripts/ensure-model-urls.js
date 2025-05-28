@@ -12,10 +12,10 @@ const path = require('path');
 
 // Define the correct model paths
 const CORRECT_PATHS = {
-  STUB: '/models/mannequin-stub.glb',
-  DRACO: '/models/mannequin-draco.glb',
-  REALISTIC_STUB: '/models/mannequin-stub.glb', // Update this when real model is available
-  REALISTIC_DRACO: '/models/mannequin-draco.glb', // Update this when real model is available
+  STUB: '/models-draco/mannequin-stub.glb',
+  DRACO: '/models-draco/mannequin.glb',
+  REALISTIC_STUB: '/models-draco/mannequin-stub.glb', // Update this when real model is available
+  REALISTIC_DRACO: '/models-draco/mannequin.glb', // Update this when real model is available
 };
 
 // Files to check and update

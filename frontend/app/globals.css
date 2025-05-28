@@ -8,6 +8,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #003d7a;
+  --accent: #ff6600;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,4 +51,17 @@ body {
 /* Fix height issue with canvas elements */
 canvas {
   display: block;
+}
+
+/* Fix for slider CLS (Cumulative Layout Shift) */
+input[type="range"]::-webkit-slider-runnable-track {
+  min-height: 0.5rem; /* h-2 in Tailwind */
+}
+
+input[type="range"]::-moz-range-track {
+  min-height: 0.5rem; /* h-2 in Tailwind */
+}
+
+input[type="range"]::-ms-track {
+  min-height: 0.5rem; /* h-2 in Tailwind */
 }

@@ -8,6 +8,10 @@ import webpack from 'webpack';
  */
 
 const nextConfig: NextConfig = {
+  // Disable Babel and use SWC
+  experimental: {
+    forceSwcTransforms: true
+  },
   // Expose environment variables to the client
   // SECURITY: API keys should NOT be exposed to the client
   env: {
@@ -30,6 +34,16 @@ const nextConfig: NextConfig = {
       : [];
   },
   
+  // Add rewrite rules for model files
+  async rewrites() {
+    return [
+      {
+        source: '/try/generator/models/:slug*',
+        destination: '/models/:slug*',
+      },
+    ];
+  },
+  
   webpack(config) {
     // Add banner plugin
     config.plugins.push(
@@ -46,6 +60,12 @@ SHA256: 3dd4…ab9c
     // Configure for Three.js and WebGL
     config.module.rules.push({
       test: /\.(glb|gltf)$/,
+      type: 'asset/resource'
+    });
+
+    // Configure for Web Workers
+    config.module.rules.push({
+      test: /bodyAIWorker\.ts$/,
       type: 'asset/resource'
     });
 
