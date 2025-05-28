@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cegeka VFR Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #0066cc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .model-viewer {
+            width: 100%;
+            height: 500px;
+            background-color: #eee;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Cegeka Virtual Fitting Room Demo</h1>
+    </header>
+    
+    <div class="container">
+        <div class="model-viewer" id="vfr-model-container">
+            <p>3D Model Viewer Placeholder - Will be replaced with actual VFR viewer</p>
+        </div>
+        
+        <div class="controls">
+            <h2>About This Demo</h2>
+            <p>This is a placeholder for the Cegeka Virtual Fitting Room demo. The actual content will be updated later.</p>
+            <p>This demo showcases the capabilities of the Virtual Fitting Room technology, allowing users to try on virtual clothing and accessories.</p>
+            
+            <h3>Features:</h3>
+            <ul>
+                <li>3D model visualization</li>
+                <li>Virtual try-on capabilities</li>
+                <li>Customization options</li>
+                <li>Realistic rendering</li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 Cegeka - Virtual Fitting Room Demo</p>
+    </footer>
+
+    <script>
+        // Check for autoplay parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoplay = urlParams.get('autoplay');
+        
+        if (autoplay === 'true') {
+            console.log('Autoplay enabled');
+            // Autoplay functionality will be implemented here
+        }
+        
+        // Placeholder for the actual VFR initialization code
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('VFR Demo initialized');
+            // Actual initialization code will be added here
+        });
+    </script>
+</body>
+</html>
