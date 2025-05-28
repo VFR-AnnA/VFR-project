@@ -102,11 +102,17 @@ export function initINPMonitoring(): void {
     eventTimingObserver.observe({ type: 'event', buffered: true });
 
     // Also observe the INP metric from web-vitals
-    import('web-vitals').then(({ onINP }) => {
-      onINP((metric) => {
-        handleINPMetric(metric);
+    try {
+      import('web-vitals').then(({ onINP }) => {
+        onINP((metric) => {
+          handleINPMetric(metric);
+        });
+      }).catch(err => {
+        console.warn('Failed to load web-vitals:', err);
       });
-    });
+    } catch (error) {
+      console.warn('Failed to import web-vitals:', error);
+    }
 
     console.log('INP monitoring initialized');
   } catch (error) {

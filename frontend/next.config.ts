@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_FEATURE_REFINE_PBR: process.env.NEXT_PUBLIC_FEATURE_REFINE_PBR
   },
   
-  // Add explicit redirect for root path in development mode
+  // Add explicit redirects
   async redirects() {
     return process.env.NODE_ENV === "development"
       ? [
@@ -30,8 +30,19 @@ const nextConfig: NextConfig = {
             destination: "/generator-demo",
             permanent: false,
           },
+          {
+            source: "/demo",
+            destination: "/try/body-ai",
+            permanent: false,
+          },
         ]
-      : [];
+      : [
+          {
+            source: "/demo",
+            destination: "/try/body-ai",
+            permanent: false,
+          },
+        ];
   },
   
   // Add rewrite rules for model files
@@ -69,10 +80,23 @@ SHA256: 3dd4…ab9c
       type: 'asset/resource'
     });
 
+    // Configure for MediaPipe WASM files
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'asset/resource'
+    });
+
     return config;
   },
-  // Allow connections from other devices on the network
-  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
+  // Allow connections from other devices on the network and transpile ESM packages
+  transpilePackages: [
+    'three',
+    '@react-three/fiber',
+    '@react-three/drei',
+    '@mediapipe/pose',
+    '@mediapipe/camera_utils',
+    '@mediapipe/drawing_utils'
+  ],
 };
 
 export default nextConfig;

@@ -5,10 +5,14 @@
  */
 
 import BodyAIDemo from "./components/BodyAIDemo";
+import AutoDefaultAvatar from "./AutoDefaultAvatar";
 
 export default function BodyAIPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-6 md:p-12">
+      {/* 👇 plaats als aller­eerste */}
+      <AutoDefaultAvatar />
+      
       <div className="mx-auto w-full max-w-screen-sm px-4">
         <h1 className="text-3xl font-semibold mb-8">
           Body-AI Demo

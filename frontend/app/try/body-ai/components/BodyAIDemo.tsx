@@ -10,10 +10,10 @@ import { useRef, useState, useEffect, ChangeEvent, useTransition, useCallback, u
 import dynamic from "next/dynamic";
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
-import useGeneratorStore from "../../../hooks/useGeneratorStore";
+import useGeneratorStore from "../../../../app/hooks/useGeneratorStore";
 
 // Dynamically import MannequinViewer with SSR disabled to prevent Three.js errors
-const MannequinViewer = dynamic(() => import("../../../components/MannequinViewer"), {
+const MannequinViewer = dynamic(() => import("../../../../app/components/MannequinViewer"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full bg-gray-800">
