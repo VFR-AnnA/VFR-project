@@ -11,16 +11,26 @@ import dynamic from "next/dynamic";
 import SimpleVFRViewer from "../../../components/SimpleVFRViewer";
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, AVATAR_PARAM_RANGES } from "../../../../types/avatar-params";
 import useGeneratorStore from "../../../../app/hooks/useGeneratorStore";
+import SimpleMannequinViewer from "../../../../app/components/SimpleMannequinViewer";
 
 // Dynamically import MannequinViewer with SSR disabled to prevent Three.js errors
-const MannequinViewer = dynamic(() => import("../../../../app/components/MannequinViewer"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full bg-gray-800">
-      <p className="text-white">Loading 3D Viewer...</p>
-    </div>
-  )
-});
+const MannequinViewer = dynamic(
+  () => import("../../../../app/components/MannequinViewer")
+    .then(mod => mod)
+    .catch(err => {
+      console.warn("Error loading MannequinViewer:", err);
+      // Return SimpleMannequinViewer as a fallback
+      return SimpleMannequinViewer;
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full bg-gray-800">
+        <p className="text-white">Loading 3D Viewer...</p>
+      </div>
+    )
+  }
+);
 import { PoseLandmarks } from "../../../../types/pose-landmarks";
 import { getMeasurementsFromImage } from "../../../utils/measure";
 import { useWebVitals } from "../../../utils/useWebVitals";
