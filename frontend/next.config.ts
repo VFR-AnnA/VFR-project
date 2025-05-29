@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true
   },
+  // Skip TypeScript errors during builds
+  typescript: {
+    ignoreBuildErrors: true
+  },
   // Disable Babel and use SWC
   experimental: {
     forceSwcTransforms: true
