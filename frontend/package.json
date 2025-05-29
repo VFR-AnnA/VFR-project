@@ -78,6 +78,7 @@
     "start-server-and-test": "^2.0.3",
     "tailwindcss": "^4",
     "ts-jest": "^29.3.3",
+    "tsup": "^8.0.2",
     "typescript": "^5",
     "webpack": "^5.99.8",
     "worker-loader": "^3.0.8"
