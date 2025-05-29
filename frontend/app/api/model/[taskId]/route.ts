@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
 export async function GET(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { taskId: string } }
 ) {
   const taskId = params.taskId;
