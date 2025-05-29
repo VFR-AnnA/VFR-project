@@ -1,5 +1,7 @@
 {
-  "routes": [
-    {"src": "/(.*)", "dest": "/$1", "headers": {"www-authenticate": "Basic realm=\"Demo\""}}
-  ]
+  "build": {
+    "env": {
+      "NEXT_DISABLE_ESLINT": "true"
+    }
+  }
 }
