@@ -31,26 +31,18 @@ const nextConfig: NextConfig = {
   
   // Add explicit redirects
   async redirects() {
-    return process.env.NODE_ENV === "development"
-      ? [
-          {
-            source: "/",
-            destination: "/generator-demo",
-            permanent: false,
-          },
-          {
-            source: "/demo",
-            destination: "/try/body-ai",
-            permanent: false,
-          },
-        ]
-      : [
-          {
-            source: "/demo",
-            destination: "/try/body-ai",
-            permanent: false,
-          },
-        ];
+    return [
+      {
+        source: "/",
+        destination: "/cegeka-demo.html",
+        permanent: false,
+      },
+      {
+        source: "/demo",
+        destination: "/cegeka-demo.html",
+        permanent: false,
+      },
+    ];
   },
   
   // Add rewrite rules for model files
