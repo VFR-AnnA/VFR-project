@@ -4,9 +4,9 @@ export const runtime = 'edge';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
-  const taskId = params.taskId;
+  const { taskId } = await params;
   const url = `https://assets.meshy.ai/${taskId}/output/model.glb`;
   
   try {
