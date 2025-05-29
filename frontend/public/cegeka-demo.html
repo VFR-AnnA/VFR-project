@@ -17,6 +17,11 @@
     <script src="/lib/OrbitControls.js"></script>
     <!-- Import Chart.js for analytics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Import ClothingManager module -->
+    <script type="module">
+        import { ClothingManager } from '/lib/ClothingManager.js';
+        window.ClothingManager = ClothingManager;
+    </script>
     
     <style>
         /* ============================================
@@ -901,6 +906,15 @@
     <script>
     // Simple viewer implementation
     window.addEventListener('DOMContentLoaded', function() {
+        // Wait for ClothingManager to be available
+        const waitForClothingManager = setInterval(() => {
+            if (window.ClothingManager) {
+                clearInterval(waitForClothingManager);
+                initializeViewer();
+            }
+        }, 100);
+        
+        function initializeViewer() {
         const container = document.getElementById('canvas-container');
         if (!container) return;
         
@@ -948,17 +962,34 @@
         ground.receiveShadow = true;
         scene.add(ground);
         
-        // Load model
+        // Load model and clothing
         const loader = new THREE.GLTFLoader();
+        let clothingManager = null;
+        let mannequinModel = null;
+        
         loader.load('/models/mannequin-stub.glb', function(gltf) {
-            const model = gltf.scene;
-            model.traverse(function(child) {
+            mannequinModel = gltf.scene;
+            mannequinModel.traverse(function(child) {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
                 }
             });
-            scene.add(model);
+            scene.add(mannequinModel);
+            
+            // Initialize clothing manager
+            clothingManager = new window.ClothingManager(mannequinModel, loader);
+            
+            // Load clothing items (using placeholder paths - replace with actual models)
+            clothingManager.load('hoodie', '/models/clothes/hoodie.glb').catch(() => {
+                console.log('Hoodie model not found - using placeholder');
+            });
+            clothingManager.load('tshirt', '/models/clothes/tshirt.glb').catch(() => {
+                console.log('T-shirt model not found - using placeholder');
+            });
+            
+            // Make clothing manager globally accessible
+            window.clothingManager = clothingManager;
         });
         
         // Auto-rotate toggle
@@ -1005,6 +1036,58 @@
         };
         uiContainer.appendChild(rotateBtn);
         
+        // Add clothing selection UI
+        const clothingContainer = document.createElement('div');
+        clothingContainer.style.cssText = 'margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;';
+        
+        const clothingLabel = document.createElement('div');
+        clothingLabel.textContent = 'Clothing:';
+        clothingLabel.style.cssText = 'font-size: 12px; margin-bottom: 5px; color: #666;';
+        clothingContainer.appendChild(clothingLabel);
+        
+        // Clothing buttons
+        const clothingOptions = [
+            { id: 'none', label: 'None' },
+            { id: 'hoodie', label: 'Hoodie' },
+            { id: 'tshirt', label: 'T-Shirt' }
+        ];
+        
+        clothingOptions.forEach(function(option) {
+            const btn = document.createElement('button');
+            btn.textContent = option.label;
+            btn.className = 'clothing-btn btn btn-secondary';
+            btn.style.cssText = 'padding: 5px 10px; cursor: pointer; margin-bottom: 5px; width: 100%;';
+            btn.onclick = function() {
+                if (window.clothingManager) {
+                    window.clothingManager.show(option.id);
+                }
+            };
+            clothingContainer.appendChild(btn);
+        });
+        
+        // Color picker
+        const colorContainer = document.createElement('div');
+        colorContainer.style.cssText = 'margin-top: 10px;';
+        
+        const colorLabel = document.createElement('div');
+        colorLabel.textContent = 'Color:';
+        colorLabel.style.cssText = 'font-size: 12px; margin-bottom: 5px; color: #666;';
+        colorContainer.appendChild(colorLabel);
+        
+        const colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.value = '#0066cc';
+        colorPicker.style.cssText = 'width: 100%; height: 30px; cursor: pointer;';
+        colorPicker.onchange = function() {
+            if (window.clothingManager) {
+                window.clothingManager.setColor(this.value);
+            }
+        };
+        colorContainer.appendChild(colorPicker);
+        
+        clothingContainer.appendChild(colorContainer);
+        uiContainer.appendChild(clothingContainer);
+        
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
@@ -1026,6 +1109,7 @@
         
         // Start animation
         animate();
+        }
     });
     </script>
 </head>
