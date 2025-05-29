@@ -175,4 +175,41 @@ export class ClothingManager {
     await Promise.all(loadPromises);
     console.log('All predefined clothes loaded');
   }
+  
+  // Get current clothing mesh for external manipulation
+  getCurrentMesh() {
+    if (this.currentClothing) {
+      return this.layers.get(this.currentClothing);
+    }
+    return null;
+  }
+}
+
+// Export helper functions for external UI
+export function setGarmentColor(hex) {
+  if (window.clothingManager) {
+    window.clothingManager.setColor(hex);
+  }
+}
+
+export function setBodyType(type, mannequin) {
+  if (!mannequin) return;
+  
+  // Scale factors for different body types
+  const scales = {
+    athletic: { x: 1.05, y: 1.0, z: 1.05 },
+    average: { x: 1.0, y: 1.0, z: 1.0 },
+    curvy: { x: 0.95, y: 1.0, z: 1.1 }
+  };
+  
+  const scale = scales[type] || scales.average;
+  mannequin.scale.set(scale.x, scale.y, scale.z);
+  mannequin.updateMatrix();
+}
+
+// Make functions globally available
+if (typeof window !== 'undefined') {
+  window.VFR = window.VFR || {};
+  window.VFR.setGarmentColor = setGarmentColor;
+  window.VFR.setBodyType = setBodyType;
 }

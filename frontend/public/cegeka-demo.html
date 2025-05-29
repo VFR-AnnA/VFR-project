@@ -1106,7 +1106,103 @@
         
         // Start animation
         animate();
+        
+        // Make mannequin globally accessible for UI controls
+        window.mannequinModel = mannequinModel;
         }
+    });
+    </script>
+    
+    <!-- UI Control Connections -->
+    <script>
+    // Wait for everything to be loaded
+    window.addEventListener('DOMContentLoaded', function() {
+        // Brand switcher functionality
+        const brandButtons = document.querySelectorAll('[data-theme]');
+        brandButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const theme = this.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                // Update active state
+                brandButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update brand name in UI
+                const brandName = this.textContent;
+                document.querySelectorAll('.brand-name').forEach(el => {
+                    el.textContent = brandName;
+                });
+            });
+        });
+        
+        // Height slider functionality
+        const heightSlider = document.getElementById('heightSlider');
+        const heightValue = document.getElementById('heightValue');
+        let targetHeight = 175;
+        
+        if (heightSlider) {
+            heightSlider.addEventListener('input', function() {
+                const height = parseInt(this.value);
+                targetHeight = height;
+                heightValue.textContent = height + ' cm';
+                
+                // Update mannequin scale smoothly
+                if (window.mannequinModel) {
+                    const scale = height / 175; // 175cm is the base height
+                    window.mannequinModel.scale.y = scale;
+                }
+            });
+        }
+        
+        // Body type buttons functionality
+        const bodyTypeButtons = document.querySelectorAll('[data-type]');
+        bodyTypeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const bodyType = this.getAttribute('data-type');
+                
+                // Update active state
+                bodyTypeButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Apply body type scaling
+                if (window.VFR && window.VFR.setBodyType && window.mannequinModel) {
+                    window.VFR.setBodyType(bodyType, window.mannequinModel);
+                }
+                
+                // Update size recommendation based on body type
+                updateSizeRecommendation(bodyType);
+            });
+        });
+        
+        // Function to update size recommendation
+        function updateSizeRecommendation(bodyType) {
+            const sizeMap = {
+                'athletic': { size: 'L', confidence: 92 },
+                'average': { size: 'M', confidence: 94 },
+                'curvy': { size: 'XL', confidence: 89 }
+            };
+            
+            const recommendation = sizeMap[bodyType] || sizeMap['average'];
+            const sizeElement = document.getElementById('recommendedSize');
+            const confidenceElement = document.getElementById('confidenceValue');
+            const confidenceFill = document.getElementById('confidenceFill');
+            
+            if (sizeElement) sizeElement.textContent = recommendation.size;
+            if (confidenceElement) confidenceElement.textContent = recommendation.confidence;
+            if (confidenceFill) confidenceFill.style.width = recommendation.confidence + '%';
+        }
+        
+        // Smooth height animation
+        let currentHeight = 1;
+        function animateHeight() {
+            if (window.mannequinModel && Math.abs(currentHeight - window.mannequinModel.scale.y) > 0.001) {
+                currentHeight += (window.mannequinModel.scale.y - currentHeight) * 0.1;
+                window.mannequinModel.scale.y = currentHeight;
+            }
+            requestAnimationFrame(animateHeight);
+        }
+        animateHeight();
     });
     </script>
 </head>
@@ -1801,6 +1897,24 @@
                 // Update 3D model
                 if (window.viewerManager) {
                     window.viewerManager.updateClothing(product);
+                }
+                
+                // Also update clothing using ClothingManager
+                if (window.clothingManager) {
+                    // Map product model to clothing type
+                    const clothingMap = {
+                        'hoodie': 'hoodie',
+                        'shirt': 'tshirt',
+                        'jacket': 'hoodie' // Use hoodie as fallback for jacket
+                    };
+                    
+                    const clothingType = clothingMap[product.model] || 'none';
+                    window.clothingManager.show(clothingType);
+                    
+                    // Update color if available
+                    if (product.color) {
+                        window.clothingManager.setColor(product.color);
+                    }
                 }
             }
             
