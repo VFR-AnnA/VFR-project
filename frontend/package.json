@@ -39,6 +39,7 @@
     "three-mesh-bvh": "^0.7.0",
     "three-stdlib": "^2.29.4",
     "three-webgpu": "^0.0.0",
+    "swr": "^2.2.5",
     "web-vitals": "^3.3.0",
     "zustand": "^5.0.5"
   },
