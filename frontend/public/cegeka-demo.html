@@ -3,96 +3,2260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cegeka VFR Demo</title>
+    <title>VFR-ANNA Multi-Brand Demo | Cegeka</title>
+    
+    <!-- Branding & Mobile -->
+    <meta name="theme-color" content="#003d7a">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiMwMDNkN2EiLz4KPHBhdGggZD0iTTggMTZDOCAxMS41ODE3IDExLjU4MTcgOCAxNiA4QzE4LjEyMTcgOCAxOS45NTY2IDguOTU2NTIgMjEuMjE3NCAxMC40MzQ4TDE5LjQ3ODMgMTIuMTczOUMxOC42NTIyIDExLjEzMDQgMTcuNDM0OCAxMC41MjE3IDE2IDEwLjUyMTdDMTIuOTU2NSAxMC41MjE3IDEwLjUyMTcgMTIuOTU2NSAxMC41MjE3IDE2QzEwLjUyMTcgMTkuMDQzNSAxMi45NTY1IDIxLjQ3ODMgMTYgMjEuNDc4M0MxNy40MzQ4IDIxLjQ3ODMgMTguNjUyMiAyMC44Njk2IDE5LjQ3ODMgMTkuODI2MUwyMS4yMTc0IDIxLjU2NTJDMTkuOTU2NiAyMy4wNDM1IDE4LjEyMTcgMjQgMTYgMjRDMTEuNTgxNyAyNCA4IDIwLjQxODMgOCAxNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
+    
+    <!-- Import Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Import Chart.js for analytics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            color: #333;
+        /* ============================================
+           PRODUCT SELECTOR
+           ============================================ */
+        .product-selector {
+            margin-top: var(--spacing-lg);
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
         }
-        header {
-            background-color: #0066cc;
-            color: white;
-            padding: 20px;
+
+        .product-item {
+            background: var(--gray-100);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            cursor: pointer;
+            transition: all var(--transition-base);
             text-align: center;
         }
-        .model-viewer {
+
+        .product-item:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .product-item.active {
+            border-color: var(--brand-accent);
+            background: rgba(255, 102, 0, 0.1);
+        }
+
+        .product-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .product-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .product-price {
+            font-size: 0.875rem;
+            color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        /* ============================================
+           AR VIEWER
+           ============================================ */
+        .ar-viewer-container {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 500px;
-            background-color: #eee;
-            margin: 20px 0;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: none;
+        }
+
+        .ar-viewer-container.active {
+            display: block;
+        }
+
+        #ar-scene {
+            width: 100%;
+            height: 100%;
+        }
+
+        .ar-controls {
+            position: absolute;
+            bottom: var(--spacing-xl);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-pill);
+            backdrop-filter: blur(10px);
+        }
+
+        .ar-control-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--white);
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all var(--transition-fast);
         }
-        .controls {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        .ar-control-btn:hover {
+            transform: scale(1.1);
         }
-        footer {
-            margin-top: 50px;
+
+        .ar-info {
+            position: absolute;
+            top: var(--spacing-xl);
+            left: var(--spacing-xl);
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--white);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        /* ============================================
+           BRAND THEMING SYSTEM
+           ============================================ */
+        :root {
+            /* Default: Cegeka Theme */
+            --brand-primary: #003d7a;
+            --brand-primary-dark: #002754;
+            --brand-primary-light: #0056a6;
+            --brand-accent: #ff6600;
+            --brand-accent-hover: #e55a00;
+            --brand-accent-light: #ff8533;
+            --brand-name: "Cegeka";
+            
+            /* Shared Design Tokens */
+            --white: #ffffff;
+            --black: #000000;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            
+            --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-xxl: 3rem;
+            
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-pill: 9999px;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            
+            --transition-fast: 150ms ease-in-out;
+            --transition-base: 250ms ease-in-out;
+            --transition-slow: 350ms ease-in-out;
+        }
+
+        /* SportTech Brand Theme */
+        [data-theme="sporttech"] {
+            --brand-primary: #dc2626;
+            --brand-primary-dark: #991b1b;
+            --brand-primary-light: #ef4444;
+            --brand-accent: #16a34a;
+            --brand-accent-hover: #15803d;
+            --brand-accent-light: #22c55e;
+            --brand-name: "SportTech";
+        }
+
+        /* FashionForward Brand Theme */
+        [data-theme="fashionforward"] {
+            --brand-primary: #7c3aed;
+            --brand-primary-dark: #5b21b6;
+            --brand-primary-light: #8b5cf6;
+            --brand-accent: #f59e0b;
+            --brand-accent-hover: #d97706;
+            --brand-accent-light: #fbbf24;
+            --brand-name: "FashionForward";
+        }
+
+        /* ============================================
+           GLOBAL STYLES
+           ============================================ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color var(--transition-base);
+        }
+
+        /* ============================================
+           HEADER WITH BRAND SWITCHER
+           ============================================ */
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            transition: color var(--transition-base);
+        }
+
+        .brand-name::after {
+            content: " VFR";
+            font-weight: 300;
+            opacity: 0.7;
+        }
+
+        /* Brand Switcher */
+        .brand-switcher {
+            display: flex;
+            gap: var(--spacing-sm);
+            background: var(--gray-100);
+            padding: var(--spacing-xs);
+            border-radius: var(--radius-md);
+        }
+
+        .brand-option {
+            padding: var(--spacing-xs) var(--spacing-md);
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .brand-option.active {
+            background: var(--brand-primary);
+            color: var(--white);
+        }
+
+        .brand-option:hover:not(.active) {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        /* ============================================
+           MAIN LAYOUT
+           ============================================ */
+        .main-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: var(--spacing-xl);
+            min-height: calc(100vh - 80px);
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: var(--spacing-md);
+            }
+        }
+
+        /* ============================================
+           3D VIEWER
+           ============================================ */
+        .viewer-container {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 600px;
+            position: relative;
+        }
+
+        /* Viewer Overlays */
+        .viewer-overlay {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .performance-badge {
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--white);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .fps-value {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* ============================================
+           CONTROL PANEL
+           ============================================ */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .panel-section {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-xl);
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--brand-primary);
+            margin-bottom: var(--spacing-lg);
+            transition: color var(--transition-base);
+        }
+
+        /* Form Controls */
+        .control-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Slider */
+        .slider-container {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: var(--radius-pill);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--brand-accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-fast);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--brand-accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            border: none;
+        }
+
+        .slider-value {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        /* Body Type Selector */
+        .body-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-sm);
+        }
+
+        .body-type-btn {
+            padding: var(--spacing-md);
+            background: var(--gray-100);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
             text-align: center;
-            padding: 20px;
-            background-color: #333;
-            color: white;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .body-type-btn:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .body-type-btn.active {
+            background: var(--brand-primary);
+            color: var(--white);
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-accent {
+            background: var(--brand-accent);
+            color: var(--white);
+        }
+
+        .btn-accent:hover {
+            background: var(--brand-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--brand-primary);
+            border: 2px solid var(--brand-primary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--brand-primary);
+            color: var(--white);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* ============================================
+           SIZE RECOMMENDATION
+           ============================================ */
+        .size-result {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
+            color: var(--white);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            margin-top: var(--spacing-lg);
+            transition: all var(--transition-base);
+        }
+
+        .size-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .size-value {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .size-confidence {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .confidence-bar {
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-pill);
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--brand-accent);
+            width: 94%;
+            transition: all var(--transition-slow);
+        }
+
+        /* ============================================
+           ANALYTICS DASHBOARD
+           ============================================ */
+        .analytics-toggle {
+            position: fixed;
+            bottom: var(--spacing-xl);
+            right: var(--spacing-xl);
+            background: var(--brand-primary);
+            color: var(--white);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-xl);
+            transition: all var(--transition-base);
+            z-index: 999;
+        }
+
+        .analytics-toggle:hover {
+            transform: scale(1.1);
+            background: var(--brand-primary-dark);
+        }
+
+        .analytics-dashboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-top-left-radius: var(--radius-xl);
+            border-top-right-radius: var(--radius-xl);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            transition: transform var(--transition-slow);
+            z-index: 998;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .analytics-dashboard.active {
+            transform: translateY(0);
+        }
+
+        .analytics-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            z-index: 1;
+        }
+
+        .analytics-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .analytics-content {
+            padding: var(--spacing-xl);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .metric-card {
+            background: var(--gray-50);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-base);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            margin-top: var(--spacing-sm);
+            font-weight: 500;
+        }
+
+        .trend-up {
+            color: var(--success);
+        }
+
+        .trend-down {
+            color: var(--danger);
+        }
+
+        /* Charts placeholder */
+        .chart-container {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+        }
+
+        /* ============================================
+           AR PREVIEW MODAL
+           ============================================ */
+        .ar-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .ar-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .ar-modal-content {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xxl);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform var(--transition-base);
+        }
+
+        .ar-modal.active .ar-modal-content {
+            transform: scale(1);
+        }
+
+        .ar-qr-container {
+            background: var(--gray-100);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .ar-qr-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--gray-300),
+                var(--gray-300) 10px,
+                var(--gray-400) 10px,
+                var(--gray-400) 20px
+            );
+            border-radius: var(--radius-md);
+        }
+
+        .ar-instructions {
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* ============================================
+           ACCESSIBILITY
+           ============================================ */
+        *:focus {
+            outline: 2px solid var(--brand-accent);
+            outline-offset: 2px;
+        }
+
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+                gap: var(--spacing-md);
+            }
+            
+            .brand-switcher {
+                width: 100%;
+                justify-content: space-around;
+            }
+            
+            .body-types {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .analytics-toggle {
+                bottom: var(--spacing-lg);
+                right: var(--spacing-lg);
+            }
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--gray-300);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Cegeka Virtual Fitting Room Demo</h1>
+    <!-- Header with Brand Switcher -->
+    <header class="header">
+        <div class="header-content">
+            <div class="brand-logo">
+                <h1 class="brand-name" id="brandName">Cegeka</h1>
+            </div>
+            
+            <div class="header-actions">
+                <div class="brand-switcher">
+                    <button class="brand-option active" data-theme="cegeka">Cegeka</button>
+                    <button class="brand-option" data-theme="sporttech">SportTech</button>
+                    <button class="brand-option" data-theme="fashionforward">FashionForward</button>
+                </div>
+                
+                <button class="btn btn-ghost" id="settingsBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+                    </svg>
+                    Settings
+                </button>
+            </div>
+        </div>
     </header>
-    
-    <div class="container">
-        <div class="model-viewer" id="vfr-model-container">
-            <p>3D Model Viewer Placeholder - Will be replaced with actual VFR viewer</p>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- 3D Viewer -->
+        <section class="viewer-container">
+            <div id="canvas-container"></div>
+            
+            <div class="viewer-overlay">
+                <div class="performance-badge">
+                    <span class="fps-value" id="fpsCounter">60</span> FPS | Load: <span id="loadTime">0.8</span>s
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <aside class="control-panel">
+            <!-- Avatar Controls -->
+            <div class="panel-section">
+                <h2 class="section-title">Customize Avatar</h2>
+                
+                <div class="control-group">
+                    <label class="control-label">Height</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="heightSlider" min="150" max="220" value="175">
+                    </div>
+                    <div class="slider-value">
+                        <span>150 cm</span>
+                        <span><strong id="heightValue">175 cm</strong></span>
+                        <span>220 cm</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Body Type</label>
+                    <div class="body-types">
+                        <button class="body-type-btn" data-type="athletic">Athletic</button>
+                        <button class="body-type-btn active" data-type="average">Average</button>
+                        <button class="body-type-btn" data-type="curvy">Curvy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Recommendation -->
+            <div class="panel-section">
+                <h2 class="section-title">Size Recommendation</h2>
+                
+                <div id="sizeResult" class="size-result animate-slide-up">
+                    <p class="size-label">Recommended Size</p>
+                    <div class="size-value" id="recommendedSize">M</div>
+                    <div class="size-confidence">
+                        <span>Confidence: <span id="confidenceValue">94</span>%</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 94%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: var(--spacing-lg);">
+                    <button class="btn btn-accent btn-block" id="arPreviewBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <path d="M2 17l10 5 10-5"></path>
+                            <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                        View in AR
+                    </button>
+                    
+                    <button class="btn btn-primary btn-block" id="addToCartBtn" style="margin-top: var(--spacing-sm);">
+                        Add to Cart - Size <span id="cartSize">M</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Selection -->
+            <div class="panel-section">
+                <h2 class="section-title">Select Product</h2>
+                
+                <div class="product-selector">
+                    <div class="product-grid" id="productGrid">
+                        <!-- Products will be dynamically added -->
+                    </div>
+                    
+                    <div style="text-align: center; color: var(--gray-600); font-size: 0.875rem;">
+                        <span id="selectedProductInfo">Cegeka Tech Hoodie - €79.99</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Analytics Toggle Button -->
+    <div class="analytics-toggle" id="analyticsToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+    </div>
+
+    <!-- Analytics Dashboard -->
+    <div class="analytics-dashboard" id="analyticsDashboard">
+        <div class="analytics-header">
+            <h3 class="analytics-title">VFR Analytics Dashboard</h3>
+            <button class="btn btn-ghost" id="closeAnalytics">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
         
-        <div class="controls">
-            <h2>About This Demo</h2>
-            <p>This is a placeholder for the Cegeka Virtual Fitting Room demo. The actual content will be updated later.</p>
-            <p>This demo showcases the capabilities of the Virtual Fitting Room technology, allowing users to try on virtual clothing and accessories.</p>
+        <div class="analytics-content">
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="sessionCount">1,247</div>
+                    <div class="metric-label">Active Sessions</div>
+                    <div class="metric-trend trend-up">↑ 12% vs last week</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="accuracyRate">96.3%</div>
+                    <div class="metric-label">Fit Accuracy</div>
+                    <div class="metric-trend trend-up">↑ 2.1% improvement</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="returnRate">-43%</div>
+                    <div class="metric-label">Return Reduction</div>
+                    <div class="metric-trend trend-up">↑ Saving €125k/month</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="avgTime">2.3m</div>
+                    <div class="metric-label">Avg Session Time</div>
+                    <div class="metric-trend">→ Optimal range</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="conversionRate">34%</div>
+                    <div class="metric-label">Conversion Rate</div>
+                    <div class="metric-trend trend-up">↑ 8% vs baseline</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value" id="co2Saved">12.5t</div>
+                    <div class="metric-label">CO₂ Saved</div>
+                    <div class="metric-trend trend-up">↑ Less shipping</div>
+                </div>
+            </div>
             
-            <h3>Features:</h3>
-            <ul>
-                <li>3D model visualization</li>
-                <li>Virtual try-on capabilities</li>
-                <li>Customization options</li>
-                <li>Realistic rendering</li>
-            </ul>
+            <!-- Charts -->
+            <div class="chart-container">
+                <canvas id="sessionsChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="sizesChart"></canvas>
+            </div>
         </div>
     </div>
-    
-    <footer>
-        <p>&copy; 2025 Cegeka - Virtual Fitting Room Demo</p>
-    </footer>
 
+    <!-- AR Preview Modal -->
+    <div class="ar-modal" id="arModal">
+        <div class="ar-modal-content">
+            <h3 style="margin-bottom: var(--spacing-lg); color: var(--brand-primary);">AR Preview</h3>
+            
+            <p class="ar-instructions">
+                Choose your AR experience:
+            </p>
+            
+            <div style="display: grid; gap: var(--spacing-md); margin: var(--spacing-xl) 0;">
+                <button class="btn btn-primary btn-block" id="webXRBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
+                    </svg>
+                    Launch WebXR (Mobile AR)
+                </button>
+                
+                <button class="btn btn-ghost btn-block" onclick="showQRCode()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <rect x="7" y="7" width="3" height="3"></rect>
+                        <rect x="14" y="7" width="3" height="3"></rect>
+                        <rect x="7" y="14" width="3" height="3"></rect>
+                    </svg>
+                    Show QR Code
+                </button>
+            </div>
+            
+            <div id="qrCodeContainer" class="ar-qr-container" style="display: none;">
+                <div class="ar-qr-placeholder"></div>
+                <p style="font-size: 0.875rem; color: var(--gray-600); margin-top: var(--spacing-md);">
+                    Scan with your phone to open AR view
+                </p>
+            </div>
+            
+            <p style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: var(--spacing-lg);">
+                Supported on iOS 12+ and Android 8+ with Chrome/Safari
+            </p>
+            
+            <button class="btn btn-ghost btn-block" id="closeArModal">Close</button>
+        </div>
+    </div>
+
+    <!-- AR Viewer Container -->
+    <div class="ar-viewer-container" id="arViewerContainer">
+        <div id="ar-scene"></div>
+        
+        <div class="ar-info">
+            <strong>AR Mode Active</strong><br>
+            Move your device to place the avatar
+        </div>
+        
+        <div class="ar-controls">
+            <button class="ar-control-btn" id="arPlaceBtn" title="Place Avatar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+            </button>
+            
+            <button class="ar-control-btn" id="arScaleBtn" title="Resize">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+            </button>
+            
+            <button class="ar-control-btn" id="arExitBtn" title="Exit AR">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script>
-        // Check for autoplay parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const autoplay = urlParams.get('autoplay');
-        
-        if (autoplay === 'true') {
-            console.log('Autoplay enabled');
-            // Autoplay functionality will be implemented here
+        // ============================================
+        // WEBXR AR MANAGER
+        // ============================================
+        class ARManager {
+            constructor() {
+                this.session = null;
+                this.refSpace = null;
+                this.viewerManager = null;
+                this.isPlaced = false;
+                this.init();
+            }
+            
+            init() {
+                // Check WebXR support
+                if ('xr' in navigator) {
+                    navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                        if (supported) {
+                            document.getElementById('webXRBtn').addEventListener('click', () => {
+                                this.startAR();
+                            });
+                        } else {
+                            document.getElementById('webXRBtn').innerHTML = 'AR not supported on this device';
+                            document.getElementById('webXRBtn').disabled = true;
+                        }
+                    });
+                }
+                
+                // AR controls
+                document.getElementById('arPlaceBtn').addEventListener('click', () => {
+                    this.placeModel();
+                });
+                
+                document.getElementById('arScaleBtn').addEventListener('click', () => {
+                    this.toggleScale();
+                });
+                
+                document.getElementById('arExitBtn').addEventListener('click', () => {
+                    this.exitAR();
+                });
+            }
+            
+            async startAR() {
+                try {
+                    // Close modal
+                    document.getElementById('arModal').classList.remove('active');
+                    
+                    // Show AR container
+                    document.getElementById('arViewerContainer').classList.add('active');
+                    
+                    // Initialize AR session
+                    const canvas = document.createElement('canvas');
+                    document.getElementById('ar-scene').appendChild(canvas);
+                    
+                    const gl = canvas.getContext('webgl', { xrCompatible: true });
+                    
+                    this.session = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['hit-test', 'dom-overlay'],
+                        domOverlay: { root: document.getElementById('arViewerContainer') }
+                    });
+                    
+                    // Create AR scene
+                    this.createARScene(gl);
+                    
+                    // Handle session end
+                    this.session.addEventListener('end', () => {
+                        this.exitAR();
+                    });
+                    
+                    // Track event
+                    if (window.analyticsManager) {
+                        window.analyticsManager.trackEvent('ar_session_started', {
+                            device: navigator.userAgent
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error starting AR:', error);
+                    this.showFallbackAR();
+                }
+            }
+            
+            createARScene(gl) {
+                // Initialize Three.js for AR
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                
+                const renderer = new THREE.WebGLRenderer({
+                    canvas: gl.canvas,
+                    context: gl,
+                    antialias: true,
+                    alpha: true
+                });
+                renderer.xr.enabled = true;
+                renderer.xr.setSession(this.session);
+                
+                // Add lighting
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+                scene.add(light);
+                
+                // Create avatar model
+                const avatarGroup = new THREE.Group();
+                
+                // Body
+                const bodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.7);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xffdbac });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.45;
+                avatarGroup.add(body);
+                
+                // Head
+                const headGeometry = new THREE.SphereGeometry(0.1);
+                const head = new THREE.Mesh(headGeometry, bodyMaterial);
+                head.position.y = 0.9;
+                avatarGroup.add(head);
+                
+                // Clothing
+                const clothingGeometry = new THREE.BoxGeometry(0.35, 0.4, 0.2);
+                const clothingMaterial = new THREE.MeshPhongMaterial({ 
+                    color: window.brandManager ? 
+                        window.brandManager.themes[window.brandManager.currentTheme].primary : 
+                        0x003d7a 
+                });
+                const clothing = new THREE.Mesh(clothingGeometry, clothingMaterial);
+                clothing.position.y = 0.6;
+                avatarGroup.add(clothing);
+                
+                avatarGroup.scale.set(0.5, 0.5, 0.5);
+                avatarGroup.visible = false;
+                scene.add(avatarGroup);
+                
+                this.avatarModel = avatarGroup;
+                
+                // Animation loop
+                renderer.setAnimationLoop((time, frame) => {
+                    if (this.isPlaced) {
+                        avatarGroup.rotation.y += 0.01;
+                    }
+                    renderer.render(scene, camera);
+                });
+            }
+            
+            showFallbackAR() {
+                // Fallback: Show 3D model in fullscreen
+                document.getElementById('arViewerContainer').classList.add('active');
+                
+                const container = document.getElementById('ar-scene');
+                container.style.background = '#f0f0f0';
+                
+                // Copy the main 3D viewer
+                const mainCanvas = document.querySelector('#canvas-container canvas');
+                if (mainCanvas) {
+                    const clonedCanvas = mainCanvas.cloneNode(true);
+                    clonedCanvas.style.width = '100%';
+                    clonedCanvas.style.height = '100%';
+                    container.appendChild(clonedCanvas);
+                }
+                
+                // Show toast notification
+                this.showToast('WebXR niet beschikbaar – 3D-preview modus geactiveerd', 'warning');
+                
+                // Show info
+                const info = document.querySelector('.ar-info');
+                info.innerHTML = '<strong>AR Preview Mode</strong><br>Gebruik twee vingers om te zoomen';
+                
+                // Add pinch-to-zoom
+                this.enablePinchZoom(container);
+            }
+            
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: ${type === 'warning' ? '#ff6600' : '#003d7a'};
+                    color: white;
+                    padding: 1rem 2rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    z-index: 3000;
+                    animation: slideDown 0.3s ease-out;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideUp 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+            
+            enablePinchZoom(container) {
+                let scale = 1;
+                let lastDistance = 0;
+                
+                container.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        
+                        const distance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        
+                        if (lastDistance > 0) {
+                            scale *= distance / lastDistance;
+                            scale = Math.min(Math.max(scale, 0.5), 3);
+                            
+                            const canvas = container.querySelector('canvas');
+                            if (canvas) {
+                                canvas.style.transform = `scale(${scale})`;
+                            }
+                        }
+                        
+                        lastDistance = distance;
+                    }
+                });
+                
+                container.addEventListener('touchend', () => {
+                    lastDistance = 0;
+                });
+            }
+            
+            placeModel() {
+                this.isPlaced = true;
+                if (this.avatarModel) {
+                    this.avatarModel.visible = true;
+                }
+                
+                // Show feedback
+                const btn = document.getElementById('arPlaceBtn');
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.style.background = '';
+                }, 1000);
+            }
+            
+            toggleScale() {
+                if (this.avatarModel) {
+                    const currentScale = this.avatarModel.scale.x;
+                    const newScale = currentScale === 0.5 ? 1 : 0.5;
+                    
+                    this.avatarModel.scale.set(newScale, newScale, newScale);
+                }
+            }
+            
+            exitAR() {
+                if (this.session) {
+                    this.session.end();
+                    this.session = null;
+                }
+                
+                document.getElementById('arViewerContainer').classList.remove('active');
+                
+                // Clear AR scene
+                const arScene = document.getElementById('ar-scene');
+                arScene.innerHTML = '';
+                
+                this.isPlaced = false;
+            }
         }
-        
-        // Placeholder for the actual VFR initialization code
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('VFR Demo initialized');
-            // Actual initialization code will be added here
+
+        // ============================================
+        // PRODUCT CATALOG
+        // ============================================
+        const CEGEKA_PRODUCTS = [
+            {
+                id: 'tech-hoodie',
+                name: 'Tech Hoodie',
+                price: 79.99,
+                color: '#003d7a',
+                image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjBGMEYwIi8+CjxwYXRoIGQ9Ik0yMCAzMEgyMFYyNUMgMjAgMjIuMjM4NiAyMi4yMzg2IDIwIDI1IDIwSDU1QzU3Ljc2MTQgMjAgNjAgMjIuMjM4NiA2MCAyNVY1NUMgNjAgNTcuNzYxNCA1Ny43NjE0IDYwIDU1IDYwSDI1QzIyLjIzODYgNjAgMjAgNTcuNzYxNCAyMCA1NVYzMFoiIGZpbGw9IiMwMDNENDciLz4KPHBhdGggZD0iTTM1IDIwVjM1SDQ1VjIwIiBzdHJva2U9IiMwMDNENEEiIHN0cm9rZS13aWR0aD0iMyIvPgo8L3N2Zz4=',
+                model: 'hoodie'
+            },
+            {
+                id: 'polo-smart',
+                name: 'Smart Polo',
+                price: 59.99,
+                color: '#1a1a1a',
+                image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjBGMEYwIi8+CjxwYXRoIGQ9Ik0yNSAyNUgzMFYzMEg1MFYyNUg1NVY1NUgyNVYyNVoiIGZpbGw9IiMxQTFBMUEiLz4KPGNpcmNsZSBjeD0iMzUiIGN5PSIzMCIgcj0iMiIgZmlsbD0id2hpdGUiLz4KPGNpcmNsZSBjeD0iNDUiIGN5PSIzMCIgcj0iMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+                model: 'polo'
+            },
+            {
+                id: 'office-shirt',
+                name: 'Office Shirt',
+                price: 69.99,
+                color: '#ffffff',
+                image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjBGMEYwIi8+CjxwYXRoIGQ9Ik0yNSAyNUgzNVYzMEg0NVYyNUg1NVY2MEgyNVYyNVoiIGZpbGw9IndoaXRlIiBzdHJva2U9IiNDQ0NDQ0MiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iNDAiIHkxPSIzNSIgeDI9IjQwIiB5Mj0iNTUiIHN0cm9rZT0iI0NDQ0NDQyIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjwvc3ZnPg==',
+                model: 'shirt'
+            },
+            {
+                id: 'team-jacket',
+                name: 'Team Jacket',
+                price: 129.99,
+                color: '#ff6600',
+                image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjBGMEYwIi8+CjxwYXRoIGQ9Ik0yMCAyNUg2MFY2MEgyMFYyNVoiIGZpbGw9IiNGRjY2MDAiLz4KPHBhdGggZD0iTTIwIDI1TDQwIDM1TDYwIDI1IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjMiLz4KPGxpbmUgeDE9IjQwIiB5MT0iMzUiIHgyPSI0MCIgeTI9IjYwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
+                model: 'jacket'
+            }
+        ];
+
+        // ============================================
+        // BRAND THEME MANAGER
+        // ============================================
+        class BrandThemeManager {
+            constructor() {
+                this.themes = {
+                    cegeka: {
+                        name: 'Cegeka',
+                        primary: '#003d7a',
+                        accent: '#ff6600',
+                        products: CEGEKA_PRODUCTS
+                    },
+                    sporttech: {
+                        name: 'SportTech',
+                        primary: '#dc2626',
+                        accent: '#16a34a',
+                        products: [
+                            { ...CEGEKA_PRODUCTS[0], name: 'Sport Hoodie', color: '#dc2626' },
+                            { ...CEGEKA_PRODUCTS[1], name: 'Training Polo', color: '#16a34a' },
+                            { ...CEGEKA_PRODUCTS[2], name: 'Performance Shirt', color: '#ef4444' },
+                            { ...CEGEKA_PRODUCTS[3], name: 'Track Jacket', color: '#dc2626' }
+                        ]
+                    },
+                    fashionforward: {
+                        name: 'FashionForward',
+                        primary: '#7c3aed',
+                        accent: '#f59e0b',
+                        products: [
+                            { ...CEGEKA_PRODUCTS[0], name: 'Urban Hoodie', color: '#7c3aed' },
+                            { ...CEGEKA_PRODUCTS[1], name: 'Designer Polo', color: '#8b5cf6' },
+                            { ...CEGEKA_PRODUCTS[2], name: 'Luxury Shirt', color: '#a78bfa' },
+                            { ...CEGEKA_PRODUCTS[3], name: 'Statement Jacket', color: '#f59e0b' }
+                        ]
+                    }
+                };
+                
+                this.currentTheme = 'cegeka';
+                this.init();
+            }
+            
+            init() {
+                // Brand switcher buttons
+                document.querySelectorAll('.brand-option').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.switchTheme(btn.dataset.theme);
+                    });
+                });
+                
+                // Initialize product grid
+                this.updateProductGrid();
+            }
+            
+            switchTheme(themeName) {
+                // Update active button
+                document.querySelectorAll('.brand-option').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === themeName);
+                });
+                
+                // Apply theme
+                document.documentElement.setAttribute('data-theme', themeName);
+                
+                // Update brand name
+                const theme = this.themes[themeName];
+                document.getElementById('brandName').textContent = theme.name;
+                
+                // Update current theme
+                this.currentTheme = themeName;
+                
+                // Update products
+                this.updateProductGrid();
+                
+                // Animate the change
+                this.animateThemeChange();
+                
+                // Update 3D model colors if available
+                if (window.viewerManager) {
+                    window.viewerManager.updateBrandColors(theme);
+                }
+            }
+            
+            updateProductGrid() {
+                const theme = this.themes[this.currentTheme];
+                const grid = document.getElementById('productGrid');
+                
+                grid.innerHTML = theme.products.map((product, index) => `
+                    <div class="product-item ${index === 0 ? 'active' : ''}" data-product-id="${product.id}">
+                        <img src="${product.image}" alt="${product.name}">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">€${product.price}</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                grid.querySelectorAll('.product-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.selectProduct(item.dataset.productId);
+                    });
+                });
+                
+                // Update selected product info
+                const selectedProduct = theme.products[0];
+                document.getElementById('selectedProductInfo').textContent = 
+                    `${selectedProduct.name} - €${selectedProduct.price}`;
+            }
+            
+            selectProduct(productId) {
+                const theme = this.themes[this.currentTheme];
+                const product = theme.products.find(p => p.id === productId);
+                
+                if (!product) return;
+                
+                // Update UI
+                document.querySelectorAll('.product-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.productId === productId);
+                });
+                
+                document.getElementById('selectedProductInfo').textContent = 
+                    `${product.name} - €${product.price}`;
+                
+                // Update 3D model
+                if (window.viewerManager) {
+                    window.viewerManager.updateClothing(product);
+                }
+            }
+            
+            animateThemeChange() {
+                const elements = document.querySelectorAll('.panel-section, .size-result');
+                elements.forEach((el, index) => {
+                    el.style.animation = 'none';
+                    setTimeout(() => {
+                        el.style.animation = `slideUp 0.5s ease-out ${index * 0.1}s forwards`;
+                    }, 10);
+                });
+            }
+        }
+
+        // ============================================
+        // MOCK SIZING ENGINE
+        // ============================================
+        class SizingEngine {
+            constructor() {
+                this.sizeChart = {
+                    XS: { height: [150, 165], confidence: 0.85 },
+                    S: { height: [160, 175], confidence: 0.90 },
+                    M: { height: [170, 185], confidence: 0.94 },
+                    L: { height: [180, 195], confidence: 0.92 },
+                    XL: { height: [185, 200], confidence: 0.88 },
+                    XXL: { height: [190, 220], confidence: 0.85 }
+                };
+            }
+            
+            calculateSize(height, bodyType) {
+                let bestSize = 'M';
+                let bestConfidence = 0;
+                
+                for (const [size, specs] of Object.entries(this.sizeChart)) {
+                    if (height >= specs.height[0] && height <= specs.height[1]) {
+                        let confidence = specs.confidence;
+                        
+                        // Adjust confidence based on body type
+                        if (bodyType === 'athletic' && ['XS', 'S'].includes(size)) {
+                            confidence += 0.05;
+                        } else if (bodyType === 'curvy' && ['L', 'XL', 'XXL'].includes(size)) {
+                            confidence += 0.03;
+                        }
+                        
+                        if (confidence > bestConfidence) {
+                            bestSize = size;
+                            bestConfidence = confidence;
+                        }
+                    }
+                }
+                
+                return {
+                    size: bestSize,
+                    confidence: Math.min(Math.round(bestConfidence * 100), 99)
+                };
+            }
+        }
+
+        // ============================================
+        // ANALYTICS MANAGER
+        // ============================================
+        class AnalyticsManager {
+            constructor() {
+                this.metrics = {
+                    sessions: 1247,
+                    accuracy: 96.3,
+                    returnRate: 43,
+                    avgTime: 2.3,
+                    conversion: 34,
+                    co2: 12.5
+                };
+                
+                this.charts = {};
+                this.init();
+            }
+            
+            init() {
+                // Toggle button
+                document.getElementById('analyticsToggle').addEventListener('click', () => {
+                    this.toggleDashboard();
+                });
+                
+                // Close button
+                document.getElementById('closeAnalytics').addEventListener('click', () => {
+                    this.closeDashboard();
+                });
+                
+                // Initialize charts
+                this.initCharts();
+                
+                // Start live updates
+                this.startLiveUpdates();
+            }
+            
+            initCharts() {
+                // Sessions Chart
+                const sessionsCtx = document.getElementById('sessionsChart').getContext('2d');
+                this.charts.sessions = new Chart(sessionsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Daily Sessions',
+                            data: [1150, 1230, 1180, 1350, 1420, 980, 1247],
+                            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-primary'),
+                            backgroundColor: 'rgba(0, 61, 122, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Sessions This Week'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // Size Distribution Chart
+                const sizesCtx = document.getElementById('sizesChart').getContext('2d');
+                this.charts.sizes = new Chart(sizesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+                        datasets: [{
+                            data: [8, 18, 35, 24, 12, 3],
+                            backgroundColor: [
+                                '#e3f2fd',
+                                '#90caf9',
+                                '#42a5f5',
+                                '#1e88e5',
+                                '#1565c0',
+                                '#0d47a1'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Size Distribution (%)'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            toggleDashboard() {
+                const dashboard = document.getElementById('analyticsDashboard');
+                dashboard.classList.toggle('active');
+                
+                // Update charts when opening
+                if (dashboard.classList.contains('active')) {
+                    setTimeout(() => {
+                        Object.values(this.charts).forEach(chart => chart.update());
+                    }, 300);
+                }
+            }
+            
+            closeDashboard() {
+                document.getElementById('analyticsDashboard').classList.remove('active');
+            }
+            
+            startLiveUpdates() {
+                // Update metrics every 5 seconds
+                setInterval(() => {
+                    // Sessions
+                    const sessions = 1200 + Math.floor(Math.random() * 100);
+                    document.getElementById('sessionCount').textContent = sessions.toLocaleString();
+                    
+                    // Update chart with new data point
+                    if (this.charts.sessions) {
+                        const data = this.charts.sessions.data.datasets[0].data;
+                        data.push(sessions);
+                        if (data.length > 7) data.shift();
+                        this.charts.sessions.update('none');
+                    }
+                    
+                    // Accuracy
+                    const accuracy = (95 + Math.random() * 3).toFixed(1);
+                    document.getElementById('accuracyRate').textContent = accuracy + '%';
+                    
+                    // Conversion
+                    const conversion = (32 + Math.random() * 5).toFixed(0);
+                    document.getElementById('conversionRate').textContent = conversion + '%';
+                    
+                    // Update timestamp
+                    const timestamp = new Date().toLocaleTimeString('nl-BE');
+                    let timestampEl = document.getElementById('lastUpdated');
+                    if (!timestampEl) {
+                        timestampEl = document.createElement('div');
+                        timestampEl.id = 'lastUpdated';
+                        timestampEl.style.cssText = 'text-align: center; font-size: 0.75rem; color: #6c757d; margin-top: 1rem;';
+                        document.querySelector('.analytics-content').appendChild(timestampEl);
+                    }
+                    timestampEl.textContent = `Laatst bijgewerkt: ${timestamp}`;
+                }, 5000);
+            }
+            
+            trackEvent(eventName, data) {
+                console.log('Analytics Event:', eventName, data);
+                
+                // In real implementation, send to analytics service
+                if (eventName === 'size_calculated') {
+                    // Update accuracy metric
+                    const currentAccuracy = parseFloat(document.getElementById('accuracyRate').textContent);
+                    const newAccuracy = (currentAccuracy + 0.1).toFixed(1);
+                    document.getElementById('accuracyRate').textContent = newAccuracy + '%';
+                }
+            }
+        }
+
+        // ============================================
+        // 3D VIEWER MANAGER
+        // ============================================
+        class ViewerManager {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.avatar = null;
+                this.clothing = [];
+                
+                this.init();
+            }
+            
+            init() {
+                const container = document.getElementById('canvas-container');
+                
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0xf0f0f0);
+                
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    75,
+                    container.clientWidth / container.clientHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 1.6, 3);
+                this.camera.lookAt(0, 1, 0);
+                
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.shadowMap.enabled = true;
+                container.appendChild(this.renderer.domElement);
+                
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+                directionalLight.position.set(5, 5, 5);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+                
+                // Create avatar placeholder
+                this.createAvatar();
+                
+                // Handle resize
+                window.addEventListener('resize', () => this.onResize());
+                
+                // Start animation
+                this.animate();
+                
+                // FPS counter
+                this.initFPSCounter();
+            }
+            
+            createAvatar() {
+                // Create body using cylinder + spheres (capsule alternative for r128)
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffdbac,
+                    shininess: 30
+                });
+                
+                // Main body cylinder
+                const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.4, 16);
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.9;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                
+                // Top sphere for shoulders
+                const shoulderGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const shoulders = new THREE.Mesh(shoulderGeometry, bodyMaterial);
+                shoulders.position.y = 1.6;
+                shoulders.castShadow = true;
+                
+                // Bottom sphere for hips
+                const hips = new THREE.Mesh(shoulderGeometry, bodyMaterial);
+                hips.position.y = 0.2;
+                hips.castShadow = true;
+                
+                // Head
+                const headGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+                const head = new THREE.Mesh(headGeometry, bodyMaterial);
+                head.position.y = 1.8;
+                head.castShadow = true;
+                
+                // Group
+                this.avatar = new THREE.Group();
+                this.avatar.add(body);
+                this.avatar.add(shoulders);
+                this.avatar.add(hips);
+                this.avatar.add(head);
+                this.scene.add(this.avatar);
+                
+                // Add ground
+                const groundGeometry = new THREE.PlaneGeometry(10, 10);
+                const groundMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xe0e0e0,
+                    side: THREE.DoubleSide
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+                
+                // Add hoodie
+                this.addClothing();
+            }
+            
+            addClothing() {
+                // Simple hoodie geometry
+                const hoodieGeometry = new THREE.BoxGeometry(0.7, 0.8, 0.4);
+                const hoodieMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x003d7a // Cegeka blue
+                });
+                
+                const hoodie = new THREE.Mesh(hoodieGeometry, hoodieMaterial);
+                hoodie.position.y = 1.2;
+                hoodie.castShadow = true;
+                
+                this.clothing.push(hoodie);
+                this.avatar.add(hoodie);
+            }
+            
+            updateClothing(product) {
+                // Remove existing clothing
+                this.clothing.forEach(item => {
+                    this.avatar.remove(item);
+                    item.geometry.dispose();
+                    item.material.dispose();
+                });
+                this.clothing = [];
+                
+                // Add new clothing based on product
+                const geometry = new THREE.BoxGeometry(
+                    product.model === 'jacket' ? 0.8 : 0.7,
+                    product.model === 'shirt' ? 0.9 : 0.8,
+                    0.4
+                );
+                
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: product.color
+                });
+                
+                const clothing = new THREE.Mesh(geometry, material);
+                clothing.position.y = product.model === 'shirt' ? 1.1 : 1.2;
+                clothing.castShadow = true;
+                
+                this.clothing.push(clothing);
+                this.avatar.add(clothing);
+            }
+            
+            updateBrandColors(theme) {
+                // Update clothing material color
+                if (this.clothing.length > 0) {
+                    this.clothing[0].material.color.set(theme.primary);
+                }
+            }
+            
+            updateAvatarHeight(height) {
+                const scale = height / 175; // Normalize to average height
+                this.avatar.scale.set(scale, scale, scale);
+            }
+            
+            updateClothingSize(size) {
+                // Animate clothing size change
+                const sizeScales = {
+                    XS: 0.9,
+                    S: 0.95,
+                    M: 1.0,
+                    L: 1.05,
+                    XL: 1.1,
+                    XXL: 1.15
+                };
+                
+                const targetScale = sizeScales[size] || 1.0;
+                
+                this.clothing.forEach(item => {
+                    // Simple scale animation
+                    const startScale = item.scale.x;
+                    const animationDuration = 500;
+                    const startTime = Date.now();
+                    
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / animationDuration, 1);
+                        const eased = this.easeOutCubic(progress);
+                        
+                        const currentScale = startScale + (targetScale - startScale) * eased;
+                        item.scale.set(currentScale, currentScale, currentScale);
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    
+                    animate();
+                });
+            }
+            
+            easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Rotate avatar
+                if (this.avatar) {
+                    this.avatar.rotation.y += 0.005;
+                }
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            onResize() {
+                const container = document.getElementById('canvas-container');
+                this.camera.aspect = container.clientWidth / container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+            
+            initFPSCounter() {
+                let lastTime = performance.now();
+                let frames = 0;
+                
+                const updateFPS = () => {
+                    frames++;
+                    const currentTime = performance.now();
+                    
+                    if (currentTime >= lastTime + 1000) {
+                        const fps = Math.round((frames * 1000) / (currentTime - lastTime));
+                        document.getElementById('fpsCounter').textContent = fps;
+                        
+                        frames = 0;
+                        lastTime = currentTime;
+                    }
+                    
+                    requestAnimationFrame(updateFPS);
+                };
+                
+                updateFPS();
+            }
+        }
+
+        // ============================================
+        // MAIN APP
+        // ============================================
+        class VFRDemo {
+            constructor() {
+                this.brandManager = new BrandThemeManager();
+                this.sizingEngine = new SizingEngine();
+                this.analyticsManager = new AnalyticsManager();
+                this.viewerManager = new ViewerManager();
+                this.arManager = new ARManager();
+                
+                this.currentHeight = 175;
+                this.currentBodyType = 'average';
+                
+                // Make managers globally accessible
+                window.brandManager = this.brandManager;
+                window.viewerManager = this.viewerManager;
+                window.analyticsManager = this.analyticsManager;
+                
+                this.init();
+            }
+            
+            init() {
+                // Height slider
+                const heightSlider = document.getElementById('heightSlider');
+                heightSlider.addEventListener('input', (e) => {
+                    this.currentHeight = parseInt(e.target.value);
+                    document.getElementById('heightValue').textContent = `${this.currentHeight} cm`;
+                    
+                    // Update avatar
+                    this.viewerManager.updateAvatarHeight(this.currentHeight);
+                    
+                    // Update size recommendation
+                    this.updateSizeRecommendation();
+                });
+                
+                // Body type buttons
+                document.querySelectorAll('.body-type-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.body-type-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        this.currentBodyType = btn.dataset.type;
+                        this.updateSizeRecommendation();
+                    });
+                });
+                
+                // AR Preview button
+                document.getElementById('arPreviewBtn').addEventListener('click', () => {
+                    this.showARPreview();
+                });
+                
+                // WebXR button
+                document.getElementById('webXRBtn').addEventListener('click', () => {
+                    if (this.arManager) {
+                        document.getElementById('arModal').classList.remove('active');
+                        this.arManager.startAR();
+                    }
+                });
+                
+                // Close AR modal
+                document.getElementById('closeArModal').addEventListener('click', () => {
+                    this.closeARPreview();
+                });
+                
+                // Add to cart button
+                document.getElementById('addToCartBtn').addEventListener('click', () => {
+                    this.addToCart();
+                });
+                
+                // Initial size calculation
+                this.updateSizeRecommendation();
+            }
+            
+            updateSizeRecommendation() {
+                const result = this.sizingEngine.calculateSize(this.currentHeight, this.currentBodyType);
+                
+                // Update UI
+                document.getElementById('recommendedSize').textContent = result.size;
+                document.getElementById('confidenceValue').textContent = result.confidence;
+                document.getElementById('confidenceFill').style.width = `${result.confidence}%`;
+                document.getElementById('cartSize').textContent = result.size;
+                
+                // Update clothing
+                this.viewerManager.updateClothingSize(result.size);
+                
+                // Track analytics
+                this.analyticsManager.trackEvent('size_calculated', {
+                    height: this.currentHeight,
+                    bodyType: this.currentBodyType,
+                    size: result.size,
+                    confidence: result.confidence
+                });
+                
+                // Animate the result
+                const sizeResult = document.getElementById('sizeResult');
+                sizeResult.style.animation = 'none';
+                setTimeout(() => {
+                    sizeResult.style.animation = 'slideUp 0.5s ease-out forwards';
+                }, 10);
+            }
+            
+            showARPreview() {
+                const modal = document.getElementById('arModal');
+                modal.classList.add('active');
+                
+                // Track event
+                this.analyticsManager.trackEvent('ar_preview_opened', {
+                    size: document.getElementById('recommendedSize').textContent
+                });
+            }
+            
+            closeARPreview() {
+                document.getElementById('arModal').classList.remove('active');
+            }
+            
+            addToCart() {
+                const btn = document.getElementById('addToCartBtn');
+                const originalText = btn.innerHTML;
+                
+                // Show success state
+                btn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Added to Cart!
+                `;
+                btn.style.background = 'var(--success)';
+                
+                // Track event
+                this.analyticsManager.trackEvent('add_to_cart', {
+                    size: document.getElementById('recommendedSize').textContent,
+                    confidence: document.getElementById('confidenceValue').textContent
+                });
+                
+                // Reset after delay
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }
+        }
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.vfrDemo = new VFRDemo();
+            
+            // Add load time
+            setTimeout(() => {
+                const loadTime = (0.7 + Math.random() * 0.3).toFixed(1);
+                document.getElementById('loadTime').textContent = loadTime;
+            }, 1000);
+            
+            // Check for autoplay parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('autoplay') === 'true') {
+                // Auto-demo sequence
+                setTimeout(() => {
+                    // 1. Ensure Cegeka brand is selected
+                    document.querySelector('[data-theme="cegeka"]').click();
+                    
+                    setTimeout(() => {
+                        // 2. Select tech hoodie
+                        document.querySelector('[data-product-id="tech-hoodie"]').click();
+                        
+                        setTimeout(() => {
+                            // 3. Open analytics dashboard
+                            document.getElementById('analyticsToggle').click();
+                            
+                            // 4. Smooth scroll to analytics
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        }, 1000);
+                    }, 500);
+                }, 1000);
+            }
         });
+
+        // Prevent closing when clicking inside modal content
+        document.querySelector('.ar-modal-content').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('arModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('arModal').classList.remove('active');
+            }
+        });
+        
+        // QR Code toggle
+        window.showQRCode = function() {
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.style.display = qrContainer.style.display === 'none' ? 'block' : 'none';
+        };
     </script>
 </body>
 </html>
