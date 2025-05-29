@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'edge';
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { taskId: string } }
+  request: NextRequest,
+  context: { params: { taskId: string } }
 ) {
-  const { taskId } = params;
+  const { taskId } = context.params;
   const url = `https://assets.meshy.ai/${taskId}/output/model.glb`;
   
   try {
