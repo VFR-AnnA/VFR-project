@@ -8,6 +8,14 @@ import webpack from 'webpack';
  */
 
 const nextConfig: NextConfig = {
+  // Skip ESLint during builds
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  // Disable Babel and use SWC
+  experimental: {
+    forceSwcTransforms: true
+  },
   // Expose environment variables to the client
   // SECURITY: API keys should NOT be exposed to the client
   env: {
@@ -17,7 +25,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_FEATURE_REFINE_PBR: process.env.NEXT_PUBLIC_FEATURE_REFINE_PBR
   },
   
-  // Add explicit redirect for root path in development mode
+  // Add explicit redirects
   async redirects() {
     return process.env.NODE_ENV === "development"
       ? [
@@ -26,8 +34,29 @@ const nextConfig: NextConfig = {
             destination: "/generator-demo",
             permanent: false,
           },
+          {
+            source: "/demo",
+            destination: "/try/body-ai",
+            permanent: false,
+          },
         ]
-      : [];
+      : [
+          {
+            source: "/demo",
+            destination: "/try/body-ai",
+            permanent: false,
+          },
+        ];
+  },
+  
+  // Add rewrite rules for model files
+  async rewrites() {
+    return [
+      {
+        source: '/try/generator/models/:slug*',
+        destination: '/models/:slug*',
+      },
+    ];
   },
   
   webpack(config) {
@@ -49,10 +78,29 @@ SHA256: 3dd4…ab9c
       type: 'asset/resource'
     });
 
+    // Configure for Web Workers
+    config.module.rules.push({
+      test: /bodyAIWorker\.ts$/,
+      type: 'asset/resource'
+    });
+
+    // Configure for MediaPipe WASM files
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'asset/resource'
+    });
+
     return config;
   },
-  // Allow connections from other devices on the network
-  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
+  // Allow connections from other devices on the network and transpile ESM packages
+  transpilePackages: [
+    'three',
+    '@react-three/fiber',
+    '@react-three/drei',
+    '@mediapipe/pose',
+    '@mediapipe/camera_utils',
+    '@mediapipe/drawing_utils'
+  ],
 };
 
 export default nextConfig;

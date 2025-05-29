@@ -34,7 +34,7 @@ import { Group } from 'three';
 import { AvatarParams, DEFAULT_AVATAR_PARAMS, paramsToScaleFactors } from "../../types/avatar-params";
 import RealisticAvatar from "./RealisticAvatar";
 
-const MODELS_PATH = '/models';
+const MODELS_PATH = '/models-draco';
 
 // Debug logging function
 const debug = (message: string, ...args: unknown[]) => {
@@ -319,17 +319,17 @@ export default function VFRViewer({
 }
 
 // Preload models using useGLTF.preload which has built-in DRACO support
-useGLTF.preload(`${MODELS_PATH}/mannequin-stub.glb`);
 useGLTF.preload(`${MODELS_PATH}/mannequin-draco.glb`);
+useGLTF.preload(`${MODELS_PATH}/mannequin.glb`);
 
 // Add preload link for HD model to load it when browser is idle
 if (typeof document !== 'undefined') {
-  const linkExists = document.querySelector(`link[href="${MODELS_PATH}/mannequin-draco.glb"][rel="preload"]`);
+  const linkExists = document.querySelector(`link[href="${MODELS_PATH}/mannequin.glb"][rel="preload"]`);
   
   if (!linkExists) {
     const link = document.createElement('link');
     link.rel = 'preload';
-    link.href = `${MODELS_PATH}/mannequin-draco.glb`;
+    link.href = `${MODELS_PATH}/mannequin.glb`;
     link.as = 'fetch';
     link.crossOrigin = 'anonymous';
     link.setAttribute('importance', 'low');

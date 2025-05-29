@@ -102,11 +102,17 @@ export function initINPMonitoring(): void {
     eventTimingObserver.observe({ type: 'event', buffered: true });
 
     // Also observe the INP metric from web-vitals
-    import('web-vitals').then(({ onINP }) => {
-      onINP((metric) => {
-        handleINPMetric(metric);
+    try {
+      import('web-vitals').then(({ onINP }) => {
+        onINP((metric) => {
+          handleINPMetric(metric);
+        });
+      }).catch(err => {
+        console.warn('Failed to load web-vitals:', err);
       });
-    });
+    } catch (error) {
+      console.warn('Failed to import web-vitals:', error);
+    }
 
     console.log('INP monitoring initialized');
   } catch (error) {
@@ -188,28 +194,33 @@ function sendINPToAnalytics(metric: Metric): void {
 /**
  * Get a description of an element for logging
  */
-function getElementDescription(element: Element): string {
+function getElementDescription(element: Element | undefined): string {
   if (!element) return 'unknown';
   
-  let description = element.tagName.toLowerCase();
-  
-  // Add id if available
-  if (element.id) {
-    description += `#${element.id}`;
+  try {
+    let description = element.tagName.toLowerCase();
+    
+    // Add id if available
+    if (element.id) {
+      description += `#${element.id}`;
+    }
+    
+    // Add classes if available (limit to first 2)
+    if (element.classList && element.classList.length > 0) {
+      const classes = Array.from(element.classList).slice(0, 2).join('.');
+      description += classes ? `.${classes}` : '';
+    }
+    
+    // Add type for inputs
+    if (element.tagName.toLowerCase() === 'input' && element.hasAttribute('type')) {
+      description += `[type=${element.getAttribute('type')}]`;
+    }
+    
+    return description;
+  } catch (error) {
+    console.error('Error getting element description:', error);
+    return 'unknown';
   }
-  
-  // Add classes if available (limit to first 2)
-  if (element.classList && element.classList.length > 0) {
-    const classes = Array.from(element.classList).slice(0, 2).join('.');
-    description += classes ? `.${classes}` : '';
-  }
-  
-  // Add type for inputs
-  if (element.tagName.toLowerCase() === 'input' && element.hasAttribute('type')) {
-    description += `[type=${element.getAttribute('type')}]`;
-  }
-  
-  return description;
 }
 
 /**

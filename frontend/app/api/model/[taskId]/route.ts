@@ -1,18 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// Explicitly define the type but avoid NextRequest/complex types
-interface Params {
-  taskId: string;
-}
-
 export async function GET(
-  // @ts-ignore - ignore the request type
-  request: Request,
-  { params }: { params: Params }
+  req: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
-  const taskId = params.taskId;
+  const { taskId } = await params;
   const url = `https://assets.meshy.ai/${taskId}/output/model.glb`;
   
   try {

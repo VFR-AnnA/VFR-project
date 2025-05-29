@@ -1,0 +1,7 @@
+# Basisbeveiliging voor demo
+/*
+ Basic-Auth: Artur $SITE_PASSWORD
+
+# Cache GLB's 1 jaar
+/models-draco/*
+ Cache-Control: public, max-age=31536000, immutable

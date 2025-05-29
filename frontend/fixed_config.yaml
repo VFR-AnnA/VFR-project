@@ -1,0 +1,15 @@
+# Basic SPAR3D configuration
+model:
+  type: spar3d
+  point_dim: 3
+  feature_dim: 256
+  hidden_dim: 512
+  num_layers: 8
+  num_heads: 8
+  dropout: 0.1
+  activation: gelu
+  norm: layer
+  use_checkpoint: false
+  low_vram_mode: false
+isosurface_resolution: 128
+pdiff_image_tokenizer_cls: spar3d.models.tokenizers.dinov2.DinoV2ImageTokenizer

@@ -7,6 +7,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ClientProviderWrapper from "./components/ai-assist/ClientProviderWrapper";
+import ClientFabWrapper from "./components/ai-assist/ClientFabWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +35,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <a href="#main" className="sr-only focus:not-sr-only">
-          Skip to main content
-        </a>
-        <main id="main">{children}</main>
+        <ClientProviderWrapper>
+          <a href="#main" className="sr-only focus:not-sr-only">
+            Skip to main content
+          </a>
+          <main id="main">{children}</main>
+          {/* floating button in bottom-right – fixed slot, no CLS */}
+          <ClientFabWrapper />
+        </ClientProviderWrapper>
       </body>
     </html>
   );

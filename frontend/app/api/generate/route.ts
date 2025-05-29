@@ -22,6 +22,7 @@ interface GeneratorOptions {
   enablePBR?: boolean;
   embed?: boolean;
   provider?: 'meshy' | 'hunyuan';
+  imagePrompt?: string; // Base64 encoded image data
 }
 
 interface GeneratorResult {
@@ -126,12 +127,29 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
       console.log('Starting Hunyuan generation with options:', JSON.stringify(options, null, 2));
       
       // Prepare the request body
-      const requestBody = {
-        prompt: options.prompt,
+      const requestBody: any = {
         mode: options.modelType || 'avatar',
         quality: options.quality || 'high',
-        embed: options.embed !== undefined ? options.embed : true
+        embed: options.embed !== undefined ? options.embed : true,
+        input_media_type: options.imagePrompt ? 'IMAGE' : 'TEXT'
       };
+      
+      // Always include the text prompt, ensure it's never empty
+      requestBody.prompt = options.prompt.trim() || '(image prompt)';
+      
+      // Add image prompt if provided
+      if (options.imagePrompt) {
+        // Extract the base64 data from the data URL
+        const base64Data = options.imagePrompt.split(',')[1];
+        if (base64Data) {
+          requestBody.image_base64 = base64Data;
+          console.log('Including image prompt in Hunyuan API request with IMAGE input_media_type');
+        } else {
+          console.warn('Invalid image prompt format, ignoring image prompt');
+          // Fallback to TEXT mode if image is invalid
+          requestBody.input_media_type = 'TEXT';
+        }
+      }
       
       // Debug the request details
       if (process.env.DEBUG_PROVIDERS === 'true') {
@@ -164,19 +182,44 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
       console.log('Starting Meshy generation with options:', JSON.stringify(options, null, 2));
       
       // 1. Start the Meshy preview generation job
+      const meshy_request_body: any = {
+        mode: options.imagePrompt ? 'TEXT_AND_IMAGE' : 'preview', // Use TEXT_AND_IMAGE mode when image is provided
+        art_style: 'realistic',
+        topology: 'triangle',
+        embed: options.embed || false,
+        prompt: options.prompt.trim() || '(image prompt)', // Ensure prompt is never empty
+        inputs: []
+      };
+      
+      // Always add text input
+      meshy_request_body.inputs.push({
+        type: 'text',
+        data: options.prompt.trim() || '(image prompt)' // Use default text if prompt is empty
+      });
+      
+      // Add image prompt if provided
+      if (options.imagePrompt) {
+        // Extract the base64 data from the data URL
+        const base64Data = options.imagePrompt.split(',')[1];
+        if (base64Data) {
+          // Add image to inputs array
+          meshy_request_body.inputs.push({
+            type: 'image',
+            data: options.imagePrompt // Keep full data URL
+          });
+          console.log('Including image prompt in Meshy API request with TEXT_AND_IMAGE mode');
+        } else {
+          console.warn('Invalid image prompt format, ignoring image prompt');
+        }
+      }
+      
       startResponse = await fetch(MESHY_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          prompt: options.prompt,
-          mode: 'preview', // Required parameter for Meshy API v2
-          art_style: 'realistic',
-          topology: 'triangle',
-          embed: options.embed || false
-        })
+        body: JSON.stringify(meshy_request_body)
       });
       
       // Log the full response for debugging
@@ -431,7 +474,8 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
           texturePrompt: options.texturePrompt || 'realistic fabrics and denim',
           modelType: options.modelType || 'avatar',
           quality: options.quality || 'standard',
-          isPBR: true
+          isPBR: true,
+          hasImagePrompt: !!options.imagePrompt
         },
         textureUrls: refineResultData.texture_urls || [],
         measurements: computeMeasurements(refineResultData)
@@ -466,7 +510,8 @@ async function generate(options: GeneratorOptions): Promise<GeneratorResult> {
           prompt: options.prompt,
           modelType: options.modelType || 'avatar',
           quality: options.quality || 'standard',
-          isPBR: false
+          isPBR: false,
+          hasImagePrompt: !!options.imagePrompt
         },
         measurements: computeMeasurements(previewData)
       };

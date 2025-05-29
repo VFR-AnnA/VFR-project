@@ -1,12 +1,9 @@
-import { Metadata } from 'next';
 import GeneratorDemo from '../../components/GeneratorDemo';
 
-// Use only generateMetadata, not both metadata and generateMetadata
-export const generateMetadata = (): Metadata => {
-  return {
-    title: 'VFR Generator Demo',
-    description: 'Generate 3D models using AI for the Virtual Fitting Room',
-  };
+// Metadata for the page
+export const metadata = {
+  title: 'VFR Generator Demo',
+  description: 'Generate 3D models using AI for the Virtual Fitting Room',
 };
 
 export default function GeneratorDemoPage() {

@@ -10,7 +10,7 @@ export interface BodyMeasurements {
 }
 
 /* ---------- helpers ---------- */
-const dist = (a: NormalizedLandmark, b: NormalizedLandmark) =>
+const dist = (a: NormalizedLandmark, b: NormalizedLandmark) =>                                                  
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 /* ---------- core ---------- */
