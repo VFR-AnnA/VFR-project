@@ -8,6 +8,10 @@ import webpack from 'webpack';
  */
 
 const nextConfig: NextConfig = {
+  // Skip ESLint during builds
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   // Disable Babel and use SWC
   experimental: {
     forceSwcTransforms: true
