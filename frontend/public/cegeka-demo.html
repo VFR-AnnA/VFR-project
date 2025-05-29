@@ -900,6 +900,38 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        
+        /* Active state for body type buttons */
+        .body-type-btn.active {
+            background: #004ab9;
+            color: #fff;
+        }
+        
+        /* Product tile styles */
+        .product-tile {
+            background: var(--c);
+            color: #fff;
+            padding: 1rem;
+            border: 0;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: filter 0.2s;
+        }
+        
+        .product-tile:hover {
+            filter: brightness(1.1);
+        }
+        
+        .product-tile span {
+            font-weight: 600;
+        }
+        
+        .product-tile small {
+            opacity: 0.9;
+        }
     </style>
     
     <!-- New simplified Three.js viewer with OrbitControls -->
@@ -1118,7 +1150,7 @@
     // Wait for everything to be loaded
     window.addEventListener('DOMContentLoaded', function() {
         // Brand switcher functionality
-        const brandButtons = document.querySelectorAll('[data-theme]');
+        const brandButtons = document.querySelectorAll('.brand-option');
         brandButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 const theme = this.getAttribute('data-theme');
@@ -1156,7 +1188,7 @@
         }
         
         // Body type buttons functionality
-        const bodyTypeButtons = document.querySelectorAll('[data-type]');
+        const bodyTypeButtons = document.querySelectorAll('.body-type-btn');
         bodyTypeButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 const bodyType = this.getAttribute('data-type');
@@ -1203,6 +1235,46 @@
             requestAnimationFrame(animateHeight);
         }
         animateHeight();
+        
+        // Auto-populate the product grid
+        const products = [
+            { id: 'hoodie', name: 'Urban Hoodie', color: '#ff69b4', price: '€79.99' },
+            { id: 'tshirt', name: 'Training Tee', color: '#3e8cff', price: '€34.99' }
+        ];
+        
+        const grid = document.getElementById('productGrid');
+        if (grid) {
+            grid.innerHTML = products.map(p => `
+                <button class="product-tile" data-cloth="${p.id}" style="--c:${p.color}">
+                    <span>${p.name}</span>
+                    <small>${p.price}</small>
+                </button>
+            `).join('');
+            
+            // Delegate click to ClothingManager
+            grid.addEventListener('click', e => {
+                const tile = e.target.closest('[data-cloth]');
+                if (tile) {
+                    const id = tile.dataset.cloth;
+                    if (window.clothingManager) {
+                        window.clothingManager.show(id);
+                    }
+                    
+                    // Update active state
+                    grid.querySelectorAll('.product-tile').forEach(t => t.classList.remove('active'));
+                    tile.classList.add('active');
+                    
+                    // Update product info
+                    const product = products.find(p => p.id === id);
+                    if (product) {
+                        const infoElement = document.getElementById('selectedProductInfo');
+                        if (infoElement) {
+                            infoElement.textContent = `${product.name} - ${product.price}`;
+                        }
+                    }
+                }
+            });
+        }
     });
     </script>
 </head>
