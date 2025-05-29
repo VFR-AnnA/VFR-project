@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
-    "copy-models": "xcopy /E /I /Y public\\models\\* public\\models-draco\\",
+    "copy-models": "node scripts/copy-models.js",
     "prebuild": "node scripts/ensure-model-urls.js && npm run copy-models",
     "build": "next build",
     "start": "next start",
