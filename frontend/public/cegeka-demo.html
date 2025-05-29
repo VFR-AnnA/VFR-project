@@ -2259,42 +2259,50 @@
             }
         }
 
-        // Initialize app when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            window.vfrDemo = new VFRDemo();
-            
-            // Add load time
-            setTimeout(() => {
-                const loadTime = (0.7 + Math.random() * 0.3).toFixed(1);
-                document.getElementById('loadTime').textContent = loadTime;
-            }, 1000);
-            
-            // Check for autoplay parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('autoplay') === 'true') {
-                // Auto-demo sequence
+        // Initialize app when DOM is ready and Three.js is loaded
+        function initializeApp() {
+            if (typeof THREE !== 'undefined') {
+                window.vfrDemo = new VFRDemo();
+                
+                // Add load time
                 setTimeout(() => {
-                    // 1. Ensure Cegeka brand is selected
-                    document.querySelector('[data-theme="cegeka"]').click();
-                    
+                    const loadTime = (0.7 + Math.random() * 0.3).toFixed(1);
+                    document.getElementById('loadTime').textContent = loadTime;
+                }, 1000);
+                
+                // Check for autoplay parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('autoplay') === 'true') {
+                    // Auto-demo sequence
                     setTimeout(() => {
-                        // 2. Select tech hoodie
-                        document.querySelector('[data-product-id="tech-hoodie"]').click();
+                        // 1. Ensure Cegeka brand is selected
+                        document.querySelector('[data-theme="cegeka"]').click();
                         
                         setTimeout(() => {
-                            // 3. Open analytics dashboard
-                            document.getElementById('analyticsToggle').click();
+                            // 2. Select tech hoodie
+                            document.querySelector('[data-product-id="tech-hoodie"]').click();
                             
-                            // 4. Smooth scroll to analytics
-                            window.scrollTo({
-                                top: document.body.scrollHeight,
-                                behavior: 'smooth'
-                            });
-                        }, 1000);
-                    }, 500);
-                }, 1000);
+                            setTimeout(() => {
+                                // 3. Open analytics dashboard
+                                document.getElementById('analyticsToggle').click();
+                                
+                                // 4. Smooth scroll to analytics
+                                window.scrollTo({
+                                    top: document.body.scrollHeight,
+                                    behavior: 'smooth'
+                                });
+                            }, 1000);
+                        }, 500);
+                    }, 1000);
+                }
+            } else {
+                // Wait a bit more for Three.js to load
+                setTimeout(initializeApp, 100);
             }
-        });
+        }
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', initializeApp);
 
         // Prevent closing when clicking inside modal content
         document.querySelector('.ar-modal-content').addEventListener('click', (e) => {
