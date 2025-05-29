@@ -5,6 +5,13 @@ export class ClothingManager {
     this.loader = loader;
     this.layers = new Map();
     this.currentClothing = null;
+    
+    // Clothing paths mapping
+    this.CLOTHES = {
+      none: null,
+      hoodie: '/models/clothes/hoodie.glb',
+      tshirt: '/models/clothes/tshirt.glb'
+    };
   }
 
   async load(name, url) {
@@ -91,5 +98,81 @@ export class ClothingManager {
   // Check if clothing is loaded
   has(name) {
     return this.layers.has(name);
+  }
+  
+  // Dispose of a specific clothing item to free GPU memory
+  disposeClothing(name) {
+    const clothing = this.layers.get(name);
+    if (clothing) {
+      clothing.traverse((child) => {
+        if (child.isMesh) {
+          // Dispose geometry
+          if (child.geometry) {
+            child.geometry.dispose();
+          }
+          
+          // Dispose materials
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => this.disposeMaterial(mat));
+            } else {
+              this.disposeMaterial(child.material);
+            }
+          }
+        }
+      });
+      
+      // Remove from scene and map
+      if (clothing.parent) {
+        clothing.parent.remove(clothing);
+      }
+      this.layers.delete(name);
+      console.log(`Disposed clothing: ${name}`);
+    }
+  }
+  
+  // Helper to dispose material and its textures
+  disposeMaterial(material) {
+    if (!material) return;
+    
+    // Dispose textures
+    const textureProperties = [
+      'map', 'normalMap', 'roughnessMap', 'metalnessMap',
+      'aoMap', 'emissiveMap', 'alphaMap', 'envMap'
+    ];
+    
+    textureProperties.forEach(prop => {
+      if (material[prop]) {
+        material[prop].dispose();
+      }
+    });
+    
+    // Dispose the material itself
+    material.dispose();
+  }
+  
+  // Dispose all clothing items
+  disposeAll() {
+    const names = Array.from(this.layers.keys());
+    names.forEach(name => this.disposeClothing(name));
+    this.currentClothing = null;
+  }
+  
+  // Load clothing items from predefined paths
+  async loadPredefinedClothes() {
+    const loadPromises = [];
+    
+    for (const [name, path] of Object.entries(this.CLOTHES)) {
+      if (path && !this.has(name)) {
+        loadPromises.push(
+          this.load(name, path).catch(err => {
+            console.warn(`Failed to load ${name}: ${err.message}`);
+          })
+        );
+      }
+    }
+    
+    await Promise.all(loadPromises);
+    console.log('All predefined clothes loaded');
   }
 }

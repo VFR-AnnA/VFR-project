@@ -980,12 +980,9 @@
             // Initialize clothing manager
             clothingManager = new window.ClothingManager(mannequinModel, loader);
             
-            // Load clothing items (using placeholder paths - replace with actual models)
-            clothingManager.load('hoodie', '/models/clothes/hoodie.glb').catch(() => {
-                console.log('Hoodie model not found - using placeholder');
-            });
-            clothingManager.load('tshirt', '/models/clothes/tshirt.glb').catch(() => {
-                console.log('T-shirt model not found - using placeholder');
+            // Load predefined clothing items
+            clothingManager.loadPredefinedClothes().then(() => {
+                console.log('Clothing items loaded');
             });
             
             // Make clothing manager globally accessible
