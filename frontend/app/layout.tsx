@@ -9,6 +9,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientProviderWrapper from "./components/ai-assist/ClientProviderWrapper";
 import ClientFabWrapper from "./components/ai-assist/ClientFabWrapper";
+import TinyNav from "./components/TinyNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,8 +34,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-10`}
       >
+        <TinyNav />
         <ClientProviderWrapper>
           <a href="#main" className="sr-only focus:not-sr-only">
             Skip to main content
