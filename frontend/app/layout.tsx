@@ -9,6 +9,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientProviderWrapper from "./components/ai-assist/ClientProviderWrapper";
 import ClientFabWrapper from "./components/ai-assist/ClientFabWrapper";
+import Navigation from "./components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,8 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Avatar-Wallet VFR Demo",
-  description: "Visual Feature Recognition for Avatar-Wallet - © 2025 Artur Gabrielian",
+  title: "VFR-Anna Demo | Vercel Commerce Integration",
+  description: "Virtual Fitting Room with real-time 3D try-on for e-commerce",
 };
 
 export default function RootLayout({
@@ -32,9 +33,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical 3D assets */}
+        <link rel="preload" as="fetch" href="/models/mannequin.glb" crossOrigin="" />
+        <link rel="preload" as="fetch" href="/models/clothes/hoodie.glb" crossOrigin="" />
+        <link rel="preload" as="fetch" href="/models/clothes/tshirt.glb" crossOrigin="" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-16`}
       >
+        <Navigation />
         <ClientProviderWrapper>
           <a href="#main" className="sr-only focus:not-sr-only">
             Skip to main content
