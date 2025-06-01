@@ -27,10 +27,24 @@
         }
 
         .product-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-sm);
+            display: flex;
+            overflow-x: auto;
+            gap: 0.5rem;
+            padding-bottom: 4px;
             margin-bottom: var(--spacing-md);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .product-grid::-webkit-scrollbar {
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            .product-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                overflow-x: visible;
+            }
         }
 
         .product-item {
@@ -1022,14 +1036,53 @@
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
+            controls.update();
         });
         
         // Start animation
         animate();
     });
     </script>
+    
+    <!-- Preload GLB for better performance -->
+    <link rel="preload" href="/models/mannequin-stub.glb" as="fetch" crossorigin>
 </head>
 <body>
+    <!-- Quick Navigation -->
+    <nav class="tiny-nav">
+        <a href="/cegeka-demo.html" class="nav-link active">3D Demo</a>
+        <a href="/google-vs-vfr" class="nav-link">2D vs 3D</a>
+    </nav>
+    <style>
+        .tiny-nav {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: 2000;
+            gap: 8px;
+            display: flex;
+        }
+        .tiny-nav .nav-link {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .tiny-nav .nav-link:hover {
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tiny-nav .nav-link.active {
+            background: var(--primary-color, #003d7a);
+            color: white;
+            border-color: var(--primary-color, #003d7a);
+        }
+    </style>
+    
     <!-- Header with Brand Switcher -->
     <header class="header">
         <div class="header-content">

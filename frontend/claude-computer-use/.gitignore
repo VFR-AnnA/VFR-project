@@ -1,0 +1,41 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Virtual environment
+claude-env/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# API Keys - NEVER commit these!
+*api_key*
+*API_KEY*
+secrets/
+
+# Screenshots and temporary files
+screenshots/
+temp/
+*.tmp

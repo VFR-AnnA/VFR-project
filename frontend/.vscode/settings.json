@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "files.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  }
+}

@@ -74,11 +74,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   margin-bottom: 3rem;
   min-height: 600px;
   flex: 1;
+  padding: 0 2rem;
 }
 
 @media (min-width: 1024px) {
@@ -129,6 +130,8 @@
   color: white;
   box-shadow: 0 4px 16px rgba(30, 60, 114, 0.3);
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .vfr-anna-side h2 {

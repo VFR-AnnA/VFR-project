@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Clothing Placeholders</title>
+</head>
+<body>
+    <h1>Generating Clothing Placeholders...</h1>
+    <div id="output"></div>
+    
+    <script>
+        const clothingItems = [
+            { name: 'tshirt', color: '#4285f4' },
+            { name: 'hoodie', color: '#34a853' },
+            { name: 'jacket', color: '#ea4335' },
+            { name: 'polo', color: '#fbbc04' }
+        ];
+
+        function createClothingImage(name, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 768;
+            const ctx = canvas.getContext('2d');
+            
+            // Clear with transparency
+            ctx.clearRect(0, 0, 512, 768);
+            
+            // Set color with transparency
+            ctx.fillStyle = color + 'CC'; // Add alpha for transparency
+            
+            // Draw simple clothing shape
+            switch(name) {
+                case 'tshirt':
+                    // Body
+                    ctx.fillRect(140, 200, 232, 300);
+                    // Sleeves
+                    ctx.fillRect(80, 200, 60, 150);
+                    ctx.fillRect(372, 200, 60, 150);
+                    // Neckline
+                    ctx.beginPath();
+                    ctx.arc(256, 200, 60, 0, Math.PI, true);
+                    ctx.fill();
+                    break;
+                    
+                case 'hoodie':
+                    // Body
+                    ctx.fillRect(120, 180, 272, 350);
+                    // Hood
+                    ctx.beginPath();
+                    ctx.arc(256, 180, 100, Math.PI, 0);
+                    ctx.fill();
+                    // Pocket
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    ctx.fillRect(180, 400, 152, 80);
+                    break;
+                    
+                case 'jacket':
+                    // Body
+                    ctx.fillRect(120, 160, 272, 380);
+                    // Collar
+                    ctx.beginPath();
+                    ctx.moveTo(120, 160);
+                    ctx.lineTo(170, 120);
+                    ctx.lineTo(342, 120);
+                    ctx.lineTo(392, 160);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Zipper
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(256, 160);
+                    ctx.lineTo(256, 540);
+                    ctx.stroke();
+                    break;
+                    
+                case 'polo':
+                    // Body
+                    ctx.fillRect(140, 220, 232, 280);
+                    // Collar
+                    ctx.fillRect(160, 160, 192, 60);
+                    // Buttons
+                    ctx.fillStyle = 'white';
+                    for(let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(256, 240 + i * 40, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+            }
+            
+            // Convert to data URL
+            return canvas.toDataURL('image/png');
+        }
+
+        // Generate and display images
+        const output = document.getElementById('output');
+        clothingItems.forEach(item => {
+            const dataUrl = createClothingImage(item.name, item.color);
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.style.width = '128px';
+            img.style.margin = '10px';
+            
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `${item.name}.png`;
+            link.textContent = `Download ${item.name}.png`;
+            link.style.display = 'block';
+            
+            output.appendChild(img);
+            output.appendChild(link);
+        });
+        
+        document.querySelector('h1').textContent = 'Clothing placeholders generated! Right-click to save each image.';
+    </script>
+</body>
+</html>

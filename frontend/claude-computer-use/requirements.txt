@@ -1,0 +1,16 @@
+# Core requirements
+anthropic>=0.18.0
+python-dotenv>=1.0.0
+
+# Screen automation
+pyautogui>=0.9.54
+pillow>=10.0.0
+
+# Voice control (optional)
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+pyaudio>=0.2.11
+
+# Additional utilities
+keyboard>=0.13.5
+requests>=2.31.0

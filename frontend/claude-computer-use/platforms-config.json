@@ -1,0 +1,35 @@
+{
+  "platforms": {
+    "github": {
+      "username": "VFR-ANNA",
+      "default_repo": "VFR-project",
+      "auto_actions": ["check_prs", "check_issues"]
+    },
+    "vercel": {
+      "team": "vfr-anna-team",
+      "projects": ["vfr-frontend", "vfr-api"],
+      "check_interval": 300
+    },
+    "linkedin": {
+      "company_page": "VFR-ANNA",
+      "post_schedule": "MWF",
+      "hashtags": ["#VirtualFitting", "#AI", "#Fashion"]
+    },
+    "aws": {
+      "region": "eu-west-1",
+      "services": ["EC2", "S3", "Lambda", "RDS"]
+    }
+  },
+  "automation_rules": {
+    "github_pr_auto_review": true,
+    "vercel_auto_redeploy": false,
+    "social_cross_post": true,
+    "aws_cost_alerts": true
+  },
+  "shortcuts": {
+    "ctrl+shift+g": "github",
+    "ctrl+shift+v": "vercel",
+    "ctrl+shift+l": "linkedin",
+    "ctrl+shift+a": "aws"
+  }
+}

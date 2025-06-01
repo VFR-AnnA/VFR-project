@@ -29,11 +29,26 @@ export class ClothingManager {
       obj.visible = false;
       obj.name = name;
       
-      // Ensure proper shadows
+      // Ensure proper shadows and fix black block issue
       obj.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
+          
+          // Fix black block issue with transparency
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => {
+                mat.transparent = true;
+                mat.depthWrite = false;
+                mat.side = THREE.DoubleSide;
+              });
+            } else {
+              child.material.transparent = true;
+              child.material.depthWrite = false;
+              child.material.side = THREE.DoubleSide;
+            }
+          }
         }
       });
       
