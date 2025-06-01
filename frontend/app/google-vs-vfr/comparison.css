@@ -1,0 +1,83 @@
+/* Google vs VFR Comparison Page Styles */
+
+.comparison-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.tab-content {
+  min-height: 600px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+}
+
+.feature-table th {
+  background: #f8f9fa;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.feature-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.feature-table .advantage {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.feature-table .disadvantage {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .comparison-container {
+    padding: 1rem;
+  }
+  
+  .tab-content {
+    padding: 1rem;
+  }
+  
+  .feature-table {
+    font-size: 0.875rem;
+  }
+  
+  .feature-table th,
+  .feature-table td {
+    padding: 0.5rem;
+  }
+}
+
+/* Product grid for mobile */
+.product-grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.product-grid > * {
+  flex: 0 0 120px;
+}
+
+/* Ensure horizontal scroll on mobile */
+@media (max-width: 640px) {
+  .product-grid {
+    flex-wrap: nowrap;
+  }
+}
