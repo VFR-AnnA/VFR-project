@@ -16,6 +16,22 @@
     this.clothing = null;
     this.loader = new THREE.GLTFLoader();
     
+    // Set up Meshopt decoder for compressed GLB files
+    if (typeof MeshoptDecoder !== 'undefined') {
+      this.loader.setMeshoptDecoder(MeshoptDecoder);
+    } else {
+      // Try to load it dynamically
+      const script = document.createElement('script');
+      script.src = '/lib/meshopt_decoder.module.js';
+      script.type = 'module';
+      script.onload = () => {
+        if (window.MeshoptDecoder) {
+          this.loader.setMeshoptDecoder(window.MeshoptDecoder);
+        }
+      };
+      document.head.appendChild(script);
+    }
+    
     // Default materials
     this.defaultMaterial = new THREE.MeshStandardMaterial({
       color: 0xcccccc,
