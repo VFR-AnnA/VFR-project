@@ -2270,8 +2270,31 @@
                     document.getElementById('loadTime').textContent = loadTime;
                 }, 1000);
                 
-                // Check for autoplay parameter
+                // Check for URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
+                
+                // Handle SKU parameter from commerce integration
+                const sku = urlParams.get('sku');
+                if (sku) {
+                    // Map SKU to product
+                    const skuToProduct = {
+                        'basic-tee': 'basic-tee',
+                        'tech-hoodie': 'tech-hoodie',
+                        'sport-jacket': 'sport-jacket',
+                        'premium-polo': 'premium-polo'
+                    };
+                    
+                    const productId = skuToProduct[sku];
+                    if (productId) {
+                        setTimeout(() => {
+                            const productElement = document.querySelector(`[data-product-id="${productId}"]`);
+                            if (productElement) {
+                                productElement.click();
+                            }
+                        }, 500);
+                    }
+                }
+                
                 if (urlParams.get('autoplay') === 'true') {
                     // Auto-demo sequence
                     setTimeout(() => {
