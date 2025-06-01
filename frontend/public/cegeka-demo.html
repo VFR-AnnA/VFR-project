@@ -13,13 +13,17 @@
     <script src="/lib/three.min.js"></script>
     <!-- GLTFLoader - hosted locally to bypass CORS -->
     <script src="/lib/GLTFLoader.js"></script>
-    <!-- Meshopt decoder for compressed GLB files -->
-    <script type="module">
-        import MeshoptDecoder from '/lib/meshopt_decoder.module.js';
-        window.MeshoptDecoder = MeshoptDecoder;
-    </script>
     <!-- Import Chart.js for analytics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Meshopt decoder for compressed GLB files - MUST be loaded before ClothingManager -->
+    <script type="module">
+        import { MeshoptDecoder } from '/lib/meshopt_decoder.module.js';
+        window.MeshoptDecoder = MeshoptDecoder;
+        // Ensure it's available globally before other scripts run
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('MeshoptDecoder loaded:', !!window.MeshoptDecoder);
+        });
+    </script>
     
     <style>
         /* ============================================

@@ -17,20 +17,17 @@
     this.loader = new THREE.GLTFLoader();
     
     // Set up Meshopt decoder for compressed GLB files
-    if (typeof MeshoptDecoder !== 'undefined') {
-      this.loader.setMeshoptDecoder(MeshoptDecoder);
-    } else {
-      // Try to load it dynamically
-      const script = document.createElement('script');
-      script.src = '/lib/meshopt_decoder.module.js';
-      script.type = 'module';
-      script.onload = () => {
-        if (window.MeshoptDecoder) {
-          this.loader.setMeshoptDecoder(window.MeshoptDecoder);
-        }
-      };
-      document.head.appendChild(script);
-    }
+    // Wait for MeshoptDecoder to be available
+    const setupDecoder = () => {
+      if (window.MeshoptDecoder) {
+        this.loader.setMeshoptDecoder(window.MeshoptDecoder);
+        console.log('MeshoptDecoder set on GLTFLoader');
+      } else {
+        // If not available yet, wait a bit and try again
+        setTimeout(setupDecoder, 100);
+      }
+    };
+    setupDecoder();
     
     // Default materials
     this.defaultMaterial = new THREE.MeshStandardMaterial({
