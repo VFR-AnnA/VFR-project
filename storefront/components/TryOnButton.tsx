@@ -1,6 +1,6 @@
 'use client'
 import { Dialog } from '@headlessui/react'
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Script from 'next/script'
 
 export default function TryOnButton({ sku, onFit }: { sku: string; onFit: () => void }) {
