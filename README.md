@@ -1,17 +1,28 @@
 # Boyov VFR Project
 
-This repository contains the web-based Virtual Fitting Room (VFR) prototype. The main application lives inside the `frontend` directory.
+This repository contains the web-based Virtual Fitting Room (VFR) prototype.
+There are two sub-apps:
+
+* `frontend` – legacy demo built with vanilla tooling
+* `storefront` – a Next.js commerce storefront that integrates the VFR widget
 
 ## Quick Start
 
-1. Install dependencies:
+1. Install dependencies for the whole workspace:
    ```bash
-   cd frontend && npm install
+   pnpm install -w
    ```
-2. Start the development server:
+2. Start the storefront dev server:
    ```bash
-   npm run dev
+   pnpm dev -F storefront
    ```
    The app should now be running at <http://localhost:3000>.
 
-See the docs inside `frontend` for more details on features and architecture.
+Vercel deploys from this directory via `vercel.json`:
+```json
+{
+  "rootDirectory": "storefront"
+}
+```
+
+See the docs inside `frontend` for more details on the original demo.

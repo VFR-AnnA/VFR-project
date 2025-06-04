@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - name: Install deps (skip in restricted env)
+        run: |
+          if [ -n "$CI" ]; then
+            npm config set registry https://registry.npmjs.org/
+          fi
+          pnpm install --frozen-lockfile
+        working-directory: storefront
+      - name: Install Playwright browsers (CI only)
+        if: ${{ !env.VERCEL }}
+        run: pnpm exec playwright install --with-deps
+        working-directory: storefront
+      - name: Build
+        run: pnpm run build
+        working-directory: storefront
