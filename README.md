@@ -21,10 +21,7 @@ There are two sub-apps:
 Vercel deploys from this directory via `vercel.json`:
 ```json
 {
-  "rootDirectory": "storefront",
-  "framework": "nextjs",
-  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm run build"
+  "rootDirectory": "storefront"
 }
 ```
 
