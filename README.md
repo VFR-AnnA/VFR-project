@@ -18,4 +18,12 @@ There are two sub-apps:
    ```
    The app should now be running at <http://localhost:3000>.
 
+Vercel deploys from this directory via `vercel.json`:
+```json
+{
+  "rootDirectory": "storefront",
+  "framework": "nextjs"
+}
+```
+
 See the docs inside `frontend` for more details on the original demo.
