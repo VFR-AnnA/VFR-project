@@ -1,4 +1,4 @@
 {
-  "root": "frontend",
+  "root": "storefront",
   "framework": "nextjs"
 }

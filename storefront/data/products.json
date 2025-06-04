@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "hoodie",
+    "sku": "hoodie-001",
+    "title": "Cozy Hoodie",
+    "description": "A warm hoodie",
+    "price": 49.99
+  },
+  {
+    "slug": "tshirt",
+    "sku": "tshirt-001",
+    "title": "Classic T-Shirt",
+    "description": "A stylish t-shirt",
+    "price": 19.99
+  },
+  {
+    "slug": "cap",
+    "sku": "cap-001",
+    "title": "Cool Cap",
+    "description": "A trendy cap",
+    "price": 14.99
+  }
+]
