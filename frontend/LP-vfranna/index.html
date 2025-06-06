@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VFR-ANNA | The 3D Virtual Try-On Platform - Angel Investment Opportunity</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="VFR-ANNA: 0.66s load time, ±2cm accuracy, universal widget. Cut fashion returns by 65% with real 3D physics virtual try-on technology. €100K-€500K angel investment opportunity.">
+    <meta name="author" content="Artur - VFR-ANNA Founder">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="VFR-ANNA - 65% Fashion Return Reduction Platform">
+    <meta property="og:description" content="Angel investment opportunity: €100K-€500K for revolutionary 3D virtual try-on technology.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://demo.vfranna.com">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --accent: #f59e0b;
+            --accent-light: #fbbf24;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --sidebar-bg: rgba(15, 23, 42, 0.95);
+            --content-bg: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.25);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Application Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 300px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.3;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            position: relative;
+        }
+        
+        .nav-link:hover,
+        .nav-link:focus,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-right: 3px solid var(--accent);
+            outline: none;
+        }
+        
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            width: 20px;
+        }
+        
+        .nav-text {
+            font-weight: 500;
+        }
+        
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: var(--dark);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 300px;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-y: visible;
+        }
+        
+        /* Content Panels */
+        .content-panel {
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+        
+        .content-panel.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Panel Header */
+        .panel-header {
+            background: var(--content-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .panel-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .panel-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        /* Accordion Sections */
+        .accordion-container {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .accordion-item {
+            background: var(--content-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .accordion-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            color: white;
+        }
+        
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .accordion-header.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .accordion-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .accordion-icon {
+            font-size: 1.3rem;
+        }
+        
+        .accordion-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .accordion-header.active .accordion-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .accordion-content.active {
+            max-height: 2000px;
+        }
+        
+        .accordion-body {
+            padding: 25px;
+        }
+        
+        /* Content Grids */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .content-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+        
+        .metric-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            color: var(--success);
+        }
+        
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table th {
+            background: rgba(59, 130, 246, 0.2);
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .winner {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .loser {
+            opacity: 0.6;
+        }
+        
+        /* Calculator Styles */
+        .calculator-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .calculator-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-weight: 500;
+            color: var(--accent);
+        }
+        
+        .input-group input,
+        .input-group select {
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .input-group select option {
+            background: var(--dark);
+            color: white;
+        }
+        
+        .results-container {
+            background: linear-gradient(45deg, var(--success), #059669);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+        }
+        
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: block;
+        }
+        
+        .result-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Investment Specific Styles */
+        .investment-slider {
+            width: 100%;
+            margin: 15px 0;
+            appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .investment-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        .equity-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .equity-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .comparison-scenarios {
+            margin-top: 25px;
+        }
+        
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .scenario-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-card.selected {
+            border-color: var(--accent);
+            background: rgba(251, 191, 36, 0.1);
+        }
+        
+        .scenario-card h4 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        
+        /* CTA Buttons */
+        .cta-button {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 10px 10px 0;
+            min-height: 44px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .cta-button:hover,
+        .cta-button:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .cta-button.secondary {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-menu-btn {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: block;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        /* Pulse animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">VFR-ANNA</div>
+                <div class="tagline">Revolutionary 3D Virtual Try-On Platform</div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#overview" class="nav-link active" data-panel="overview">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Overview</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#performance" class="nav-link" data-panel="performance">
+                        <span class="nav-icon">⚡</span>
+                        <span class="nav-text">Performance</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#demos" class="nav-link" data-panel="demos">
+                        <span class="nav-icon">🎮</span>
+                        <span class="nav-text">Live Demos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#competition" class="nav-link" data-panel="competition">
+                        <span class="nav-icon">⚔️</span>
+                        <span class="nav-text">vs Competition</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#integration" class="nav-link" data-panel="integration">
+                        <span class="nav-icon">🔧</span>
+                        <span class="nav-text">Integration</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#market" class="nav-link" data-panel="market">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Market Analysis</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#roi" class="nav-link" data-panel="roi">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">ROI Calculator</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#investment-calculator" class="nav-link" data-panel="investment-calculator">
+                        <span class="nav-icon">💎</span>
+                        <span class="nav-text">Investment Calculator</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#investment" class="nav-link" data-panel="investment">
+                        <span class="nav-icon">🚀</span>
+                        <span class="nav-text">Funding Round</span>
+                        <span class="nav-badge">€1.5M</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Overview Panel -->
+            <section class="content-panel active" id="overview">
+                <!-- Hero Section -->
+                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(251, 191, 36, 0.08)); border-radius: 20px; padding: 50px 40px; margin-bottom: 30px; text-align: center;">
+                    <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; margin-bottom: 20px; background: linear-gradient(45deg, #fff, var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2;">
+                        The 3D Virtual Try-On Platform that cuts fashion returns by 65%
+                    </h1>
+                    <p style="font-size: 1.4rem; margin-bottom: 35px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;">
+                        0.66-second load, ±2cm fit accuracy, universal widget for any shop
+                    </p>
+                    
+                    <!-- Primary CTA -->
+                    <div style="margin-bottom: 40px;">
+                        <a href="https://calendly.com/artur-vfranna/15min-demo" target="_blank" class="cta-button" 
+                           style="font-size: 1.3rem; padding: 20px 50px; animation: pulse 2s infinite; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);"
+                           onclick="trackEvent('CTA', 'Schedule_Demo', 'Hero_Button')">
+                            📅 Schedule 15-min Demo with Artur
+                        </a>
+                        <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.8;">
+                            See live 3D physics in action • Direct call with founder • No commitment required
+                        </p>
+                        
+                        <!-- Quick Contact Options -->
+                        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                            <a href="mailto:artur@vfranna.com" 
+                               style="color: var(--accent-light); text-decoration: none; font-weight: 600; padding: 8px 16px; border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 20px; transition: all 0.3s ease;"
+                               onclick="trackEvent('Contact', 'Email_Hero', 'Quick_Contact')">
+                                📧 artur@vfranna.com
+                            </a>
+                            <a href="https://wa.me/32471852312" target="_blank"
+                               style="color: var(--accent-light); text-decoration: none; font-weight: 600; padding: 8px 16px; border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 20px; transition: all 0.3s ease;"
+                               onclick="trackEvent('Contact', 'WhatsApp_Hero', 'Quick_Contact')">
+                                💬 +32 471 85 23 12
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Hero Stats -->
+                    <div class="hero-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 25px; max-width: 900px; margin: 0 auto;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 25px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 2.8rem; font-weight: 800; color: var(--accent-light); display: block;">0.66s</span>
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Load Time</span>
+                            <span style="font-size: 0.8rem; opacity: 0.7; display: block;">85% faster than Google</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 25px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 2.8rem; font-weight: 800; color: var(--success); display: block;">±2cm</span>
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Fit Accuracy</span>
+                            <span style="font-size: 0.8rem; opacity: 0.7; display: block;">Real 3D physics</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 25px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 2.8rem; font-weight: 800; color: var(--success); display: block;">-65%</span>
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Returns</span>
+                            <span style="font-size: 0.8rem; opacity: 0.7; display: block;">Peer-reviewed study</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 25px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size: 2.8rem; font-weight: 800; color: var(--accent-light); display: block;">€454B</span>
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Market Size</span>
+                            <span style="font-size: 0.8rem; opacity: 0.7; display: block;">Fashion returns annually</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- VFR-ANNA Avatar Presentation Section -->
+                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.10)); border-radius: 20px; padding: 40px; margin-bottom: 30px; text-align: center;">
+                    <h2 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 15px; color: var(--accent-light);">
+                        🎭 Meet Artur - VFR-ANNA Founder
+                    </h2>
+                    <p style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 25px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        Discover how VFR-ANNA revolutionizes fashion e-commerce with our founder's personal presentation
+                    </p>
+                    
+                    <!-- Avatar Video Container - Flexible Integration -->
+                    <div id="avatar-video-container" style="position: relative; width: 100%; max-width: 800px; margin: 0 auto; background: rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        
+                        <!-- OPTION A: HeyGen Embed (Hidden by default) -->
+                        <div id="heygen-embed" style="display: none; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                            <iframe
+                                src="https://app.heygen.com/share/76b306eb103a4217bd0238b1457ca261"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 15px;"
+                                allowfullscreen
+                                title="VFR-ANNA Avatar Presentation by Artur">
+                            </iframe>
+                        </div>
+                        
+                        <!-- OPTION B: Local Video Upload (Default) -->
+                        <div id="local-video" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                            <video
+                                id="avatar-video-player"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 15px;"
+                                controls
+                                autoplay
+                                muted
+                                loop>
+                                <source src="avatar-presentation.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        
+                        <!-- Video Source Toggle Button (for your admin use) -->
+                        <div style="position: absolute; top: 10px; right: 10px; z-index: 100;">
+                            <button onclick="toggleVideoSource()" 
+                                    style="background: rgba(59, 130, 246, 0.8); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer; opacity: 0.7;">
+                                Switch Source
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <a href="https://app.heygen.com/share/76b306eb103a4217bd0238b1457ca261" target="_blank" 
+                           style="color: var(--accent-light); text-decoration: none; font-weight: 600; font-size: 0.9rem; opacity: 0.8;"
+                           onclick="trackEvent('Video', 'External_Link', 'HeyGen_Avatar')">
+                            🔗 Watch Full Avatar Presentation
+                        </a>
+                    </div>
+                    
+                    <!-- Presentation Impact Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 20px; margin-top: 25px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <span style="font-size: 1.5rem; font-weight: 800; color: var(--success); display: block;">3D</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">Avatar Tech</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent-light); display: block;">Live</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">Presentation</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <span style="font-size: 1.5rem; font-weight: 800; color: var(--success); display: block;">Personal</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">Story</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent-light); display: block;">Ready</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">to Invest</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-header">
+                    <h2 class="panel-title">Platform Overview</h2>
+                    <p class="panel-subtitle">Proven technology that revolutionizes online fashion shopping with real 3D physics simulation</p>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">🎯</span>
+                                <span>Core Value Proposition</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div class="content-grid">
+                                    <div class="content-card">
+                                        <div class="card-title">🔄 360° Virtual Try-On</div>
+                                        <p>Real 3D physics simulation shows exactly how clothing fits, drapes and moves on your body.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">⚡ Ultra-Fast Performance</div>
+                                        <p>0.66s load time - faster than most product images, 85% faster than Google's baseline.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">🌐 Universal Widget</div>
+                                        <p>Works on all e-commerce platforms with 3 lines of code. Shopify, WooCommerce, Magento, custom builds.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">🔒 Privacy-First</div>
+                                        <p>All processing local in browser. No photos to servers. Fully GDPR-compliant.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Performance Panel -->
+            <section class="content-panel" id="performance">
+                <div class="panel-header">
+                    <h1 class="panel-title">Performance Metrics</h1>
+                    <p class="panel-subtitle">Real-time analytics en competitive benchmarks</p>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">⚡</span>
+                                <span>Load Performance</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div class="content-grid">
+                                    <div class="content-card">
+                                        <div class="card-title">VFR-ANNA Performance</div>
+                                        <div class="metric-display">
+                                            <span>Initial Paint</span>
+                                            <span class="metric-value">0.22s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>3D Render Ready</span>
+                                            <span class="metric-value">0.66s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Interactive</span>
+                                            <span class="metric-value">0.72s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Memory Usage</span>
+                                            <span class="metric-value">&lt;50MB</span>
+                                        </div>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">Competition Comparison</div>
+                                        <div class="metric-display">
+                                            <span>Google Try-On</span>
+                                            <span style="color: var(--danger);">3-5s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Industry Average</span>
+                                            <span style="color: var(--danger);">2.8s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>VFR-ANNA</span>
+                                            <span class="metric-value">0.66s</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Performance Gain</span>
+                                            <span class="metric-value">+85%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Demos Panel -->
+            <section class="content-panel" id="demos">
+                <div class="panel-header">
+                    <h1 class="panel-title">Live Demonstrations</h1>
+                    <p class="panel-subtitle">Interactieve demos van alle VFR-ANNA implementaties</p>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.2); border-radius: 15px; padding: 20px; margin: 20px 0;">
+                    <h3>Live Production System</h3>
+                    <p>Complete VFR-ANNA implementation with real-time 3D physics simulation</p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="https://vfr-project-desyodd4y-boyov69s-projects.vercel.app/cegeka-demo.html" target="_blank" class="cta-button" onclick="trackEvent('Demo', 'External_Link', 'Production_Demo')">🚀 Open Live Demo</a>
+                        <a href="https://vfr-project-desyodd4y-boyov69s-projects.vercel.app/google-vs-vfr" target="_blank" class="cta-button secondary" onclick="trackEvent('Demo', 'External_Link', 'Google_Comparison')">🥊 vs Google Comparison</a>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Competition Panel -->
+            <section class="content-panel" id="competition">
+                <div class="panel-header">
+                    <h1 class="panel-title">vs Competition</h1>
+                    <p class="panel-subtitle">VFR-ANNA vs market leaders en technische vergelijking</p>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">🆚</span>
+                                <span>Google Try-On Comparison</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <table class="comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Feature</th>
+                                            <th>Google Try-On ($13B)</th>
+                                            <th>VFR-ANNA</th>
+                                            <th>Impact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Technology</td>
+                                            <td class="loser">2D Overlay</td>
+                                            <td class="winner">3D Physics</td>
+                                            <td>Revolutionary</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Load Time</td>
+                                            <td class="loser">3-5 seconds</td>
+                                            <td class="winner">0.66 seconds</td>
+                                            <td>Game-changing</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Platform Support</td>
+                                            <td class="loser">Google Shopping Only</td>
+                                            <td class="winner">Universal Widget</td>
+                                            <td>Market-defining</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Availability</td>
+                                            <td class="loser">US Beta Only</td>
+                                            <td class="winner">EU Production Ready</td>
+                                            <td>First-mover</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Accuracy</td>
+                                            <td class="loser">Visual Estimation</td>
+                                            <td class="winner">±2cm Precision</td>
+                                            <td>Superior</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Integration Panel -->
+            <section class="content-panel" id="integration">
+                <div class="panel-header">
+                    <h1 class="panel-title">Universal Integration</h1>
+                    <p class="panel-subtitle">Agnostic widget architecture voor alle e-commerce platforms</p>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">🔧</span>
+                                <span>3-Line Integration</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div style="background: rgba(0,0,0,0.4); padding: 25px; border-radius: 15px; margin-bottom: 25px;">
+                                    <h3 style="color: var(--accent); margin-bottom: 20px;">Complete Integration Code</h3>
+                                    <pre style="color: #a7f3d0; font-family: monospace; line-height: 2; font-size: 1.1rem; overflow-x: auto;"><code>&lt;script src="https://demo.vfranna.com/widget.js"&gt;&lt;/script&gt;
+&lt;div class="vfr-anna-widget" data-product="{{product.id}}"&gt;&lt;/div&gt;
+&lt;script&gt;VFR.init();&lt;/script&gt;</code></pre>
+                                </div>
+                                
+                                <div class="content-grid">
+                                    <div class="content-card">
+                                        <div class="card-title">Shopify Integration</div>
+                                        <p>Native app store beschikbaar. One-click install met automatische product sync.</p>
+                                        <div class="metric-display">
+                                            <span>Setup Time</span>
+                                            <span class="metric-value">&lt; 5 min</span>
+                                        </div>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">Universal Widget</div>
+                                        <p>Universal JavaScript widget werkt op elke website. Complete API access.</p>
+                                        <div class="metric-display">
+                                            <span>Compatibility</span>
+                                            <span class="metric-value">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Market Panel -->
+            <section class="content-panel" id="market">
+                <div class="panel-header">
+                    <h1 class="panel-title">Market Analysis</h1>
+                    <p class="panel-subtitle">€454B markt opportunity en growth projections</p>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">💰</span>
+                                <span>Market Opportunity</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div class="content-grid">
+                                    <div class="content-card">
+                                        <div class="card-title">Global Fashion Returns</div>
+                                        <div class="metric-display">
+                                            <span>Total Annual Market</span>
+                                            <span class="metric-value">€454B</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Growth Rate (CAGR)</span>
+                                            <span class="metric-value">22.8%</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>Size-Related Returns</span>
+                                            <span class="metric-value">52%</span>
+                                        </div>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">Regional Breakdown</div>
+                                        <div class="metric-display">
+                                            <span>EU Market</span>
+                                            <span class="metric-value">€156B</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>US Market</span>
+                                            <span class="metric-value">€218B</span>
+                                        </div>
+                                        <div class="metric-display">
+                                            <span>APAC Market</span>
+                                            <span class="metric-value">€80B</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ROI Calculator Panel -->
+            <section class="content-panel" id="roi">
+                <div class="panel-header">
+                    <h1 class="panel-title">ROI Calculator</h1>
+                    <p class="panel-subtitle">Bereken je return on investment met VFR-ANNA</p>
+                </div>
+                
+                <div class="calculator-container">
+                    <h3>ROI Calculator</h3>
+                    <div class="calculator-inputs">
+                        <div class="input-group">
+                            <label for="revenueInput">Annual Revenue (€M)</label>
+                            <input type="number" id="revenueInput" value="50" min="1" max="1000" onchange="calculateROI()">
+                        </div>
+                        <div class="input-group">
+                            <label for="returnRateInput">Current Return Rate (%)</label>
+                            <input type="number" id="returnRateInput" value="24.4" min="0" max="50" step="0.1" onchange="calculateROI()">
+                        </div>
+                        <div class="input-group">
+                            <label for="investmentInput">VFR-ANNA Investment (€K)</label>
+                            <input type="number" id="investmentInput" value="150" min="50" max="500" onchange="calculateROI()">
+                        </div>
+                    </div>
+                    
+                    <div class="results-container" id="roiResults">
+                        <div class="result-item">
+                            <span class="result-number" id="annualSavings">€7.9M</span>
+                            <span class="result-label">Annual Savings</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-number" id="threeYearROI">15.760%</span>
+                            <span class="result-label">3-Year ROI</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-number" id="paybackPeriod">< 1 month</span>
+                            <span class="result-label">Payback Period</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Investment Calculator Panel -->
+            <section class="content-panel" id="investment-calculator">
+                <div class="panel-header">
+                    <h1 class="panel-title">Angel Investment Calculator</h1>
+                    <p class="panel-subtitle">Calculate your equity and returns for €100K-€500K investments</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--accent-light); display: block;">€100K-€500K</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Angel Range</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--success); display: block;" id="calculatedEquity">3.8%</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Your Equity</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--accent-light); display: block;" id="calculatedExitValue">€3.0M</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Exit Value</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--success); display: block;" id="calculatedROI">1.100%</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Total ROI</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">💎</span>
+                                <span>Investment Calculator</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div class="calculator-container">
+                                    <h3>Your Investment Parameters</h3>
+                                    
+                                    <div class="calculator-inputs">
+                                        <div class="input-group">
+                                            <label for="angelInvestmentAmount">Investment Amount (€)</label>
+                                            <input type="range" id="angelInvestmentSlider" class="investment-slider" min="100000" max="500000" step="25000" value="250000" oninput="updateInvestmentFromSlider()">
+                                            <input type="number" id="angelInvestmentAmount" value="250000" min="100000" max="500000" step="25000" onchange="updateInvestmentCalculator()">
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <label for="exitScenario">Exit Scenario</label>
+                                            <select id="exitScenario" onchange="updateInvestmentCalculator()">
+                                                <option value="conservative">Conservative (€300M exit)</option>
+                                                <option value="realistic" selected>Realistic (€400M exit)</option>
+                                                <option value="optimistic">Optimistic (€500M exit)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <label for="timeHorizon">Time Horizon</label>
+                                            <select id="timeHorizon" onchange="updateInvestmentCalculator()">
+                                                <option value="3">3 years</option>
+                                                <option value="5" selected>5 years</option>
+                                                <option value="7">7 years</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="results-container">
+                                        <h3>Your Investment Returns</h3>
+                                        <div class="equity-breakdown">
+                                            <div class="equity-item">
+                                                <div class="result-number" id="equityPercentage">3.8%</div>
+                                                <div class="result-label">Equity Ownership</div>
+                                            </div>
+                                            <div class="equity-item">
+                                                <div class="result-number" id="year1Value">€300K</div>
+                                                <div class="result-label">Year 1 Value</div>
+                                            </div>
+                                            <div class="equity-item">
+                                                <div class="result-number" id="year3Value">€1.1M</div>
+                                                <div class="result-label">Year 3 Value</div>
+                                            </div>
+                                            <div class="equity-item">
+                                                <div class="result-number" id="exitValue">€3.0M</div>
+                                                <div class="result-label">Exit Value</div>
+                                            </div>
+                                            <div class="equity-item">
+                                                <div class="result-number" id="totalROI">1.100%</div>
+                                                <div class="result-label">Total ROI</div>
+                                            </div>
+                                            <div class="equity-item">
+                                                <div class="result-number" id="annualizedReturn">29.8%</div>
+                                                <div class="result-label">Annualized Return</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="comparison-scenarios">
+                                    <h3>Investment Scenarios Comparison</h3>
+                                    <div class="scenario-grid">
+                                        <div class="scenario-card" onclick="selectScenario(100000)">
+                                            <h4>Conservative Angel</h4>
+                                            <p><strong>€100K Investment</strong></p>
+                                            <p>1.5% equity</p>
+                                            <p>€1.2M exit value</p>
+                                            <p>1,100% ROI</p>
+                                        </div>
+                                        <div class="scenario-card selected" onclick="selectScenario(250000)">
+                                            <h4>Strategic Angel</h4>
+                                            <p><strong>€250K Investment</strong></p>
+                                            <p>3.8% equity</p>
+                                            <p>€3.0M exit value</p>
+                                            <p>1,100% ROI</p>
+                                        </div>
+                                        <div class="scenario-card" onclick="selectScenario(500000)">
+                                            <h4>Lead Angel</h4>
+                                            <p><strong>€500K Investment</strong></p>
+                                            <p>7.7% equity</p>
+                                            <p>€6.0M exit value</p>
+                                            <p>1,100% ROI</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: rgba(16, 185, 129, 0.1); padding: 25px; border-radius: 15px; margin-top: 25px;">
+                                    <h3>Why This Works for You</h3>
+                                    <div class="content-grid">
+                                        <div>
+                                            <h4 style="color: var(--accent); margin-bottom: 10px;">🎯 Perfect Parallel</h4>
+                                            <p>30 years in verf color-matching → Virtual clothing size-matching</p>
+                                        </div>
+                                        <div>
+                                            <h4 style="color: var(--accent); margin-bottom: 10px;">💰 Smart Investment</h4>
+                                            <p>Post-Colora liquidity → High-growth tech opportunity</p>
+                                        </div>
+                                        <div>
+                                            <h4 style="color: var(--accent); margin-bottom: 10px;">🚀 Perfect Timing</h4>
+                                            <p>18-month window before Google catches up</p>
+                                        </div>
+                                        <div>
+                                            <h4 style="color: var(--accent); margin-bottom: 10px;">🏀 Trust Factor</h4>
+                                            <p>Basketball buddy → Business partner</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Investment Panel -->
+            <section class="content-panel" id="investment">
+                <div class="panel-header">
+                    <h1 class="panel-title">Funding Round</h1>
+                    <p class="panel-subtitle">€1.5M seed round voor universal market leadership</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--accent-light); display: block;">€1.5M</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Seed Round</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--accent-light); display: block;">15-20%</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Equity</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--success); display: block;">€300M+</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Exit Potential</span>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                            <span style="font-size: 2rem; font-weight: 800; color: var(--accent-light); display: block;">18 months</span>
+                            <span style="font-size: 0.9rem; opacity: 0.8;">Market Window</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-container">
+                    <div class="accordion-item">
+                        <button class="accordion-header active" onclick="toggleAccordion(this)">
+                            <div class="accordion-title">
+                                <span class="accordion-icon">💎</span>
+                                <span>Investment Highlights</span>
+                            </div>
+                            <span class="accordion-toggle">▼</span>
+                        </button>
+                        <div class="accordion-content active">
+                            <div class="accordion-body">
+                                <div class="content-grid">
+                                    <div class="content-card">
+                                        <div class="card-title">🚀 Technology Leadership</div>
+                                        <p>3 jaar voor op Google's $13B investment. Proven 0.66s performance vs 3-5s industry standard.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">🌍 EU-First Strategy</div>
+                                        <p>GDPR-compliant, production-ready terwijl Google in US beta. 18-month market window.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">🔧 Universal Platform</div>
+                                        <p>Agnostic widget werkt overal. Van Shopify tot custom builds met 3 regels code.</p>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="card-title">📊 Proven ROI</div>
+                                        <p>65% return reduction, 94% conversion boost. Peer-reviewed research met 10,000+ users.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Section -->
+                <div style="background: var(--content-bg); border-radius: 15px; padding: 30px; margin-top: 30px; text-align: center;">
+                    <h2>Ready to Join the Revolution?</h2>
+                    <p style="margin: 20px 0; font-size: 1.1rem; opacity: 0.9;">
+                        VFR-ANNA is positioned to become the universal standard for fashion e-commerce
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0;">
+                        <div>
+                            <h4 style="color: var(--accent); margin-bottom: 10px;">📧 Direct Contact</h4>
+                            <a href="mailto:artur@vfranna.com" style="color: white; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                                artur@vfranna.com
+                            </a>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent); margin-bottom: 10px;">📱 WhatsApp/Call</h4>
+                            <a href="tel:+32471852312" style="color: white; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                                +32 471 85 23 12
+                            </a>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent); margin-bottom: 10px;">🌐 Demo Platform</h4>
+                            <a href="https://demo.vfranna.com" target="_blank" style="color: white; text-decoration: none; font-weight: 600;">
+                                demo.vfranna.com
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Contact Buttons -->
+                    <div style="margin: 25px 0; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <a href="mailto:artur@vfranna.com?subject=VFR-ANNA Investment Opportunity&body=Hi Artur,%0A%0AI'm interested in learning more about VFR-ANNA angel investment opportunity.%0A%0ABest regards," 
+                           class="cta-button" 
+                           style="display: inline-flex; align-items: center; gap: 8px;"
+                           onclick="trackEvent('Contact', 'Email_Click', 'Investment_Inquiry')">
+                            📧 Send Email
+                        </a>
+                        <a href="https://wa.me/32471852312?text=Hi%20Artur,%20I%20saw%20your%20VFR-ANNA%20platform%20and%20I'm%20interested%20in%20discussing%20the%20angel%20investment%20opportunity." 
+                           target="_blank" 
+                           class="cta-button secondary" 
+                           style="display: inline-flex; align-items: center; gap: 8px;"
+                           onclick="trackEvent('Contact', 'WhatsApp_Click', 'Direct_Message')">
+                            💬 WhatsApp
+                        </a>
+                        <a href="https://calendly.com/artur-vfranna/15min-demo" 
+                           target="_blank" 
+                           class="cta-button" 
+                           style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(45deg, var(--success), #059669);"
+                           onclick="trackEvent('Contact', 'Calendar_Click', 'Schedule_Demo')">
+                            📅 Schedule Call
+                        </a>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; margin-top: 25px;">
+                        <h4 style="color: var(--accent); margin-bottom: 15px;">Privacy & Compliance</h4>
+                        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.8;">
+                            <span>✅ Foto's blijven lokaal in browser</span>
+                            <span>✅ Volledig GDPR-compliant</span>
+                            <span>✅ Geen data opslag op servers</span>
+                            <span>✅ EU privacy-first approach</span>
+                        </div>
+                        
+                        <!-- Personal Touch -->
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; font-style: italic;">
+                            <p style="margin: 0; color: var(--accent-light);">
+                                "Van Armenian entrepreneurial spirit naar Belgian tech innovation. 
+                                Van Colora verf-matching naar VFR-Anna size-matching."
+                            </p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                                - Artur, Founder & CTO
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Video Source Toggle Function
+        function toggleVideoSource() {
+            const heygenEmbed = document.getElementById('heygen-embed');
+            const localVideo = document.getElementById('local-video');
+            
+            if (heygenEmbed.style.display === 'none') {
+                heygenEmbed.style.display = 'block';
+                localVideo.style.display = 'none';
+                console.log('Switched to HeyGen embed');
+            } else {
+                heygenEmbed.style.display = 'none';
+                localVideo.style.display = 'block';
+                console.log('Switched to local video');
+            }
+            
+            // Track the switch
+            trackEvent('Avatar_Video', 'Source_Toggle', 'Manual_Switch');
+        }
+        
+        // Investment Calculator Functions
+        function updateInvestmentFromSlider() {
+            const sliderValue = document.getElementById('angelInvestmentSlider').value;
+            document.getElementById('angelInvestmentAmount').value = sliderValue;
+            updateInvestmentCalculator();
+        }
+        
+        function updateInvestmentCalculator() {
+            const investmentAmount = parseFloat(document.getElementById('angelInvestmentAmount').value);
+            const slider = document.getElementById('angelInvestmentSlider');
+            const exitScenario = document.getElementById('exitScenario').value;
+            const timeHorizon = parseInt(document.getElementById('timeHorizon').value);
+            
+            // Sync slider and input (both directions)
+            slider.value = investmentAmount;
+            document.getElementById('angelInvestmentAmount').value = investmentAmount;
+            
+            // Company valuation parameters (realistic for angel stage)
+            const preMoneyValuation = 6500000;  // €6.5M pre-money (more realistic for angel)
+            const totalSeedRound = 1500000;     // €1.5M total round
+            const postMoneyValuation = preMoneyValuation + totalSeedRound;
+            
+            // Exit valuations based on scenario
+            const exitValuations = {
+                conservative: 300000000,  // €300M
+                realistic: 400000000,     // €400M  
+                optimistic: 500000000     // €500M
+            };
+            
+            const exitValuation = exitValuations[exitScenario];
+            
+            // Calculate equity percentage
+            const equityPercentage = (investmentAmount / postMoneyValuation) * 100;
+            
+            // Growth projections (more conservative for angel investors)
+            const year1Multiplier = 1.2;   // 20% growth year 1
+            const year3Multiplier = 4.5;   // 350% growth year 3
+            const exitMultiplier = exitValuation / postMoneyValuation; // Based on exit scenario
+            
+            const year1Value = investmentAmount * year1Multiplier;
+            const year3Value = investmentAmount * year3Multiplier;
+            const exitValue = (equityPercentage / 100) * exitValuation;
+            const totalROI = ((exitValue - investmentAmount) / investmentAmount) * 100;
+            const annualizedReturn = (Math.pow(exitValue / investmentAmount, 1/timeHorizon) - 1) * 100;
+            
+            // Update displays
+            document.getElementById('equityPercentage').textContent = equityPercentage.toFixed(1) + '%';
+            document.getElementById('year1Value').textContent = '€' + formatInvestmentNumber(year1Value);
+            document.getElementById('year3Value').textContent = '€' + formatInvestmentNumber(year3Value);
+            document.getElementById('exitValue').textContent = '€' + formatInvestmentNumber(exitValue);
+            document.getElementById('totalROI').textContent = formatInvestmentNumber(totalROI) + '%';
+            document.getElementById('annualizedReturn').textContent = annualizedReturn.toFixed(1) + '%';
+            
+            // Update header summary
+            document.getElementById('calculatedEquity').textContent = equityPercentage.toFixed(1) + '%';
+            document.getElementById('calculatedExitValue').textContent = '€' + formatInvestmentNumber(exitValue);
+            document.getElementById('calculatedROI').textContent = formatInvestmentNumber(totalROI) + '%';
+            
+            // Track calculator usage
+            trackEvent('Investment_Calculator', 'Calculate', `Amount: ${investmentAmount}, ROI: ${totalROI.toFixed(0)}%`);
+        }
+        
+        function formatInvestmentNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(0) + 'K';
+            } else {
+                return num.toFixed(0);
+            }
+        }
+        
+        function selectScenario(amount) {
+            document.getElementById('angelInvestmentAmount').value = amount;
+            document.getElementById('angelInvestmentSlider').value = amount;
+            updateInvestmentCalculator();
+            
+            // Update scenario card selection
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        // Navigation System
+        function initNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentPanels = document.querySelectorAll('.content-panel');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Track navigation
+                    trackEvent('Navigation', 'Panel_Switch', link.dataset.panel);
+                    
+                    // Remove active classes
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    contentPanels.forEach(panel => panel.classList.remove('active'));
+                    
+                    // Add active class to clicked nav
+                    link.classList.add('active');
+                    
+                    // Show corresponding panel
+                    const panelId = link.dataset.panel;
+                    document.getElementById(panelId).classList.add('active');
+                    
+                    // Close mobile sidebar
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('open');
+                    }
+                });
+            });
+        }
+        
+        // Accordion System
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+            
+            // Close all accordions in the same container
+            const container = header.closest('.accordion-container');
+            container.querySelectorAll('.accordion-header').forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('active');
+            });
+            
+            // Open clicked accordion if it wasn't active
+            if (!isActive) {
+                header.classList.add('active');
+                content.classList.add('active');
+                
+                // Track accordion interaction
+                const accordionTitle = header.querySelector('.accordion-title span:last-child').textContent;
+                trackEvent('Accordion', 'Expand', accordionTitle);
+            }
+        }
+        
+        // ROI Calculator
+        function calculateROI() {
+            const revenue = parseFloat(document.getElementById('revenueInput').value) * 1000000;
+            const returnRate = parseFloat(document.getElementById('returnRateInput').value) / 100;
+            const investment = parseFloat(document.getElementById('investmentInput').value) * 1000;
+            
+            const currentReturnCost = revenue * returnRate;
+            const newReturnRate = returnRate * 0.35; // 65% reduction
+            const newReturnCost = revenue * newReturnRate;
+            const annualSavings = currentReturnCost - newReturnCost;
+            const threeYearSavings = annualSavings * 3;
+            const roi = ((threeYearSavings - investment) / investment) * 100;
+            const paybackMonths = (investment / annualSavings) * 12;
+            
+            // Update display with proper formatting
+            document.getElementById('annualSavings').textContent = '€' + (annualSavings / 1000000).toFixed(1) + 'M';
+            document.getElementById('threeYearROI').textContent = formatNumber(roi.toFixed(0)) + '%';
+            
+            // Conservative payback presentation
+            if (paybackMonths < 1) {
+                document.getElementById('paybackPeriod').textContent = '< 1 month';
+            } else {
+                document.getElementById('paybackPeriod').textContent = paybackMonths.toFixed(1) + ' months';
+            }
+            
+            // Track ROI calculation
+            trackEvent('ROI_Calculator', 'Calculate', `Revenue: ${revenue/1000000}M, ROI: ${roi.toFixed(0)}%`);
+        }
+        
+        // Number formatting function for percentages and thousands
+        function formatNumber(num) {
+            const number = parseInt(num);
+            // For numbers > 999, add European-style thousand separators
+            if (number > 999) {
+                return number.toLocaleString('nl-NL'); // Dutch formatting: 15.760
+            }
+            return num;
+        }
+        
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+        
+        // Mobile Responsiveness
+        function handleResize() {
+            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768) {
+                mobileBtn.style.display = 'block';
+            } else {
+                mobileBtn.style.display = 'none';
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+        
+        // Analytics Tracking
+        function trackEvent(category, action, label) {
+            // Google Analytics 4 
+            if (typeof gtag !== 'undefined') {
+                gtag('event', action, {
+                    event_category: category,
+                    event_label: label,
+                    custom_parameter: 'vfr_anna_dashboard'
+                });
+            }
+            
+            // Console logging for development
+            console.log('Analytics Event:', { category, action, label });
+        }
+        
+        // Keyboard Shortcuts
+        function handleKeyboard(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+            
+            // Navigation shortcuts (Ctrl/Cmd + number)
+            if (e.ctrlKey || e.metaKey) {
+                const shortcuts = {
+                    '1': 'overview',
+                    '2': 'performance', 
+                    '3': 'demos',
+                    '4': 'competition',
+                    '5': 'integration',
+                    '6': 'market',
+                    '7': 'roi',
+                    '8': 'investment-calculator',
+                    '9': 'investment'
+                };
+                
+                if (shortcuts[e.key]) {
+                    e.preventDefault();
+                    document.querySelector(`[data-panel="${shortcuts[e.key]}"]`).click();
+                }
+            }
+        }
+        
+        // Smooth scrolling for hash links
+        function handleHashNavigation() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const targetPanel = document.querySelector(`[data-panel="${hash}"]`);
+                if (targetPanel) {
+                    targetPanel.click();
+                }
+            }
+        }
+        
+        // Performance monitoring
+        function monitorPerformance() {
+            if ('performance' in window) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log('Page load time:', loadTime + 'ms');
+                
+                // Track performance in analytics
+                trackEvent('Performance', 'Page_Load', loadTime);
+                
+                // Show performance badge if super fast
+                if (loadTime < 1000) {
+                    console.log('🚀 Ultra-fast load time achieved!');
+                }
+            }
+        }
+        
+        // Initialize Everything
+        document.addEventListener('DOMContentLoaded', function() {
+            initNavigation();
+            calculateROI();
+            updateInvestmentCalculator();
+            handleResize();
+            handleHashNavigation();
+            
+            // Event listeners
+            window.addEventListener('resize', handleResize);
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Auto-open first accordion in each section
+            document.querySelectorAll('.accordion-container').forEach(container => {
+                const firstHeader = container.querySelector('.accordion-header');
+                if (firstHeader && !firstHeader.classList.contains('active')) {
+                    // Don't auto-click, just ensure first is marked as active if it has the class
+                    if (firstHeader.classList.contains('active')) {
+                        firstHeader.nextElementSibling.classList.add('active');
+                    }
+                }
+            });
+            
+            // Welcome animation
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+            
+            console.log('🚀 VFR-ANNA Dashboard with Angel Investment Calculator loaded successfully!');
+        });
+        
+        // Performance monitoring on load
+        window.addEventListener('load', monitorPerformance);
+    </script>
+</body>
+</html>
